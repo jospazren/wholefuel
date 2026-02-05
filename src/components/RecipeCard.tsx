@@ -2,7 +2,7 @@ import { Recipe, CATEGORY_LABELS, RecipeCategory } from '@/types/meal';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Flame, Beef, Wheat, Droplet, GripVertical } from 'lucide-react';
+import { Flame, Beef, Wheat, Droplet } from 'lucide-react';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -40,42 +40,28 @@ export function RecipeCard({
       onDragEnd={onDragEnd}
       onClick={onClick}
       className={cn(
-        'cursor-grab active:cursor-grabbing transition-all duration-200 group',
-        'hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5',
-        isDragging && 'opacity-50 rotate-2 scale-105 shadow-lg',
+        'cursor-grab active:cursor-grabbing transition-all duration-150',
+        'hover:bg-muted/50 hover:border-primary/20',
+        isDragging && 'opacity-50 rotate-1 scale-105 shadow-lg',
         onClick && 'cursor-pointer',
         className
       )}
     >
-      <CardContent className={cn('p-3', isCompact && 'p-2')}>
-        <div className="flex items-start gap-2">
-          <div className="mt-0.5 text-muted-foreground/50 group-hover:text-muted-foreground transition-colors cursor-grab">
-            <GripVertical className="h-4 w-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <h4 className={cn('font-semibold text-foreground truncate', isCompact ? 'text-sm' : 'text-base')}>
-                {recipe.name}
-              </h4>
-              <Badge variant="outline" className={cn('shrink-0 text-[10px] px-1.5 py-0', categoryColors[recipe.category])}>
-                {CATEGORY_LABELS[recipe.category]}
-              </Badge>
-            </div>
-            
-            {!isCompact && (
-              <p className="text-xs text-muted-foreground mb-2 line-clamp-1">
-                {recipe.description}
-              </p>
-            )}
-
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="font-medium">{recipe.totalMacros.calories} cals</span>
-              <span>|</span>
-              <span className="text-macro-protein">{recipe.totalMacros.protein}P</span>
-              <span className="text-macro-fat">{recipe.totalMacros.fat}F</span>
-              <span className="text-macro-carbs">{recipe.totalMacros.carbs}C</span>
-            </div>
-          </div>
+      <CardContent className="px-2.5 py-2">
+        <div className="flex items-center justify-between gap-2 mb-0.5">
+          <h4 className="text-sm font-medium text-foreground truncate flex-1">
+            {recipe.name}
+          </h4>
+          <Badge variant="outline" className={cn('shrink-0 text-[9px] px-1 py-0 h-4', categoryColors[recipe.category])}>
+            {CATEGORY_LABELS[recipe.category]}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <span className="font-medium">{recipe.totalMacros.calories}</span>
+          <span className="text-muted-foreground/50">|</span>
+          <span className="text-macro-protein">{recipe.totalMacros.protein}P</span>
+          <span className="text-macro-fat">{recipe.totalMacros.fat}F</span>
+          <span className="text-macro-carbs">{recipe.totalMacros.carbs}C</span>
         </div>
       </CardContent>
     </Card>
