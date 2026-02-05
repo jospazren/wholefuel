@@ -12,9 +12,10 @@ interface WeeklyCalendarProps {
 }
 
 export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
-  const { weeklyPlan, weeklyTargets, addMealToSlot, getDailyMacros } = useMealPlan();
+  const { weeklyPlan, weeklyTargets, addMealToSlot, moveMealToSlot, getDailyMacros } = useMealPlan();
   const [dragOverSlot, setDragOverSlot] = useState<{ day: DayOfWeek; slot: MealSlot } | null>(null);
   const [editingMeal, setEditingMeal] = useState<{ meal: MealInstance; day: DayOfWeek; slot: MealSlot } | null>(null);
+  const [draggingMeal, setDraggingMeal] = useState<{ day: DayOfWeek; slot: MealSlot } | null>(null);
 
   const handleDragOver = (e: React.DragEvent, day: DayOfWeek, slot: MealSlot) => {
     e.preventDefault();
@@ -29,6 +30,20 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
     e.preventDefault();
     setDragOverSlot(null);
     
+    // Check if we're moving an existing meal
+    const mealMoveData = e.dataTransfer.getData('meal-move');
+    if (mealMoveData) {
+      try {
+        const { fromDay, fromSlot } = JSON.parse(mealMoveData);
+        moveMealToSlot(fromDay, fromSlot, day, slot);
+        setDraggingMeal(null);
+        return;
+      } catch (error) {
+        console.error('Failed to parse meal move data:', error);
+      }
+    }
+    
+    // Otherwise, it's a new recipe from library
     try {
       const recipeData = e.dataTransfer.getData('recipe');
       if (recipeData) {
@@ -38,6 +53,12 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
     } catch (error) {
       console.error('Failed to parse dropped recipe:', error);
     }
+  };
+
+  const handleMealDragStart = (e: React.DragEvent, day: DayOfWeek, slot: MealSlot) => {
+    e.dataTransfer.setData('meal-move', JSON.stringify({ fromDay: day, fromSlot: slot }));
+    e.dataTransfer.effectAllowed = 'move';
+    setDraggingMeal({ day, slot });
   };
 
   const handleEditClick = (day: DayOfWeek, slot: MealSlot) => {
@@ -113,6 +134,7 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, day, slot)}
                       onEditClick={() => handleEditClick(day, slot)}
+                      onMealDragStart={(e) => handleMealDragStart(e, day, slot)}
                     />
                   </div>
                 ))}

@@ -22,6 +22,7 @@ interface MealPlanContextType {
   weeklyTargets: WeeklyTargets;
   setWeeklyTargets: (targets: WeeklyTargets) => void;
   addMealToSlot: (day: DayOfWeek, slot: MealSlot, recipe: Recipe) => void;
+  moveMealToSlot: (fromDay: DayOfWeek, fromSlot: MealSlot, toDay: DayOfWeek, toSlot: MealSlot) => void;
   removeMealFromSlot: (day: DayOfWeek, slot: MealSlot) => void;
   updateMealInstance: (day: DayOfWeek, slot: MealSlot, updates: Partial<MealInstance>) => void;
   getDailyMacros: (day: DayOfWeek) => Macros;
@@ -133,6 +134,32 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         [slot]: undefined,
       },
     }));
+  };
+
+  const moveMealToSlot = (fromDay: DayOfWeek, fromSlot: MealSlot, toDay: DayOfWeek, toSlot: MealSlot) => {
+    setWeeklyPlan((prev) => {
+      const meal = prev[fromDay][fromSlot];
+      if (!meal) return prev;
+      
+      // If dropping onto the same slot, do nothing
+      if (fromDay === toDay && fromSlot === toSlot) return prev;
+      
+      const updated = { ...prev };
+      
+      // Update "from" day
+      updated[fromDay] = { ...prev[fromDay], [fromSlot]: undefined };
+      
+      // Update "to" day (swap if occupied)
+      const existingMeal = prev[toDay][toSlot];
+      updated[toDay] = { ...updated[toDay], [toSlot]: meal };
+      
+      // If there was a meal in the target slot, move it to the source slot (swap)
+      if (existingMeal) {
+        updated[fromDay] = { ...updated[fromDay], [fromSlot]: existingMeal };
+      }
+      
+      return updated;
+    });
   };
 
   const updateMealInstance = (day: DayOfWeek, slot: MealSlot, updates: Partial<MealInstance>) => {
@@ -256,6 +283,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         weeklyTargets,
         setWeeklyTargets,
         addMealToSlot,
+        moveMealToSlot,
         removeMealFromSlot,
         updateMealInstance,
         getDailyMacros,

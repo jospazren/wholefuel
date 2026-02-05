@@ -1,7 +1,7 @@
 import { MealInstance, DayOfWeek, MealSlot } from '@/types/meal';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { cn } from '@/lib/utils';
-import { Plus, X, Flame, Beef } from 'lucide-react';
+import { Plus, X, Flame, Beef, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface MealSlotCellProps {
@@ -13,6 +13,7 @@ interface MealSlotCellProps {
   onDragLeave: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
   onEditClick: () => void;
+  onMealDragStart?: (e: React.DragEvent) => void;
 }
 
 export function MealSlotCell({
@@ -24,12 +25,18 @@ export function MealSlotCell({
   onDragLeave,
   onDrop,
   onEditClick,
+  onMealDragStart,
 }: MealSlotCellProps) {
   const { removeMealFromSlot } = useMealPlan();
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
     removeMealFromSlot(day, slot);
+  };
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+    onMealDragStart?.(e);
   };
 
   return (
@@ -47,11 +54,18 @@ export function MealSlotCell({
       onClick={meal ? onEditClick : undefined}
     >
       {meal ? (
-        <div className="w-full h-full p-2 flex flex-col justify-between">
+        <div
+          className="w-full h-full p-2 flex flex-col justify-between"
+          draggable
+          onDragStart={handleDragStart}
+        >
           <div className="flex items-start justify-between gap-1">
-            <h5 className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
-              {meal.recipeName}
-            </h5>
+            <div className="flex items-start gap-1 flex-1 min-w-0">
+              <GripVertical className="h-3 w-3 text-muted-foreground/50 shrink-0 mt-0.5 cursor-grab active:cursor-grabbing" />
+              <h5 className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
+                {meal.recipeName}
+              </h5>
+            </div>
             <Button
               variant="ghost"
               size="icon"
