@@ -70,12 +70,18 @@ export function MealSlotCell({
               <X className="h-2 w-2" />
             </Button>
           </div>
-          <div className="flex items-center gap-1 text-[9px]">
+          <div className="flex items-center gap-1 text-[8px]">
             <span className="text-macro-calories font-medium">
               {Math.round(meal.customMacros.calories * meal.servingMultiplier)}
             </span>
             <span className="text-macro-protein">
               {Math.round(meal.customMacros.protein * meal.servingMultiplier)}P
+            </span>
+            <span className="text-macro-carbs">
+              {Math.round(meal.customMacros.carbs * meal.servingMultiplier)}C
+            </span>
+            <span className="text-macro-fat">
+              {Math.round(meal.customMacros.fat * meal.servingMultiplier)}F
             </span>
           </div>
         </div>

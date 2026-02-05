@@ -29,7 +29,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="border-b py-2">
+      <SidebarHeader className="border-b h-12 flex items-center justify-center">
         <div className={cn(
           'flex items-center gap-2 px-2',
           isCollapsed && 'justify-center'
