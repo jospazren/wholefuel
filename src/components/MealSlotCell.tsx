@@ -42,10 +42,10 @@ export function MealSlotCell({
   return (
     <div
       className={cn(
-        'h-14 rounded border border-dashed transition-all duration-150 relative',
-        'flex items-center group',
+        'h-full rounded border border-dashed transition-all duration-150 relative',
+        'flex items-center justify-center group',
         isDragOver && 'border-primary bg-primary/10 border-solid',
-        !meal && !isDragOver && 'border-border/40 hover:border-border hover:bg-muted/20 justify-center',
+        !meal && !isDragOver && 'border-border/40 hover:border-border hover:bg-muted/20',
         meal && 'border-transparent bg-muted/50 cursor-grab active:cursor-grabbing hover:bg-muted/70'
       )}
       onDragOver={onDragOver}
@@ -56,18 +56,18 @@ export function MealSlotCell({
       onDragStart={meal ? handleDragStart : undefined}
     >
       {meal ? (
-        <div className="w-full h-full px-1 py-0.5 flex flex-col justify-between">
-          <div className="flex items-start justify-between">
-            <span className="text-[10px] font-medium text-foreground line-clamp-2 leading-tight flex-1">
+        <div className="w-full px-2 py-2 flex flex-col items-center justify-center text-center gap-1">
+          <div className="flex items-start justify-between w-full">
+            <span className="text-[10px] font-medium text-foreground line-clamp-2 leading-tight flex-1 text-center">
               {meal.recipeName}
             </span>
             <Button
               variant="ghost"
               size="icon"
-              className="h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-opacity -mt-0.5 -mr-0.5"
+              className="h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-opacity absolute top-1 right-1"
               onClick={handleRemove}
             >
-              <X className="h-2 w-2" />
+              <X className="h-2.5 w-2.5" />
             </Button>
           </div>
           <div className="flex items-center gap-1 text-[8px]">

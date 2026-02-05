@@ -82,7 +82,7 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
 
   return (
     <>
-      <div className={cn('bg-card rounded-lg border shadow-sm overflow-hidden', className)}>
+      <div className={cn('bg-card rounded-lg border shadow-sm overflow-hidden h-[calc(100vh-7rem)] flex flex-col', className)}>
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b bg-secondary/30">
           <div className="flex items-center gap-1.5">
@@ -101,8 +101,8 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
         </div>
 
         {/* Calendar Grid */}
-        <div className="overflow-x-auto">
-          <div className="min-w-[600px]">
+        <div className="overflow-x-auto flex-1 flex flex-col">
+          <div className="min-w-[600px] flex flex-col flex-1">
             {/* Day Headers */}
             <div className="grid grid-cols-[50px_repeat(7,1fr)] border-b">
               <div className="px-1 py-1.5 bg-muted/30" />
@@ -115,7 +115,7 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
 
             {/* Meal Rows */}
             {MEAL_SLOTS.map((slot) => (
-              <div key={slot} className="grid grid-cols-[50px_repeat(7,1fr)] border-b last:border-b-0">
+              <div key={slot} className="grid grid-cols-[50px_repeat(7,1fr)] border-b last:border-b-0 flex-1">
                 <div className="px-1 py-0.5 bg-muted/30 flex items-center">
                   <span className="text-[9px] font-medium text-muted-foreground leading-tight">
                     {MEAL_SLOT_LABELS[slot]}
