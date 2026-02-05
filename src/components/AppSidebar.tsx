@@ -28,39 +28,35 @@ export function AppSidebar() {
   const isCollapsed = state === 'collapsed';
 
   return (
-    <Sidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="border-b">
+    <Sidebar collapsible="icon" className="border-r w-44">
+      <SidebarHeader className="border-b py-2">
         <div className={cn(
-          'flex items-center gap-3 px-2 py-3',
+          'flex items-center gap-2 px-2',
           isCollapsed && 'justify-center'
         )}>
-          <div className="p-2 bg-primary rounded-xl shadow-glow shrink-0">
-            <ChefHat className="h-5 w-5 text-primary-foreground" />
+          <div className="p-1.5 bg-primary rounded-lg shrink-0">
+            <ChefHat className="h-4 w-4 text-primary-foreground" />
           </div>
           {!isCollapsed && (
-            <div className="min-w-0">
-              <h1 className="font-display font-bold text-lg text-foreground truncate">NutriPlan</h1>
-              <p className="text-[10px] text-muted-foreground truncate">Meal Planning Made Simple</p>
-            </div>
+            <h1 className="font-display font-bold text-sm text-foreground truncate">NutriPlan</h1>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="py-1">
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title}>
+                  <SidebarMenuButton asChild tooltip={item.title} className="h-8">
                     <NavLink 
                       to={item.url} 
                       end={item.url === '/'}
-                      className="hover:bg-muted/50" 
+                      className="hover:bg-muted/50 text-xs" 
                       activeClassName="bg-primary/10 text-primary font-medium"
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-3.5 w-3.5" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -71,16 +67,16 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t">
+      <SidebarFooter className="border-t py-1">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings">
+            <SidebarMenuButton asChild tooltip="Settings" className="h-8">
               <NavLink 
                 to="/settings" 
-                className="hover:bg-muted/50" 
+                className="hover:bg-muted/50 text-xs" 
                 activeClassName="bg-primary/10 text-primary font-medium"
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-3.5 w-3.5" />
                 <span>Settings</span>
               </NavLink>
             </SidebarMenuButton>

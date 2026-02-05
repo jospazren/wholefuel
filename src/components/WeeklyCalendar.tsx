@@ -82,49 +82,47 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
 
   return (
     <>
-      <div className={cn('bg-card rounded-xl border shadow-sm overflow-hidden', className)}>
+      <div className={cn('bg-card rounded-lg border shadow-sm overflow-hidden', className)}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b bg-secondary/30">
-          <div className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-primary" />
-            <h3 className="font-display font-semibold text-lg">Weekly Meal Plan</h3>
+        <div className="flex items-center justify-between px-3 py-2 border-b bg-secondary/30">
+          <div className="flex items-center gap-1.5">
+            <CalendarDays className="h-4 w-4 text-primary" />
+            <h3 className="font-display font-semibold text-sm">Weekly Plan</h3>
           </div>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ChevronLeft className="h-4 w-4" />
+          <div className="flex items-center gap-0.5">
+            <Button variant="ghost" size="icon" className="h-6 w-6">
+              <ChevronLeft className="h-3 w-3" />
             </Button>
-            <span className="text-sm font-medium text-muted-foreground px-2">This Week</span>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ChevronRight className="h-4 w-4" />
+            <span className="text-xs text-muted-foreground px-1">This Week</span>
+            <Button variant="ghost" size="icon" className="h-6 w-6">
+              <ChevronRight className="h-3 w-3" />
             </Button>
           </div>
         </div>
 
         {/* Calendar Grid */}
         <div className="overflow-x-auto">
-          <div className="min-w-[700px]">
+          <div className="min-w-[600px]">
             {/* Day Headers */}
-            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b">
-              <div className="p-2 bg-muted/30">
-                <span className="text-[10px] font-medium text-muted-foreground">Meal</span>
-              </div>
+            <div className="grid grid-cols-[50px_repeat(7,1fr)] border-b">
+              <div className="px-1 py-1.5 bg-muted/30" />
               {DAYS_OF_WEEK.map((day) => (
-                <div key={day} className="p-2 text-center border-l bg-muted/20">
-                  <div className="font-semibold text-foreground text-xs">{DAY_LABELS[day]}</div>
+                <div key={day} className="px-0.5 py-1.5 text-center border-l bg-muted/20">
+                  <div className="font-medium text-foreground text-[10px]">{DAY_LABELS[day]}</div>
                 </div>
               ))}
             </div>
 
             {/* Meal Rows */}
             {MEAL_SLOTS.map((slot) => (
-              <div key={slot} className="grid grid-cols-[60px_repeat(7,1fr)] border-b last:border-b-0">
-                <div className="p-2 bg-muted/30 flex items-center">
-                  <span className="text-[10px] font-medium text-muted-foreground">
+              <div key={slot} className="grid grid-cols-[50px_repeat(7,1fr)] border-b last:border-b-0">
+                <div className="px-1 py-0.5 bg-muted/30 flex items-center">
+                  <span className="text-[9px] font-medium text-muted-foreground leading-tight">
                     {MEAL_SLOT_LABELS[slot]}
                   </span>
                 </div>
                 {DAYS_OF_WEEK.map((day) => (
-                  <div key={`${day}-${slot}`} className="p-0.5 border-l">
+                  <div key={`${day}-${slot}`} className="border-l">
                     <MealSlotCell
                       day={day}
                       slot={slot}
@@ -142,24 +140,19 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
             ))}
 
             {/* Daily Totals Row */}
-            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-t-2 border-primary/20 bg-secondary/20">
-              <div className="p-2 bg-muted/30">
-                <span className="text-[10px] font-semibold text-foreground">Totals</span>
+            <div className="grid grid-cols-[50px_repeat(7,1fr)] border-t border-primary/20 bg-secondary/20">
+              <div className="px-1 py-1 bg-muted/30">
+                <span className="text-[9px] font-medium text-muted-foreground">Total</span>
               </div>
               {DAYS_OF_WEEK.map((day) => {
                 const macros = getDailyMacros(day);
                 return (
-                  <div key={`total-${day}`} className="p-1 border-l">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <div className={cn('flex items-center gap-0.5 text-[10px] font-semibold rounded px-1 py-0.5', getAdherenceColor(macros.calories, weeklyTargets.dailyCalories))}>
-                        <Flame className="h-2.5 w-2.5" />
-                        {macros.calories}
-                      </div>
-                      <div className="flex items-center gap-1 text-[9px]">
-                        <span className="text-macro-protein font-medium">{macros.protein}P</span>
-                        <span className="text-macro-carbs font-medium">{macros.carbs}C</span>
-                        <span className="text-macro-fat font-medium">{macros.fat}F</span>
-                      </div>
+                  <div key={`total-${day}`} className="px-0.5 py-1 border-l flex flex-col items-center">
+                    <div className={cn('text-[10px] font-semibold', getAdherenceColor(macros.calories, weeklyTargets.dailyCalories))}>
+                      {macros.calories}
+                    </div>
+                    <div className="text-[8px] text-muted-foreground">
+                      {macros.protein}P {macros.carbs}C {macros.fat}F
                     </div>
                   </div>
                 );

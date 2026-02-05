@@ -42,11 +42,11 @@ export function MealSlotCell({
   return (
     <div
       className={cn(
-        'h-10 rounded border border-dashed transition-all duration-150 relative',
+        'h-14 rounded border border-dashed transition-all duration-150 relative',
         'flex items-center group',
         isDragOver && 'border-primary bg-primary/10 border-solid',
         !meal && !isDragOver && 'border-border/40 hover:border-border hover:bg-muted/20 justify-center',
-        meal && 'border-border/30 bg-muted/40 border-solid cursor-grab active:cursor-grabbing hover:bg-muted/60'
+        meal && 'border-transparent bg-muted/50 cursor-grab active:cursor-grabbing hover:bg-muted/70'
       )}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
@@ -56,11 +56,21 @@ export function MealSlotCell({
       onDragStart={meal ? handleDragStart : undefined}
     >
       {meal ? (
-        <div className="w-full px-1.5 flex items-center justify-between gap-1">
-          <span className="text-[10px] font-medium text-foreground truncate flex-1">
-            {meal.recipeName}
-          </span>
-          <div className="flex items-center gap-1 text-[9px] shrink-0">
+        <div className="w-full h-full px-1 py-0.5 flex flex-col justify-between">
+          <div className="flex items-start justify-between">
+            <span className="text-[10px] font-medium text-foreground line-clamp-2 leading-tight flex-1">
+              {meal.recipeName}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-3.5 w-3.5 shrink-0 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-opacity -mt-0.5 -mr-0.5"
+              onClick={handleRemove}
+            >
+              <X className="h-2 w-2" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-1 text-[9px]">
             <span className="text-macro-calories font-medium">
               {Math.round(meal.customMacros.calories * meal.servingMultiplier)}
             </span>
@@ -68,18 +78,10 @@ export function MealSlotCell({
               {Math.round(meal.customMacros.protein * meal.servingMultiplier)}P
             </span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-4 w-4 shrink-0 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-opacity -mr-0.5"
-            onClick={handleRemove}
-          >
-            <X className="h-2.5 w-2.5" />
-          </Button>
         </div>
       ) : (
         <Plus className={cn(
-          'h-3.5 w-3.5 text-muted-foreground/40 transition-all',
+          'h-3 w-3 text-muted-foreground/30 transition-all',
           isDragOver && 'text-primary scale-110'
         )} />
       )}
