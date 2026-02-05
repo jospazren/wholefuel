@@ -102,29 +102,29 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
 
         {/* Calendar Grid */}
         <div className="overflow-x-auto">
-          <div className="min-w-[800px]">
+          <div className="min-w-[700px]">
             {/* Day Headers */}
-            <div className="grid grid-cols-8 border-b">
-              <div className="p-3 bg-muted/30">
-                <span className="text-xs font-medium text-muted-foreground">Meal</span>
+            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b">
+              <div className="p-2 bg-muted/30">
+                <span className="text-[10px] font-medium text-muted-foreground">Meal</span>
               </div>
               {DAYS_OF_WEEK.map((day) => (
-                <div key={day} className="p-3 text-center border-l bg-muted/20">
-                  <div className="font-semibold text-foreground text-sm">{DAY_LABELS[day]}</div>
+                <div key={day} className="p-2 text-center border-l bg-muted/20">
+                  <div className="font-semibold text-foreground text-xs">{DAY_LABELS[day]}</div>
                 </div>
               ))}
             </div>
 
             {/* Meal Rows */}
             {MEAL_SLOTS.map((slot) => (
-              <div key={slot} className="grid grid-cols-8 border-b last:border-b-0">
-                <div className="p-3 bg-muted/30 flex items-center">
-                  <span className="text-xs font-medium text-muted-foreground">
+              <div key={slot} className="grid grid-cols-[60px_repeat(7,1fr)] border-b last:border-b-0">
+                <div className="p-2 bg-muted/30 flex items-center">
+                  <span className="text-[10px] font-medium text-muted-foreground">
                     {MEAL_SLOT_LABELS[slot]}
                   </span>
                 </div>
                 {DAYS_OF_WEEK.map((day) => (
-                  <div key={`${day}-${slot}`} className="p-1.5 border-l">
+                  <div key={`${day}-${slot}`} className="p-0.5 border-l">
                     <MealSlotCell
                       day={day}
                       slot={slot}
@@ -142,24 +142,22 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
             ))}
 
             {/* Daily Totals Row */}
-            <div className="grid grid-cols-8 border-t-2 border-primary/20 bg-secondary/20">
-              <div className="p-3 bg-muted/30">
-                <span className="text-xs font-semibold text-foreground">Daily Totals</span>
+            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-t-2 border-primary/20 bg-secondary/20">
+              <div className="p-2 bg-muted/30">
+                <span className="text-[10px] font-semibold text-foreground">Totals</span>
               </div>
               {DAYS_OF_WEEK.map((day) => {
                 const macros = getDailyMacros(day);
                 return (
-                  <div key={`total-${day}`} className="p-2 border-l">
-                    <div className="space-y-1">
-                      <div className={cn('flex items-center justify-center gap-1 text-xs font-semibold rounded px-1.5 py-0.5', getAdherenceColor(macros.calories, weeklyTargets.dailyCalories))}>
-                        <Flame className="h-3 w-3" />
+                  <div key={`total-${day}`} className="p-1 border-l">
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className={cn('flex items-center gap-0.5 text-[10px] font-semibold rounded px-1 py-0.5', getAdherenceColor(macros.calories, weeklyTargets.dailyCalories))}>
+                        <Flame className="h-2.5 w-2.5" />
                         {macros.calories}
                       </div>
-                      <div className="flex items-center justify-center gap-1 text-[10px]">
+                      <div className="flex items-center gap-1 text-[9px]">
                         <span className="text-macro-protein font-medium">{macros.protein}P</span>
-                        <span className="text-muted-foreground">|</span>
                         <span className="text-macro-carbs font-medium">{macros.carbs}C</span>
-                        <span className="text-muted-foreground">|</span>
                         <span className="text-macro-fat font-medium">{macros.fat}F</span>
                       </div>
                     </div>
