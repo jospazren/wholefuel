@@ -5,12 +5,23 @@ export interface Macros {
   carbs: number;
 }
 
-export interface Ingredient {
+export interface BaseIngredient {
   id: string;
   name: string;
-  amount: number;
+  // Per 100g values
+  caloriesPer100g: number;
+  proteinPer100g: number;
+  fatPer100g: number;
+  carbsPer100g: number;
+  brand?: string;
+  category?: string;
+}
+
+export interface RecipeIngredient {
+  ingredientId: string;
+  name: string;
+  amount: number; // in grams
   unit: string;
-  macrosPerUnit: Macros;
 }
 
 export interface Recipe {
@@ -19,26 +30,46 @@ export interface Recipe {
   description: string;
   image?: string;
   servings: number;
-  ingredients: Ingredient[];
+  ingredients: RecipeIngredient[];
   totalMacros: Macros;
-  category: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  category: RecipeCategory;
+}
+
+export type RecipeCategory = 'breakfast' | 'main' | 'shake' | 'snack' | 'side' | 'dessert';
+
+export const RECIPE_CATEGORIES: RecipeCategory[] = ['breakfast', 'main', 'shake', 'snack', 'side', 'dessert'];
+
+export const CATEGORY_LABELS: Record<RecipeCategory, string> = {
+  breakfast: 'Breakfast',
+  main: 'Main',
+  shake: 'Shake',
+  snack: 'Snack',
+  side: 'Side',
+  dessert: 'Dessert',
+};
+
+export interface MealIngredient {
+  ingredientId: string;
+  name: string;
+  amount: number;
+  unit: string;
 }
 
 export interface MealInstance {
   id: string;
   recipeId: string;
   recipeName: string;
-  ingredients: Ingredient[];
+  ingredients: MealIngredient[];
   customMacros: Macros;
   servingMultiplier: number;
 }
 
 export interface DayPlan {
-  breakfast?: MealInstance;
-  snack1?: MealInstance;
-  lunch?: MealInstance;
-  snack2?: MealInstance;
-  dinner?: MealInstance;
+  m1?: MealInstance;
+  m2?: MealInstance;
+  m3?: MealInstance;
+  m4?: MealInstance;
+  m5?: MealInstance;
 }
 
 export interface WeeklyPlan {
@@ -71,13 +102,41 @@ export const STRATEGY_MULTIPLIERS = {
   bulk20: 1.2,
 } as const;
 
-export const MEAL_SLOTS: MealSlot[] = ['breakfast', 'snack1', 'lunch', 'snack2', 'dinner'];
+export const MEAL_SLOTS: MealSlot[] = ['m1', 'm2', 'm3', 'm4', 'm5'];
 export const DAYS_OF_WEEK: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 export const MEAL_SLOT_LABELS: Record<MealSlot, string> = {
-  breakfast: 'Breakfast',
-  snack1: 'Snack',
-  lunch: 'Lunch',
-  snack2: 'Snack',
-  dinner: 'Dinner',
+  m1: 'Breakfast',
+  m2: 'Snack 1',
+  m3: 'Lunch',
+  m4: 'Snack 2',
+  m5: 'Dinner',
 };
+
+export const DAY_LABELS: Record<DayOfWeek, string> = {
+  monday: 'Mon',
+  tuesday: 'Tue',
+  wednesday: 'Wed',
+  thursday: 'Thu',
+  friday: 'Fri',
+  saturday: 'Sat',
+  sunday: 'Sun',
+};
+
+export const DAY_FULL_LABELS: Record<DayOfWeek, string> = {
+  monday: 'Monday',
+  tuesday: 'Tuesday',
+  wednesday: 'Wednesday',
+  thursday: 'Thursday',
+  friday: 'Friday',
+  saturday: 'Saturday',
+  sunday: 'Sunday',
+};
+
+export interface ShoppingItem {
+  ingredientId: string;
+  name: string;
+  totalAmount: number;
+  unit: string;
+  purchased: boolean;
+}

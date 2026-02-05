@@ -39,6 +39,10 @@
 
     --radius: 0.75rem;
 
+    /* Status colors */
+    --status-success: 152 55% 42%;
+    --status-warning: 45 93% 47%;
+    --status-danger: 0 84% 60%;
     /* Macro colors - distinct and appetizing */
     --macro-calories: 152 55% 42%;
     --macro-protein: 10 75% 60%;

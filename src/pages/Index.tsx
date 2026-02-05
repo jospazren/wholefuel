@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { MealPlanProvider } from '@/contexts/MealPlanContext';
-import { Header } from '@/components/Header';
-import { WeeklyCalendar } from '@/components/WeeklyCalendar';
+import { AppLayout } from '@/components/AppLayout';
 import { RecipeLibrary } from '@/components/RecipeLibrary';
+import { WeeklyCalendar } from '@/components/WeeklyCalendar';
 import { DailyMacroSummary } from '@/components/DailyMacroSummary';
 import { Recipe } from '@/types/meal';
 
-function MealPlannerApp() {
+const Index = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [draggedRecipe, setDraggedRecipe] = useState<Recipe | null>(null);
 
@@ -21,20 +20,16 @@ function MealPlannerApp() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-6">
+    <AppLayout>
+      <div className="p-4 lg:p-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Sidebar - Recipe Library */}
           <div className="lg:col-span-3 order-2 lg:order-1">
-            <div className="lg:sticky lg:top-24 space-y-4">
-              <RecipeLibrary
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                className="h-[calc(100vh-8rem)]"
-              />
-            </div>
+            <RecipeLibrary
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              className="h-[calc(100vh-8rem)]"
+            />
           </div>
 
           {/* Main Content - Calendar */}
@@ -45,7 +40,7 @@ function MealPlannerApp() {
 
           {/* Right Sidebar - Info/Stats */}
           <div className="lg:col-span-3 order-3">
-            <div className="lg:sticky lg:top-24 space-y-4">
+            <div className="space-y-4">
               {/* Tips Card */}
               <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-xl border p-4 shadow-sm">
                 <h3 className="font-display font-semibold text-foreground mb-2">Quick Tips</h3>
@@ -56,11 +51,11 @@ function MealPlannerApp() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primary">•</span>
-                    Click a day header to see detailed macros
+                    Click any meal to customize ingredients
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primary">•</span>
-                    Use the settings icon to adjust your targets
+                    Green = on target, yellow/red = off target
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-primary">•</span>
@@ -94,16 +89,8 @@ function MealPlannerApp() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
-  );
-}
-
-const Index = () => {
-  return (
-    <MealPlanProvider>
-      <MealPlannerApp />
-    </MealPlanProvider>
+      </div>
+    </AppLayout>
   );
 };
 
