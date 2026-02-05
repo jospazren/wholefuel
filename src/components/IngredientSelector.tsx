@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { BaseIngredient } from '@/types/meal';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 import { Plus, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,7 +26,7 @@ const INGREDIENT_CATEGORIES = [
 
 export function IngredientSelector({ ingredients, usedIngredientIds, onSelect }: IngredientSelectorProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [open, setOpen] = useState(false);
 
   const availableIngredients = useMemo(() => {
     return ingredients.filter(ing => {
@@ -35,16 +36,13 @@ export function IngredientSelector({ ingredients, usedIngredientIds, onSelect }:
       // Filter by category
       if (selectedCategory !== 'all' && ing.category !== selectedCategory) return false;
       
-      // Filter by search
-      if (searchQuery && !ing.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      
       return true;
     });
-  }, [ingredients, usedIngredientIds, selectedCategory, searchQuery]);
+  }, [ingredients, usedIngredientIds, selectedCategory]);
 
   const handleSelect = (ingredientId: string) => {
     onSelect(ingredientId);
-    setSearchQuery('');
+    setOpen(false);
   };
 
   return (
@@ -68,46 +66,47 @@ export function IngredientSelector({ ingredients, usedIngredientIds, onSelect }:
         ))}
       </div>
 
-      {/* Search + Select */}
-      <div className="flex items-center gap-2">
-        <Plus className="h-4 w-4 text-muted-foreground shrink-0" />
-        <div className="flex-1 relative">
-          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search ingredients..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 pl-8 text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Ingredient Select */}
-      {availableIngredients.length > 0 ? (
-        <Select onValueChange={handleSelect}>
-          <SelectTrigger className="h-9">
-            <SelectValue placeholder={`Select ingredient (${availableIngredients.length} available)`} />
-          </SelectTrigger>
-          <SelectContent>
-            {availableIngredients.map((ing) => (
-              <SelectItem key={ing.id} value={ing.id}>
-                <div className="flex items-center gap-2">
-                  <span>{ing.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    ({ing.caloriesPer100g} cal/100g)
-                  </span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ) : (
-        <p className="text-sm text-muted-foreground text-center py-2">
-          {searchQuery || selectedCategory !== 'all'
-            ? 'No matching ingredients found'
-            : 'All ingredients have been added'}
-        </p>
-      )}
+      {/* Unified Search + Select */}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-start gap-2 h-9 text-sm font-normal"
+          >
+            <Plus className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">
+              Search & add ingredient ({availableIngredients.length} available)
+            </span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[300px] p-0" align="start">
+          <Command>
+            <CommandInput placeholder="Search ingredients..." />
+            <CommandList>
+              <CommandEmpty>No ingredient found.</CommandEmpty>
+              <CommandGroup>
+                {availableIngredients.map((ing) => (
+                  <CommandItem
+                    key={ing.id}
+                    value={ing.name}
+                    onSelect={() => handleSelect(ing.id)}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <span>{ing.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {ing.caloriesPer100g} cal/100g
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
