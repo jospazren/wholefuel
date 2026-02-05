@@ -1,4 +1,20 @@
-import { Recipe } from '@/types/meal';
+import { Recipe, RecipeIngredient, Macros, BaseIngredient } from '@/types/meal';
+import { baseIngredients } from './ingredients';
+
+// Helper to calculate macros from ingredients
+export function calculateRecipeMacros(ingredients: RecipeIngredient[], ingredientDb: BaseIngredient[]): Macros {
+  return ingredients.reduce((totals, ing) => {
+    const baseIng = ingredientDb.find(i => i.id === ing.ingredientId);
+    if (baseIng) {
+      const multiplier = ing.amount / 100;
+      totals.calories += Math.round(baseIng.caloriesPer100g * multiplier);
+      totals.protein += Math.round(baseIng.proteinPer100g * multiplier);
+      totals.fat += Math.round(baseIng.fatPer100g * multiplier);
+      totals.carbs += Math.round(baseIng.carbsPer100g * multiplier);
+    }
+    return totals;
+  }, { calories: 0, protein: 0, fat: 0, carbs: 0 });
+}
 
 export const sampleRecipes: Recipe[] = [
   {
@@ -8,36 +24,50 @@ export const sampleRecipes: Recipe[] = [
     servings: 1,
     category: 'breakfast',
     ingredients: [
-      { id: 'yogurt', name: 'Greek Yogurt', amount: 200, unit: 'g', macrosPerUnit: { calories: 0.59, protein: 0.10, fat: 0.005, carbs: 0.036 } },
-      { id: 'berries', name: 'Mixed Berries', amount: 100, unit: 'g', macrosPerUnit: { calories: 0.57, protein: 0.007, fat: 0.003, carbs: 0.14 } },
-      { id: 'granola', name: 'Granola', amount: 40, unit: 'g', macrosPerUnit: { calories: 4.71, protein: 0.10, fat: 0.20, carbs: 0.64 } },
+      { ingredientId: 'greek-yogurt', name: 'Greek Yogurt', amount: 200, unit: 'g' },
+      { ingredientId: 'mixed-berries', name: 'Mixed Berries', amount: 100, unit: 'g' },
+      { ingredientId: 'granola', name: 'Granola', amount: 40, unit: 'g' },
     ],
     totalMacros: { calories: 363, protein: 28, fat: 10, carbs: 46 },
   },
   {
     id: 'avocado-toast',
-    name: 'Avocado Toast',
+    name: 'Avocado Toast with Eggs',
     description: 'Whole grain toast with smashed avocado and eggs',
     servings: 1,
     category: 'breakfast',
     ingredients: [
-      { id: 'bread', name: 'Whole Grain Bread', amount: 2, unit: 'slices', macrosPerUnit: { calories: 80, protein: 4, fat: 1, carbs: 15 } },
-      { id: 'avocado', name: 'Avocado', amount: 100, unit: 'g', macrosPerUnit: { calories: 1.60, protein: 0.02, fat: 0.15, carbs: 0.09 } },
-      { id: 'eggs', name: 'Eggs', amount: 2, unit: 'large', macrosPerUnit: { calories: 72, protein: 6, fat: 5, carbs: 0.4 } },
+      { ingredientId: 'whole-wheat-bread', name: 'Whole Wheat Bread', amount: 60, unit: 'g' },
+      { ingredientId: 'avocado', name: 'Avocado', amount: 100, unit: 'g' },
+      { ingredientId: 'eggs', name: 'Eggs', amount: 100, unit: 'g' },
     ],
-    totalMacros: { calories: 468, protein: 22, fat: 27, carbs: 40 },
+    totalMacros: { calories: 463, protein: 21, fat: 27, carbs: 39 },
   },
   {
-    id: 'chicken-salad',
+    id: 'overnight-oats',
+    name: 'Overnight Oats',
+    description: 'Creamy oats with honey and chia seeds',
+    servings: 1,
+    category: 'breakfast',
+    ingredients: [
+      { ingredientId: 'rolled-oats', name: 'Rolled Oats', amount: 80, unit: 'g' },
+      { ingredientId: 'whole-milk', name: 'Whole Milk', amount: 200, unit: 'ml' },
+      { ingredientId: 'honey', name: 'Honey', amount: 20, unit: 'g' },
+      { ingredientId: 'chia-seeds', name: 'Chia Seeds', amount: 15, unit: 'g' },
+    ],
+    totalMacros: { calories: 580, protein: 22, fat: 16, carbs: 84 },
+  },
+  {
+    id: 'grilled-chicken-salad',
     name: 'Grilled Chicken Salad',
     description: 'Fresh greens with grilled chicken breast',
     servings: 1,
-    category: 'lunch',
+    category: 'main',
     ingredients: [
-      { id: 'chicken', name: 'Chicken Breast', amount: 150, unit: 'g', macrosPerUnit: { calories: 1.65, protein: 0.31, fat: 0.036, carbs: 0 } },
-      { id: 'greens', name: 'Mixed Greens', amount: 100, unit: 'g', macrosPerUnit: { calories: 0.20, protein: 0.02, fat: 0.003, carbs: 0.03 } },
-      { id: 'olive-oil', name: 'Olive Oil', amount: 15, unit: 'ml', macrosPerUnit: { calories: 8.84, protein: 0, fat: 1, carbs: 0 } },
-      { id: 'tomatoes', name: 'Cherry Tomatoes', amount: 100, unit: 'g', macrosPerUnit: { calories: 0.18, protein: 0.009, fat: 0.002, carbs: 0.039 } },
+      { ingredientId: 'chicken-breast', name: 'Chicken Breast', amount: 150, unit: 'g' },
+      { ingredientId: 'mixed-greens', name: 'Mixed Greens', amount: 100, unit: 'g' },
+      { ingredientId: 'olive-oil', name: 'Olive Oil', amount: 15, unit: 'ml' },
+      { ingredientId: 'tomatoes', name: 'Cherry Tomatoes', amount: 100, unit: 'g' },
     ],
     totalMacros: { calories: 418, protein: 50, fat: 21, carbs: 7 },
   },
@@ -46,39 +76,81 @@ export const sampleRecipes: Recipe[] = [
     name: 'Salmon Rice Bowl',
     description: 'Baked salmon with brown rice and vegetables',
     servings: 1,
-    category: 'dinner',
+    category: 'main',
     ingredients: [
-      { id: 'salmon', name: 'Salmon Fillet', amount: 150, unit: 'g', macrosPerUnit: { calories: 2.08, protein: 0.20, fat: 0.13, carbs: 0 } },
-      { id: 'rice', name: 'Brown Rice (cooked)', amount: 150, unit: 'g', macrosPerUnit: { calories: 1.12, protein: 0.025, fat: 0.009, carbs: 0.23 } },
-      { id: 'broccoli', name: 'Broccoli', amount: 100, unit: 'g', macrosPerUnit: { calories: 0.34, protein: 0.028, fat: 0.004, carbs: 0.07 } },
+      { ingredientId: 'salmon', name: 'Salmon Fillet', amount: 150, unit: 'g' },
+      { ingredientId: 'brown-rice', name: 'Brown Rice (cooked)', amount: 150, unit: 'g' },
+      { ingredientId: 'broccoli', name: 'Broccoli', amount: 100, unit: 'g' },
     ],
-    totalMacros: { calories: 548, protein: 37, fat: 22, carbs: 44 },
+    totalMacros: { calories: 514, protein: 36, fat: 22, carbs: 42 },
   },
   {
     id: 'beef-stir-fry',
     name: 'Beef Stir Fry',
-    description: 'Lean beef with mixed vegetables',
+    description: 'Lean beef with mixed vegetables and rice',
     servings: 1,
-    category: 'dinner',
+    category: 'main',
     ingredients: [
-      { id: 'beef', name: 'Lean Beef', amount: 150, unit: 'g', macrosPerUnit: { calories: 2.50, protein: 0.26, fat: 0.15, carbs: 0 } },
-      { id: 'peppers', name: 'Bell Peppers', amount: 100, unit: 'g', macrosPerUnit: { calories: 0.31, protein: 0.01, fat: 0.003, carbs: 0.06 } },
-      { id: 'rice-noodles', name: 'Rice Noodles', amount: 100, unit: 'g', macrosPerUnit: { calories: 1.09, protein: 0.009, fat: 0.002, carbs: 0.25 } },
+      { ingredientId: 'beef-lean', name: 'Lean Beef', amount: 150, unit: 'g' },
+      { ingredientId: 'bell-peppers', name: 'Bell Peppers', amount: 100, unit: 'g' },
+      { ingredientId: 'white-rice', name: 'White Rice (cooked)', amount: 150, unit: 'g' },
     ],
-    totalMacros: { calories: 546, protein: 41, fat: 23, carbs: 37 },
+    totalMacros: { calories: 601, protein: 43, fat: 24, carbs: 52 },
+  },
+  {
+    id: 'pasta-tuna',
+    name: 'Pasta with Tuna',
+    description: 'Quick protein-packed pasta dish',
+    servings: 1,
+    category: 'main',
+    ingredients: [
+      { ingredientId: 'pasta', name: 'Pasta (cooked)', amount: 200, unit: 'g' },
+      { ingredientId: 'tuna-canned', name: 'Tuna (canned)', amount: 150, unit: 'g' },
+      { ingredientId: 'olive-oil', name: 'Olive Oil', amount: 10, unit: 'ml' },
+      { ingredientId: 'tomato-sauce', name: 'Tomato Sauce', amount: 50, unit: 'g' },
+    ],
+    totalMacros: { calories: 540, protein: 51, fat: 12, carbs: 54 },
+  },
+  {
+    id: 'turkey-wrap',
+    name: 'Turkey Wrap',
+    description: 'Lean turkey with veggies in a whole wheat wrap',
+    servings: 1,
+    category: 'main',
+    ingredients: [
+      { ingredientId: 'turkey-breast', name: 'Turkey Breast', amount: 100, unit: 'g' },
+      { ingredientId: 'tortilla-wrap', name: 'Whole Wheat Tortilla', amount: 50, unit: 'g' },
+      { ingredientId: 'hummus', name: 'Hummus', amount: 30, unit: 'g' },
+      { ingredientId: 'lettuce', name: 'Lettuce', amount: 50, unit: 'g' },
+    ],
+    totalMacros: { calories: 397, protein: 40, fat: 11, carbs: 35 },
   },
   {
     id: 'protein-shake',
     name: 'Protein Shake',
     description: 'Whey protein with banana and almond milk',
     servings: 1,
-    category: 'snack',
+    category: 'shake',
     ingredients: [
-      { id: 'whey', name: 'Whey Protein', amount: 30, unit: 'g', macrosPerUnit: { calories: 4, protein: 0.80, fat: 0.033, carbs: 0.10 } },
-      { id: 'banana', name: 'Banana', amount: 100, unit: 'g', macrosPerUnit: { calories: 0.89, protein: 0.011, fat: 0.003, carbs: 0.23 } },
-      { id: 'almond-milk', name: 'Almond Milk', amount: 250, unit: 'ml', macrosPerUnit: { calories: 0.13, protein: 0.004, fat: 0.01, carbs: 0.005 } },
+      { ingredientId: 'whey-protein', name: 'Whey Protein', amount: 30, unit: 'g' },
+      { ingredientId: 'banana', name: 'Banana', amount: 100, unit: 'g' },
+      { ingredientId: 'almond-milk', name: 'Almond Milk', amount: 250, unit: 'ml' },
     ],
     totalMacros: { calories: 242, protein: 26, fat: 4, carbs: 27 },
+  },
+  {
+    id: 'peanut-butter-shake',
+    name: 'PB Banana Shake',
+    description: 'Rich and creamy post-workout shake',
+    servings: 1,
+    category: 'shake',
+    ingredients: [
+      { ingredientId: 'whey-protein', name: 'Whey Protein', amount: 30, unit: 'g' },
+      { ingredientId: 'banana', name: 'Banana', amount: 100, unit: 'g' },
+      { ingredientId: 'peanut-butter', name: 'Peanut Butter', amount: 20, unit: 'g' },
+      { ingredientId: 'whole-milk', name: 'Whole Milk', amount: 200, unit: 'ml' },
+    ],
+    totalMacros: { calories: 451, protein: 35, fat: 18, carbs: 41 },
   },
   {
     id: 'mixed-nuts',
@@ -87,50 +159,59 @@ export const sampleRecipes: Recipe[] = [
     servings: 1,
     category: 'snack',
     ingredients: [
-      { id: 'almonds', name: 'Almonds', amount: 20, unit: 'g', macrosPerUnit: { calories: 5.79, protein: 0.21, fat: 0.50, carbs: 0.22 } },
-      { id: 'walnuts', name: 'Walnuts', amount: 15, unit: 'g', macrosPerUnit: { calories: 6.54, protein: 0.15, fat: 0.65, carbs: 0.14 } },
-      { id: 'cashews', name: 'Cashews', amount: 15, unit: 'g', macrosPerUnit: { calories: 5.53, protein: 0.18, fat: 0.44, carbs: 0.30 } },
+      { ingredientId: 'almonds', name: 'Almonds', amount: 20, unit: 'g' },
+      { ingredientId: 'walnuts', name: 'Walnuts', amount: 15, unit: 'g' },
+      { ingredientId: 'cashews', name: 'Cashews', amount: 15, unit: 'g' },
     ],
     totalMacros: { calories: 296, protein: 10, fat: 27, carbs: 13 },
   },
   {
-    id: 'oatmeal',
-    name: 'Overnight Oats',
-    description: 'Creamy oats with honey and chia seeds',
-    servings: 1,
-    category: 'breakfast',
-    ingredients: [
-      { id: 'oats', name: 'Rolled Oats', amount: 80, unit: 'g', macrosPerUnit: { calories: 3.89, protein: 0.17, fat: 0.07, carbs: 0.66 } },
-      { id: 'milk', name: 'Whole Milk', amount: 200, unit: 'ml', macrosPerUnit: { calories: 0.61, protein: 0.032, fat: 0.033, carbs: 0.048 } },
-      { id: 'honey', name: 'Honey', amount: 20, unit: 'g', macrosPerUnit: { calories: 3.04, protein: 0.003, fat: 0, carbs: 0.82 } },
-      { id: 'chia', name: 'Chia Seeds', amount: 15, unit: 'g', macrosPerUnit: { calories: 4.86, protein: 0.17, fat: 0.31, carbs: 0.42 } },
-    ],
-    totalMacros: { calories: 584, protein: 23, fat: 17, carbs: 85 },
-  },
-  {
-    id: 'turkey-wrap',
-    name: 'Turkey Wrap',
-    description: 'Lean turkey with veggies in a whole wheat wrap',
-    servings: 1,
-    category: 'lunch',
-    ingredients: [
-      { id: 'turkey', name: 'Turkey Breast', amount: 100, unit: 'g', macrosPerUnit: { calories: 1.35, protein: 0.30, fat: 0.01, carbs: 0 } },
-      { id: 'wrap', name: 'Whole Wheat Wrap', amount: 1, unit: 'large', macrosPerUnit: { calories: 130, protein: 4, fat: 3, carbs: 22 } },
-      { id: 'hummus', name: 'Hummus', amount: 30, unit: 'g', macrosPerUnit: { calories: 1.66, protein: 0.08, fat: 0.10, carbs: 0.14 } },
-      { id: 'lettuce', name: 'Lettuce', amount: 50, unit: 'g', macrosPerUnit: { calories: 0.15, protein: 0.01, fat: 0.002, carbs: 0.03 } },
-    ],
-    totalMacros: { calories: 373, protein: 38, fat: 8, carbs: 32 },
-  },
-  {
-    id: 'cottage-cheese',
+    id: 'cottage-cheese-bowl',
     name: 'Cottage Cheese Bowl',
     description: 'Low-fat cottage cheese with pineapple',
     servings: 1,
     category: 'snack',
     ingredients: [
-      { id: 'cottage', name: 'Low-Fat Cottage Cheese', amount: 200, unit: 'g', macrosPerUnit: { calories: 0.72, protein: 0.11, fat: 0.01, carbs: 0.03 } },
-      { id: 'pineapple', name: 'Pineapple Chunks', amount: 80, unit: 'g', macrosPerUnit: { calories: 0.50, protein: 0.005, fat: 0.001, carbs: 0.13 } },
+      { ingredientId: 'cottage-cheese', name: 'Cottage Cheese', amount: 200, unit: 'g' },
+      { ingredientId: 'pineapple', name: 'Pineapple', amount: 80, unit: 'g' },
     ],
     totalMacros: { calories: 184, protein: 23, fat: 3, carbs: 17 },
+  },
+  {
+    id: 'apple-peanut-butter',
+    name: 'Apple with PB',
+    description: 'Sliced apple with peanut butter',
+    servings: 1,
+    category: 'snack',
+    ingredients: [
+      { ingredientId: 'apple', name: 'Apple', amount: 150, unit: 'g' },
+      { ingredientId: 'peanut-butter', name: 'Peanut Butter', amount: 20, unit: 'g' },
+    ],
+    totalMacros: { calories: 196, protein: 5, fat: 10, carbs: 24 },
+  },
+  {
+    id: 'steamed-broccoli',
+    name: 'Steamed Broccoli',
+    description: 'Simple side of steamed broccoli with olive oil',
+    servings: 1,
+    category: 'side',
+    ingredients: [
+      { ingredientId: 'broccoli', name: 'Broccoli', amount: 150, unit: 'g' },
+      { ingredientId: 'olive-oil', name: 'Olive Oil', amount: 5, unit: 'ml' },
+    ],
+    totalMacros: { calories: 95, protein: 4, fat: 5, carbs: 11 },
+  },
+  {
+    id: 'quinoa-salad',
+    name: 'Quinoa Side Salad',
+    description: 'Light quinoa salad with vegetables',
+    servings: 1,
+    category: 'side',
+    ingredients: [
+      { ingredientId: 'quinoa', name: 'Quinoa (cooked)', amount: 100, unit: 'g' },
+      { ingredientId: 'tomatoes', name: 'Tomatoes', amount: 50, unit: 'g' },
+      { ingredientId: 'olive-oil', name: 'Olive Oil', amount: 10, unit: 'ml' },
+    ],
+    totalMacros: { calories: 226, protein: 6, fat: 12, carbs: 25 },
   },
 ];

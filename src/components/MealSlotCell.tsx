@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { MealInstance, Recipe, DayOfWeek, MealSlot, MEAL_SLOT_LABELS } from '@/types/meal';
+import { MealInstance, DayOfWeek, MealSlot } from '@/types/meal';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { cn } from '@/lib/utils';
 import { Plus, X, Flame, Beef } from 'lucide-react';
@@ -13,6 +12,7 @@ interface MealSlotCellProps {
   onDragOver: (e: React.DragEvent) => void;
   onDragLeave: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
+  onEditClick: () => void;
 }
 
 export function MealSlotCell({
@@ -23,9 +23,9 @@ export function MealSlotCell({
   onDragOver,
   onDragLeave,
   onDrop,
+  onEditClick,
 }: MealSlotCellProps) {
   const { removeMealFromSlot } = useMealPlan();
-  const [isHovered, setIsHovered] = useState(false);
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -36,16 +36,15 @@ export function MealSlotCell({
     <div
       className={cn(
         'h-20 rounded-lg border-2 border-dashed transition-all duration-200 relative',
-        'flex items-center justify-center p-1.5',
+        'flex items-center justify-center p-1.5 group',
         isDragOver && 'border-primary bg-primary/10 border-solid scale-[1.02]',
         !meal && !isDragOver && 'border-border/50 hover:border-border hover:bg-muted/30',
-        meal && 'border-transparent bg-card shadow-sm border-solid'
+        meal && 'border-transparent bg-card shadow-sm border-solid cursor-pointer hover:shadow-md hover:bg-muted/30'
       )}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onClick={meal ? onEditClick : undefined}
     >
       {meal ? (
         <div className="w-full h-full p-2 flex flex-col justify-between">
@@ -53,16 +52,14 @@ export function MealSlotCell({
             <h5 className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
               {meal.recipeName}
             </h5>
-            {isHovered && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 shrink-0 -mt-1 -mr-1 hover:bg-destructive/10 hover:text-destructive"
-                onClick={handleRemove}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 shrink-0 -mt-1 -mr-1 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-opacity"
+              onClick={handleRemove}
+            >
+              <X className="h-3 w-3" />
+            </Button>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
             <span className="flex items-center gap-0.5 text-macro-calories">

@@ -65,6 +65,12 @@ export default {
           dinner: "hsl(var(--category-dinner))",
           snack: "hsl(var(--category-snack))",
         },
+        // Status colors
+        status: {
+          success: "hsl(var(--status-success))",
+          warning: "hsl(var(--status-warning))",
+          danger: "hsl(var(--status-danger))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

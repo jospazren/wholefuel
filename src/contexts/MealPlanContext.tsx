@@ -7,11 +7,17 @@ import {
   MealInstance,
   Recipe,
   Macros,
+  BaseIngredient,
+  ShoppingItem,
   STRATEGY_MULTIPLIERS,
   DAYS_OF_WEEK,
+  MEAL_SLOTS,
 } from '@/types/meal';
+import { baseIngredients as defaultIngredients } from '@/data/ingredients';
+import { sampleRecipes as defaultRecipes } from '@/data/recipes';
 
 interface MealPlanContextType {
+  // Weekly plan
   weeklyPlan: WeeklyPlan;
   weeklyTargets: WeeklyTargets;
   setWeeklyTargets: (targets: WeeklyTargets) => void;
@@ -21,6 +27,24 @@ interface MealPlanContextType {
   getDailyMacros: (day: DayOfWeek) => Macros;
   getWeeklyTotals: () => Macros;
   calculateTargets: (tdee: number, strategy: WeeklyTargets['strategy']) => { calories: number; protein: number; fat: number; carbs: number };
+  
+  // Ingredients
+  ingredients: BaseIngredient[];
+  addIngredient: (ingredient: BaseIngredient) => void;
+  updateIngredient: (id: string, updates: Partial<BaseIngredient>) => void;
+  deleteIngredient: (id: string) => void;
+  
+  // Recipes
+  recipes: Recipe[];
+  addRecipe: (recipe: Recipe) => void;
+  updateRecipe: (id: string, updates: Partial<Recipe>) => void;
+  deleteRecipe: (id: string) => void;
+  
+  // Shopping list
+  generateShoppingList: () => ShoppingItem[];
+  
+  // Helpers
+  calculateMacrosFromIngredients: (ingredients: { ingredientId: string; amount: number }[]) => Macros;
 }
 
 const defaultWeeklyPlan: WeeklyPlan = {
@@ -47,15 +71,30 @@ const MealPlanContext = createContext<MealPlanContextType | undefined>(undefined
 export function MealPlanProvider({ children }: { children: ReactNode }) {
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>(defaultWeeklyPlan);
   const [weeklyTargets, setWeeklyTargetsState] = useState<WeeklyTargets>(defaultTargets);
+  const [ingredients, setIngredients] = useState<BaseIngredient[]>(defaultIngredients);
+  const [recipes, setRecipes] = useState<Recipe[]>(defaultRecipes);
 
   const calculateTargets = (tdee: number, strategy: WeeklyTargets['strategy']) => {
     const multiplier = STRATEGY_MULTIPLIERS[strategy];
     const calories = Math.round(tdee * multiplier);
-    // Default macro split: 30% protein, 25% fat, 45% carbs
-    const protein = Math.round((calories * 0.30) / 4); // 4 cal per gram
-    const fat = Math.round((calories * 0.25) / 9); // 9 cal per gram
-    const carbs = Math.round((calories * 0.45) / 4); // 4 cal per gram
+    const protein = Math.round((calories * 0.30) / 4);
+    const fat = Math.round((calories * 0.25) / 9);
+    const carbs = Math.round((calories * 0.45) / 4);
     return { calories, protein, fat, carbs };
+  };
+
+  const calculateMacrosFromIngredients = (recipeIngredients: { ingredientId: string; amount: number }[]): Macros => {
+    return recipeIngredients.reduce((totals, ing) => {
+      const baseIng = ingredients.find(i => i.id === ing.ingredientId);
+      if (baseIng) {
+        const multiplier = ing.amount / 100;
+        totals.calories += Math.round(baseIng.caloriesPer100g * multiplier);
+        totals.protein += Math.round(baseIng.proteinPer100g * multiplier);
+        totals.fat += Math.round(baseIng.fatPer100g * multiplier);
+        totals.carbs += Math.round(baseIng.carbsPer100g * multiplier);
+      }
+      return totals;
+    }, { calories: 0, protein: 0, fat: 0, carbs: 0 });
   };
 
   const setWeeklyTargets = (targets: WeeklyTargets) => {
@@ -67,7 +106,12 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       id: `${day}-${slot}-${Date.now()}`,
       recipeId: recipe.id,
       recipeName: recipe.name,
-      ingredients: JSON.parse(JSON.stringify(recipe.ingredients)),
+      ingredients: recipe.ingredients.map(ing => ({
+        ingredientId: ing.ingredientId,
+        name: ing.name,
+        amount: ing.amount,
+        unit: ing.unit,
+      })),
       customMacros: { ...recipe.totalMacros },
       servingMultiplier: 1,
     };
@@ -96,11 +140,20 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       const currentMeal = prev[day][slot];
       if (!currentMeal) return prev;
 
+      const updatedMeal = { ...currentMeal, ...updates };
+      
+      // Recalculate macros if ingredients changed
+      if (updates.ingredients) {
+        updatedMeal.customMacros = calculateMacrosFromIngredients(
+          updates.ingredients.map(i => ({ ingredientId: i.ingredientId, amount: i.amount }))
+        );
+      }
+
       return {
         ...prev,
         [day]: {
           ...prev[day],
-          [slot]: { ...currentMeal, ...updates },
+          [slot]: updatedMeal,
         },
       };
     });
@@ -141,6 +194,61 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     return totals;
   };
 
+  // Ingredient CRUD
+  const addIngredient = (ingredient: BaseIngredient) => {
+    setIngredients(prev => [...prev, ingredient]);
+  };
+
+  const updateIngredient = (id: string, updates: Partial<BaseIngredient>) => {
+    setIngredients(prev => prev.map(ing => ing.id === id ? { ...ing, ...updates } : ing));
+  };
+
+  const deleteIngredient = (id: string) => {
+    setIngredients(prev => prev.filter(ing => ing.id !== id));
+  };
+
+  // Recipe CRUD
+  const addRecipe = (recipe: Recipe) => {
+    setRecipes(prev => [...prev, recipe]);
+  };
+
+  const updateRecipe = (id: string, updates: Partial<Recipe>) => {
+    setRecipes(prev => prev.map(rec => rec.id === id ? { ...rec, ...updates } : rec));
+  };
+
+  const deleteRecipe = (id: string) => {
+    setRecipes(prev => prev.filter(rec => rec.id !== id));
+  };
+
+  // Shopping list
+  const generateShoppingList = (): ShoppingItem[] => {
+    const itemMap = new Map<string, ShoppingItem>();
+
+    DAYS_OF_WEEK.forEach(day => {
+      MEAL_SLOTS.forEach(slot => {
+        const meal = weeklyPlan[day][slot];
+        if (meal) {
+          meal.ingredients.forEach(ing => {
+            const existing = itemMap.get(ing.ingredientId);
+            if (existing) {
+              existing.totalAmount += ing.amount * meal.servingMultiplier;
+            } else {
+              itemMap.set(ing.ingredientId, {
+                ingredientId: ing.ingredientId,
+                name: ing.name,
+                totalAmount: ing.amount * meal.servingMultiplier,
+                unit: ing.unit,
+                purchased: false,
+              });
+            }
+          });
+        }
+      });
+    });
+
+    return Array.from(itemMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  };
+
   return (
     <MealPlanContext.Provider
       value={{
@@ -153,6 +261,16 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         getDailyMacros,
         getWeeklyTotals,
         calculateTargets,
+        ingredients,
+        addIngredient,
+        updateIngredient,
+        deleteIngredient,
+        recipes,
+        addRecipe,
+        updateRecipe,
+        deleteRecipe,
+        generateShoppingList,
+        calculateMacrosFromIngredients,
       }}
     >
       {children}

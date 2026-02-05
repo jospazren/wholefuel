@@ -3,17 +3,11 @@ import { DAYS_OF_WEEK } from '@/types/meal';
 import { MacroRing } from '@/components/MacroRing';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Target } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function DailyMacroSummary() {
-  const { weeklyTargets, getWeeklyTotals } = useMealPlan();
+  const { weeklyTargets, getWeeklyTotals, getDailyMacros } = useMealPlan();
   const weeklyTotals = getWeeklyTotals();
-  
-  const weeklyTargetTotals = {
-    calories: weeklyTargets.dailyCalories * 7,
-    protein: weeklyTargets.protein * 7,
-    fat: weeklyTargets.fat * 7,
-    carbs: weeklyTargets.carbs * 7,
-  };
 
   const averageDaily = {
     calories: Math.round(weeklyTotals.calories / 7),
@@ -22,6 +16,10 @@ export function DailyMacroSummary() {
     carbs: Math.round(weeklyTotals.carbs / 7),
   };
 
+  // Calculate weekly adherence percentage
+  const weeklyTarget = weeklyTargets.dailyCalories * 7;
+  const adherencePercent = weeklyTarget > 0 ? Math.round((weeklyTotals.calories / weeklyTarget) * 100) : 0;
+
   return (
     <Card className="border-0 shadow-lg">
       <CardHeader className="pb-2">
@@ -29,6 +27,14 @@ export function DailyMacroSummary() {
           <div className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">Weekly Progress</CardTitle>
+          </div>
+          <div className={cn(
+            'text-sm font-semibold px-2 py-0.5 rounded',
+            adherencePercent >= 95 && adherencePercent <= 105 ? 'text-primary bg-primary/10' :
+            adherencePercent >= 85 && adherencePercent <= 115 ? 'text-yellow-600 bg-yellow-500/10' :
+            'text-destructive bg-destructive/10'
+          )}>
+            {adherencePercent}% of target
           </div>
         </div>
       </CardHeader>
