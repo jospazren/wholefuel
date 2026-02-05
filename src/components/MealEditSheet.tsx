@@ -1,14 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MealInstance, DayOfWeek, MealSlot, DAY_FULL_LABELS, MEAL_SLOT_LABELS, MealIngredient } from '@/types/meal';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Flame, Beef, Wheat, Droplet, Plus, Trash2, Save, X } from 'lucide-react';
+import { Flame, Beef, Wheat, Droplet, Trash2, Save, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { IngredientSelector } from '@/components/IngredientSelector';
 
 interface MealEditSheetProps {
   meal: MealInstance | null;
@@ -23,24 +23,13 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
   const [editedIngredients, setEditedIngredients] = useState<MealIngredient[]>([]);
   const [recipeName, setRecipeName] = useState('');
 
-  // Initialize state when meal changes
-  useState(() => {
-    if (meal) {
+  // Sync state when meal changes or sheet opens
+  useEffect(() => {
+    if (open && meal) {
       setEditedIngredients([...meal.ingredients]);
       setRecipeName(meal.recipeName);
     }
-  });
-
-  // Reset state when sheet opens
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen && meal) {
-      setEditedIngredients([...meal.ingredients]);
-      setRecipeName(meal.recipeName);
-    }
-    if (!isOpen) {
-      onClose();
-    }
-  };
+  }, [open, meal]);
 
   if (!meal || !day || !slot) return null;
 
@@ -83,12 +72,10 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
     onClose();
   };
 
-  const availableIngredients = ingredientDb.filter(
-    ing => !editedIngredients.some(e => e.ingredientId === ing.id)
-  );
+  const usedIngredientIds = editedIngredients.map(e => e.ingredientId);
 
   return (
-    <Sheet open={open} onOpenChange={handleOpenChange}>
+    <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <SheetContent className="sm:max-w-lg flex flex-col">
         <SheetHeader>
           <SheetTitle className="text-lg">
@@ -140,24 +127,12 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
               ))}
             </div>
 
-            {/* Add Ingredient */}
-            {availableIngredients.length > 0 && (
-              <div className="flex items-center gap-2">
-                <Plus className="h-4 w-4 text-muted-foreground" />
-                <Select onValueChange={handleAddIngredient}>
-                  <SelectTrigger className="flex-1 h-9">
-                    <SelectValue placeholder="Add ingredient..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableIngredients.map((ing) => (
-                      <SelectItem key={ing.id} value={ing.id}>
-                        {ing.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            {/* Add Ingredient with type filtering */}
+            <IngredientSelector
+              ingredients={ingredientDb}
+              usedIngredientIds={usedIngredientIds}
+              onSelect={handleAddIngredient}
+            />
           </div>
 
           <Separator />
