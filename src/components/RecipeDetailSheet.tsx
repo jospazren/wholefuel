@@ -1,5 +1,5 @@
 import { Recipe, CATEGORY_LABELS } from '@/types/meal';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Flame, Beef, Wheat, Droplet, ExternalLink } from 'lucide-react';
@@ -25,18 +25,17 @@ export function RecipeDetailSheet({ recipe, open, onClose }: RecipeDetailSheetPr
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <SheetContent className="sm:max-w-md overflow-y-auto">
-        <SheetHeader>
+      <SheetContent className="sm:max-w-md flex flex-col h-full">
+        <SheetHeader className="shrink-0">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="outline" className={cn('text-xs', categoryColors[recipe.category])}>
               {CATEGORY_LABELS[recipe.category]}
             </Badge>
           </div>
           <SheetTitle className="text-xl">{recipe.name}</SheetTitle>
-          <SheetDescription>{recipe.description}</SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6">
+        <div className="flex-1 overflow-y-auto mt-6 space-y-6 pr-1">
           {/* Macro Summary */}
           <div className="grid grid-cols-4 gap-3">
             <MacroCard icon={<Flame className="h-4 w-4" />} label="Calories" value={recipe.totalMacros.calories} unit="kcal" colorClass="text-macro-calories bg-macro-calories/10" />
