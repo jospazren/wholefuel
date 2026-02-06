@@ -1,4 +1,4 @@
-import { CalendarDays, UtensilsCrossed, Apple, ShoppingCart, Settings, LogOut } from 'lucide-react';
+import { CalendarDays, UtensilsCrossed, Apple, ShoppingCart, Settings, LogOut, Leaf } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -7,7 +7,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -16,7 +15,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
-import { ChefHat } from 'lucide-react';
 
 const navItems = [
   { title: 'Meal Planner', url: '/', icon: CalendarDays },
@@ -37,17 +35,15 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="border-b h-12 flex items-center justify-center">
+    <Sidebar collapsible="icon" className="border-r border-border/60">
+      <SidebarHeader className="border-b border-border/60 h-14 flex items-center justify-center">
         <div className={cn(
-          'flex items-center gap-2 px-2',
+          'flex items-center gap-2.5 px-2',
           isCollapsed && 'justify-center'
         )}>
-          <div className="p-1.5 bg-primary rounded-lg shrink-0">
-            <ChefHat className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <Leaf className="h-5 w-5 text-primary shrink-0" strokeWidth={1.5} />
           {!isCollapsed && (
-            <h1 className="font-display font-bold text-sm text-foreground truncate">NutriPlan</h1>
+            <h1 className="font-serif font-medium text-lg tracking-tight text-foreground">Whole</h1>
           )}
         </div>
       </SidebarHeader>
