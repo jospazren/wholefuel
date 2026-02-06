@@ -42,7 +42,6 @@ const RecipesPage = () => {
 
   // Form state
   const [formName, setFormName] = useState('');
-  const [formDescription, setFormDescription] = useState('');
   const [formCategory, setFormCategory] = useState<RecipeCategory>('main');
   const [formIngredients, setFormIngredients] = useState<RecipeIngredient[]>([]);
   const [formInstructions, setFormInstructions] = useState('');
@@ -50,7 +49,6 @@ const RecipesPage = () => {
 
   const resetForm = () => {
     setFormName('');
-    setFormDescription('');
     setFormCategory('main');
     setFormIngredients([]);
     setFormInstructions('');
@@ -80,7 +78,6 @@ const RecipesPage = () => {
 
   const handleEditClick = (recipe: Recipe) => {
     setFormName(recipe.name);
-    setFormDescription(recipe.description);
     setFormCategory(recipe.category);
     setFormIngredients([...recipe.ingredients]);
     setFormInstructions(recipe.instructions || '');
@@ -118,7 +115,7 @@ const RecipesPage = () => {
     const newRecipe: Recipe = {
       id: `recipe-${Date.now()}`,
       name: formName,
-      description: formDescription,
+      description: '',
       category: formCategory,
       servings: 1,
       ingredients: formIngredients,
@@ -135,7 +132,6 @@ const RecipesPage = () => {
     if (!editingRecipe) return;
     updateRecipe(editingRecipe.id, {
       name: formName,
-      description: formDescription,
       category: formCategory,
       ingredients: formIngredients,
       totalMacros: currentMacros,
@@ -226,10 +222,7 @@ const RecipesPage = () => {
             <Card key={recipe.id} className="group hover:shadow-md transition-shadow">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <h3 className="font-semibold text-foreground">{recipe.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-1">{recipe.description}</p>
-                  </div>
+                  <h3 className="font-semibold text-foreground">{recipe.name}</h3>
                   <Badge className={cn('shrink-0', categoryColors[recipe.category])}>
                     {CATEGORY_LABELS[recipe.category]}
                   </Badge>
@@ -300,10 +293,6 @@ const RecipesPage = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Description</Label>
-                <Textarea value={formDescription} onChange={(e) => setFormDescription(e.target.value)} placeholder="Brief description..." rows={2} />
-              </div>
 
               {/* Ingredients */}
               <div className="space-y-3">
