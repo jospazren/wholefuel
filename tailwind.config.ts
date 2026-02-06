@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Source Sans 3', 'system-ui', 'sans-serif'],
+        sans: ['Montserrat', 'system-ui', 'sans-serif'],
         display: ['Cormorant Garamond', 'Georgia', 'serif'],
         serif: ['Cormorant Garamond', 'Georgia', 'serif'],
       },
