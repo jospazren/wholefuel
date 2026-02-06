@@ -2,7 +2,7 @@ import { Recipe, CATEGORY_LABELS } from '@/types/meal';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Flame, Beef, Wheat, Droplet } from 'lucide-react';
+import { Flame, Beef, Wheat, Droplet, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface RecipeDetailSheetProps {
@@ -25,7 +25,7 @@ export function RecipeDetailSheet({ recipe, open, onClose }: RecipeDetailSheetPr
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <SheetContent className="sm:max-w-md">
+      <SheetContent className="sm:max-w-md overflow-y-auto">
         <SheetHeader>
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="outline" className={cn('text-xs', categoryColors[recipe.category])}>
@@ -61,6 +61,37 @@ export function RecipeDetailSheet({ recipe, open, onClose }: RecipeDetailSheetPr
               ))}
             </div>
           </div>
+
+          {/* Instructions */}
+          {recipe.instructions && (
+            <>
+              <Separator />
+              <div>
+                <h4 className="font-semibold text-foreground mb-3">Instructions</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                  {recipe.instructions}
+                </p>
+              </div>
+            </>
+          )}
+
+          {/* External Link */}
+          {recipe.link && (
+            <>
+              <Separator />
+              <div>
+                <a 
+                  href={recipe.link} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  View original recipe
+                </a>
+              </div>
+            </>
+          )}
         </div>
       </SheetContent>
     </Sheet>
