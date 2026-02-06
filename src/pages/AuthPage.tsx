@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2, UtensilsCrossed } from 'lucide-react';
+import { Loader2, Leaf } from 'lucide-react';
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -55,16 +55,14 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 bg-primary/10 rounded-xl">
-              <UtensilsCrossed className="h-8 w-8 text-primary" />
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <Card className="w-full max-w-sm border-border/60 shadow-md">
+        <CardHeader className="text-center pb-2">
+          <div className="flex justify-center mb-5">
+            <Leaf className="h-10 w-10 text-primary" strokeWidth={1.25} />
           </div>
-          <CardTitle className="font-display text-2xl">Meal Planner</CardTitle>
-          <CardDescription>Sign in to sync your meal plans across devices</CardDescription>
+          <CardTitle className="font-serif font-medium text-3xl tracking-tight">Whole</CardTitle>
+          <CardDescription className="text-sm mt-1.5">Clean, thoughtful meal planning</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
@@ -135,8 +133,10 @@ const AuthPage = () => {
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="text-center text-sm text-muted-foreground">
-          Your data syncs securely across all your devices
+        <CardFooter className="justify-center pt-0">
+          <p className="text-xs text-muted-foreground">
+            Your data syncs securely across devices
+          </p>
         </CardFooter>
       </Card>
     </div>
