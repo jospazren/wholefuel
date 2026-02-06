@@ -1,5 +1,7 @@
-import { CalendarDays, UtensilsCrossed, Apple, ShoppingCart, Settings } from 'lucide-react';
+import { CalendarDays, UtensilsCrossed, Apple, ShoppingCart, Settings, LogOut } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -25,7 +27,14 @@ const navItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
   const isCollapsed = state === 'collapsed';
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -79,6 +88,16 @@ export function AppSidebar() {
                 <Settings className="h-3.5 w-3.5" />
                 <span>Settings</span>
               </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              tooltip="Sign Out" 
+              className="h-8 hover:bg-destructive/10 hover:text-destructive text-xs"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Sign Out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
