@@ -48,20 +48,20 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="py-1">
+      <SidebarContent className="py-2">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={item.title} className="h-8">
+                  <SidebarMenuButton asChild tooltip={item.title} className="h-9">
                     <NavLink 
                       to={item.url} 
                       end={item.url === '/'}
-                      className="hover:bg-muted/50 text-xs" 
+                      className="hover:bg-accent/60 text-sm font-normal" 
                       activeClassName="bg-primary/10 text-primary font-medium"
                     >
-                      <item.icon className="h-3.5 w-3.5" />
+                      <item.icon className="h-4 w-4" strokeWidth={1.5} />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -72,16 +72,16 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t py-1">
+      <SidebarFooter className="border-t border-border/60 py-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings" className="h-8">
+            <SidebarMenuButton asChild tooltip="Settings" className="h-9">
               <NavLink 
                 to="/settings" 
-                className="hover:bg-muted/50 text-xs" 
+                className="hover:bg-accent/60 text-sm font-normal" 
                 activeClassName="bg-primary/10 text-primary font-medium"
               >
-                <Settings className="h-3.5 w-3.5" />
+                <Settings className="h-4 w-4" strokeWidth={1.5} />
                 <span>Settings</span>
               </NavLink>
             </SidebarMenuButton>
@@ -89,10 +89,10 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton 
               tooltip="Sign Out" 
-              className="h-8 hover:bg-destructive/10 hover:text-destructive text-xs"
+              className="h-9 hover:bg-destructive/10 hover:text-destructive text-sm font-normal"
               onClick={handleSignOut}
             >
-              <LogOut className="h-3.5 w-3.5" />
+              <LogOut className="h-4 w-4" strokeWidth={1.5} />
               <span>Sign Out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
