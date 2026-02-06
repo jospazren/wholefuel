@@ -34,7 +34,7 @@ import {
 import { Apple, Plus, Search, Pencil, Trash2, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type SortField = 'name' | 'caloriesPer100g' | 'proteinPer100g' | 'fatPer100g' | 'carbsPer100g';
+type SortField = 'name' | 'caloriesPer100g' | 'proteinPer100g' | 'fatPer100g' | 'carbsPer100g' | 'fiberPer100g' | 'sodiumPer100g';
 type SortDirection = 'asc' | 'desc';
 
 const IngredientsPage = () => {
@@ -53,6 +53,8 @@ const IngredientsPage = () => {
     proteinPer100g: '',
     fatPer100g: '',
     carbsPer100g: '',
+    fiberPer100g: '',
+    sodiumPer100g: '',
     brand: '',
   });
 
@@ -63,6 +65,8 @@ const IngredientsPage = () => {
       proteinPer100g: '',
       fatPer100g: '',
       carbsPer100g: '',
+      fiberPer100g: '',
+      sodiumPer100g: '',
       brand: '',
     });
   };
@@ -99,6 +103,8 @@ const IngredientsPage = () => {
       proteinPer100g: ing.proteinPer100g.toString(),
       fatPer100g: ing.fatPer100g.toString(),
       carbsPer100g: ing.carbsPer100g.toString(),
+      fiberPer100g: ing.fiberPer100g.toString(),
+      sodiumPer100g: ing.sodiumPer100g.toString(),
       brand: ing.brand || '',
     });
     setEditingIngredient(ing);
@@ -112,6 +118,8 @@ const IngredientsPage = () => {
       proteinPer100g: parseFloat(formData.proteinPer100g) || 0,
       fatPer100g: parseFloat(formData.fatPer100g) || 0,
       carbsPer100g: parseFloat(formData.carbsPer100g) || 0,
+      fiberPer100g: parseFloat(formData.fiberPer100g) || 0,
+      sodiumPer100g: parseFloat(formData.sodiumPer100g) || 0,
       brand: formData.brand || undefined,
     };
     addIngredient(newIngredient);
@@ -127,6 +135,8 @@ const IngredientsPage = () => {
       proteinPer100g: parseFloat(formData.proteinPer100g) || 0,
       fatPer100g: parseFloat(formData.fatPer100g) || 0,
       carbsPer100g: parseFloat(formData.carbsPer100g) || 0,
+      fiberPer100g: parseFloat(formData.fiberPer100g) || 0,
+      sodiumPer100g: parseFloat(formData.sodiumPer100g) || 0,
       brand: formData.brand || undefined,
     });
     setEditingIngredient(null);
@@ -195,6 +205,8 @@ const IngredientsPage = () => {
                 <SortHeader field="proteinPer100g">Protein</SortHeader>
                 <SortHeader field="fatPer100g">Fat</SortHeader>
                 <SortHeader field="carbsPer100g">Carbs</SortHeader>
+                <SortHeader field="fiberPer100g">Fiber</SortHeader>
+                <SortHeader field="sodiumPer100g">Sodium</SortHeader>
                 <TableHead>Brand</TableHead>
                 <TableHead className="w-20">Actions</TableHead>
               </TableRow>
@@ -207,6 +219,8 @@ const IngredientsPage = () => {
                   <TableCell className="text-macro-protein">{ing.proteinPer100g}g</TableCell>
                   <TableCell className="text-macro-fat">{ing.fatPer100g}g</TableCell>
                   <TableCell className="text-macro-carbs">{ing.carbsPer100g}g</TableCell>
+                  <TableCell className="text-muted-foreground">{ing.fiberPer100g}g</TableCell>
+                  <TableCell className="text-muted-foreground">{ing.sodiumPer100g}mg</TableCell>
                   <TableCell className="text-muted-foreground">{ing.brand || '-'}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
@@ -222,7 +236,7 @@ const IngredientsPage = () => {
               ))}
               {filteredIngredients.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     No ingredients found
                   </TableCell>
                 </TableRow>
@@ -310,6 +324,16 @@ function IngredientForm({ formData, setFormData }: { formData: any; setFormData:
         <div className="grid gap-2">
           <Label htmlFor="carbs">Carbs (g)</Label>
           <Input id="carbs" type="number" value={formData.carbsPer100g} onChange={(e) => setFormData({ ...formData, carbsPer100g: e.target.value })} />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="fiber">Fiber (g)</Label>
+          <Input id="fiber" type="number" value={formData.fiberPer100g} onChange={(e) => setFormData({ ...formData, fiberPer100g: e.target.value })} />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="sodium">Sodium (mg)</Label>
+          <Input id="sodium" type="number" value={formData.sodiumPer100g} onChange={(e) => setFormData({ ...formData, sodiumPer100g: e.target.value })} />
         </div>
       </div>
       <div className="grid gap-2">

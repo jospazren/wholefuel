@@ -13,6 +13,8 @@ export interface BaseIngredient {
   proteinPer100g: number;
   fatPer100g: number;
   carbsPer100g: number;
+  fiberPer100g: number;
+  sodiumPer100g: number; // in mg
   brand?: string;
   category?: string;
 }
