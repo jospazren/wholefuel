@@ -35,6 +35,8 @@ export interface Recipe {
   ingredients: RecipeIngredient[];
   totalMacros: Macros;
   category: RecipeCategory;
+  instructions?: string;
+  link?: string;
 }
 
 export type RecipeCategory = 'breakfast' | 'main' | 'shake' | 'snack' | 'side' | 'dessert';

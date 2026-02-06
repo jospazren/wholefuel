@@ -170,6 +170,8 @@ export type Database = {
           description: string | null
           id: string
           image: string | null
+          instructions: string | null
+          link: string | null
           name: string
           servings: number
           total_calories: number
@@ -185,6 +187,8 @@ export type Database = {
           description?: string | null
           id?: string
           image?: string | null
+          instructions?: string | null
+          link?: string | null
           name: string
           servings?: number
           total_calories?: number
@@ -200,6 +204,8 @@ export type Database = {
           description?: string | null
           id?: string
           image?: string | null
+          instructions?: string | null
+          link?: string | null
           name?: string
           servings?: number
           total_calories?: number

@@ -45,12 +45,16 @@ const RecipesPage = () => {
   const [formDescription, setFormDescription] = useState('');
   const [formCategory, setFormCategory] = useState<RecipeCategory>('main');
   const [formIngredients, setFormIngredients] = useState<RecipeIngredient[]>([]);
+  const [formInstructions, setFormInstructions] = useState('');
+  const [formLink, setFormLink] = useState('');
 
   const resetForm = () => {
     setFormName('');
     setFormDescription('');
     setFormCategory('main');
     setFormIngredients([]);
+    setFormInstructions('');
+    setFormLink('');
   };
 
   const toggleCategory = (cat: RecipeCategory) => {
@@ -79,6 +83,8 @@ const RecipesPage = () => {
     setFormDescription(recipe.description);
     setFormCategory(recipe.category);
     setFormIngredients([...recipe.ingredients]);
+    setFormInstructions(recipe.instructions || '');
+    setFormLink(recipe.link || '');
     setEditingRecipe(recipe);
   };
 
@@ -117,6 +123,8 @@ const RecipesPage = () => {
       servings: 1,
       ingredients: formIngredients,
       totalMacros: currentMacros,
+      instructions: formInstructions || undefined,
+      link: formLink || undefined,
     };
     addRecipe(newRecipe);
     setIsAddOpen(false);
@@ -131,6 +139,8 @@ const RecipesPage = () => {
       category: formCategory,
       ingredients: formIngredients,
       totalMacros: currentMacros,
+      instructions: formInstructions || undefined,
+      link: formLink || undefined,
     });
     setEditingRecipe(null);
     resetForm();
@@ -173,13 +183,13 @@ const RecipesPage = () => {
               <UtensilsCrossed className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <h1 className="font-display font-bold text-2xl text-foreground">Recipes</h1>
-              <p className="text-sm text-muted-foreground">Create and manage your recipe templates</p>
+              <h1 className="font-display font-bold text-2xl text-foreground">Menu</h1>
+              <p className="text-sm text-muted-foreground">Create and manage your dishes</p>
             </div>
           </div>
           <Button onClick={handleAddClick} className="gap-2">
             <Plus className="h-4 w-4" />
-            Create Recipe
+            Add Dish
           </Button>
         </div>
 
@@ -262,9 +272,9 @@ const RecipesPage = () => {
       <Dialog open={isAddOpen || !!editingRecipe} onOpenChange={(open) => { if (!open) { setIsAddOpen(false); setEditingRecipe(null); } }}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>{editingRecipe ? 'Edit Recipe' : 'Create Recipe'}</DialogTitle>
+            <DialogTitle>{editingRecipe ? 'Edit Dish' : 'Add Dish'}</DialogTitle>
             <DialogDescription>
-              {editingRecipe ? 'Update your recipe template' : 'Create a new recipe template'}
+              {editingRecipe ? 'Update your dish details' : 'Create a new dish for your menu'}
             </DialogDescription>
           </DialogHeader>
 
@@ -272,7 +282,7 @@ const RecipesPage = () => {
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Recipe Name</Label>
+                  <Label>Dish Name</Label>
                   <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="e.g., Chicken Stir Fry" />
                 </div>
                 <div className="space-y-2">
@@ -334,9 +344,31 @@ const RecipesPage = () => {
                 )}
               </div>
 
+              {/* Instructions */}
+              <div className="space-y-2">
+                <Label>Instructions (optional)</Label>
+                <Textarea 
+                  value={formInstructions} 
+                  onChange={(e) => setFormInstructions(e.target.value)} 
+                  placeholder="Step-by-step preparation instructions..." 
+                  rows={4} 
+                />
+              </div>
+
+              {/* Link */}
+              <div className="space-y-2">
+                <Label>Recipe Link (optional)</Label>
+                <Input 
+                  value={formLink} 
+                  onChange={(e) => setFormLink(e.target.value)} 
+                  placeholder="https://..." 
+                  type="url"
+                />
+              </div>
+
               {/* Macro Totals */}
               <div className="bg-secondary/50 rounded-lg p-4">
-                <Label className="mb-3 block">Recipe Totals</Label>
+                <Label className="mb-3 block">Dish Totals</Label>
                 <div className="grid grid-cols-4 gap-3">
                   <MacroCard icon={<Flame className="h-4 w-4" />} label="Calories" value={currentMacros.calories} colorClass="text-macro-calories bg-macro-calories/10" />
                   <MacroCard icon={<Beef className="h-4 w-4" />} label="Protein" value={currentMacros.protein} colorClass="text-macro-protein bg-macro-protein/10" />
@@ -350,7 +382,7 @@ const RecipesPage = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => { setIsAddOpen(false); setEditingRecipe(null); }}>Cancel</Button>
             <Button onClick={editingRecipe ? handleSaveEdit : handleSaveNew} disabled={!formName || formIngredients.length === 0}>
-              {editingRecipe ? 'Save Changes' : 'Create Recipe'}
+              {editingRecipe ? 'Save Changes' : 'Add Dish'}
             </Button>
           </DialogFooter>
         </DialogContent>

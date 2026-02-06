@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
   { title: 'Meal Planner', url: '/', icon: CalendarDays },
-  { title: 'Recipes', url: '/recipes', icon: UtensilsCrossed },
+  { title: 'Menu', url: '/recipes', icon: UtensilsCrossed },
   { title: 'Ingredients', url: '/ingredients', icon: Apple },
   { title: 'Shopping List', url: '/shopping', icon: ShoppingCart },
 ];
