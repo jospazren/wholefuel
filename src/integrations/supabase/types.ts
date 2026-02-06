@@ -14,7 +14,242 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ingredients: {
+        Row: {
+          brand: string | null
+          calories_per_100g: number
+          carbs_per_100g: number
+          category: string | null
+          created_at: string
+          fat_per_100g: number
+          fiber_per_100g: number
+          id: string
+          name: string
+          protein_per_100g: number
+          sodium_per_100g: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand?: string | null
+          calories_per_100g?: number
+          carbs_per_100g?: number
+          category?: string | null
+          created_at?: string
+          fat_per_100g?: number
+          fiber_per_100g?: number
+          id?: string
+          name: string
+          protein_per_100g?: number
+          sodium_per_100g?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand?: string | null
+          calories_per_100g?: number
+          carbs_per_100g?: number
+          category?: string | null
+          created_at?: string
+          fat_per_100g?: number
+          fiber_per_100g?: number
+          id?: string
+          name?: string
+          protein_per_100g?: number
+          sodium_per_100g?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      meal_plans: {
+        Row: {
+          created_at: string
+          custom_calories: number
+          custom_carbs: number
+          custom_fat: number
+          custom_protein: number
+          day_of_week: string
+          id: string
+          ingredients_json: Json | null
+          meal_slot: string
+          recipe_id: string | null
+          recipe_name: string
+          serving_multiplier: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_calories?: number
+          custom_carbs?: number
+          custom_fat?: number
+          custom_protein?: number
+          day_of_week: string
+          id?: string
+          ingredients_json?: Json | null
+          meal_slot: string
+          recipe_id?: string | null
+          recipe_name: string
+          serving_multiplier?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custom_calories?: number
+          custom_carbs?: number
+          custom_fat?: number
+          custom_protein?: number
+          day_of_week?: string
+          id?: string
+          ingredients_json?: Json | null
+          meal_slot?: string
+          recipe_id?: string | null
+          recipe_name?: string
+          serving_multiplier?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_plans_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipe_ingredients: {
+        Row: {
+          amount: number
+          id: string
+          ingredient_id: string
+          name: string
+          recipe_id: string
+          unit: string
+        }
+        Insert: {
+          amount?: number
+          id?: string
+          ingredient_id: string
+          name: string
+          recipe_id: string
+          unit?: string
+        }
+        Update: {
+          amount?: number
+          id?: string
+          ingredient_id?: string
+          name?: string
+          recipe_id?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_ingredients_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recipes: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image: string | null
+          name: string
+          servings: number
+          total_calories: number
+          total_carbs: number
+          total_fat: number
+          total_protein: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          name: string
+          servings?: number
+          total_calories?: number
+          total_carbs?: number
+          total_fat?: number
+          total_protein?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          name?: string
+          servings?: number
+          total_calories?: number
+          total_carbs?: number
+          total_fat?: number
+          total_protein?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_targets: {
+        Row: {
+          carbs: number
+          created_at: string
+          daily_calories: number
+          fat: number
+          id: string
+          protein: number
+          strategy: string
+          tdee: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          carbs?: number
+          created_at?: string
+          daily_calories?: number
+          fat?: number
+          id?: string
+          protein?: number
+          strategy?: string
+          tdee?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          carbs?: number
+          created_at?: string
+          daily_calories?: number
+          fat?: number
+          id?: string
+          protein?: number
+          strategy?: string
+          tdee?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
