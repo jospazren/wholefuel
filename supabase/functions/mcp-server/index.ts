@@ -648,7 +648,7 @@ mcpServer.tool("list_ingredients", {
 
 // Tool: Create a new ingredient
 mcpServer.tool("create_ingredient", {
-  description: "Add a new ingredient with per-100g macro values",
+  description: "Add a new ingredient with per-100g macro values and optional serving size info",
   inputSchema: {
     type: "object",
     properties: {
@@ -661,6 +661,8 @@ mcpServer.tool("create_ingredient", {
       sodium_per_100g: { type: "number", description: "Sodium in mg per 100g" },
       brand: { type: "string", description: "Brand name (optional)" },
       category: { type: "string", description: "Category (optional)" },
+      serving_description: { type: "string", description: "Serving description (e.g., '1 egg (60g)', '1 can', '1 scoop (32g)')" },
+      serving_grams: { type: "number", description: "Weight in grams for the serving size (default: 100)" },
     },
     required: ["name", "calories_per_100g", "protein_per_100g", "fat_per_100g", "carbs_per_100g"],
   },
@@ -672,7 +674,7 @@ mcpServer.tool("create_ingredient", {
 
     const { 
       name, calories_per_100g, protein_per_100g, fat_per_100g, carbs_per_100g,
-      fiber_per_100g, sodium_per_100g, brand, category 
+      fiber_per_100g, sodium_per_100g, brand, category, serving_description, serving_grams
     } = input as {
       name: string;
       calories_per_100g: number;
@@ -683,6 +685,8 @@ mcpServer.tool("create_ingredient", {
       sodium_per_100g?: number;
       brand?: string;
       category?: string;
+      serving_description?: string;
+      serving_grams?: number;
     };
 
     const { data: ingredient, error } = await auth.supabase
@@ -697,6 +701,8 @@ mcpServer.tool("create_ingredient", {
         sodium_per_100g: sodium_per_100g || 0,
         brand: brand || null,
         category: category || null,
+        serving_description: serving_description || '100g',
+        serving_grams: serving_grams || 100,
         user_id: auth.userId,
       })
       .select()
@@ -709,7 +715,7 @@ mcpServer.tool("create_ingredient", {
     return {
       content: [{
         type: "text",
-        text: `Successfully created ingredient "${name}". ID: ${ingredient.id}`
+        text: `Successfully created ingredient "${name}" with serving "${serving_description || '100g'}". ID: ${ingredient.id}`
       }]
     };
   },
@@ -717,7 +723,7 @@ mcpServer.tool("create_ingredient", {
 
 // Tool: Bulk create ingredients
 mcpServer.tool("bulk_create_ingredients", {
-  description: "Create multiple ingredients at once with per-100g macro values. Returns a summary of created ingredients.",
+  description: "Create multiple ingredients at once with per-100g macro values and optional serving info. Returns a summary of created ingredients.",
   inputSchema: {
     type: "object",
     properties: {
@@ -735,6 +741,8 @@ mcpServer.tool("bulk_create_ingredients", {
             sodium_per_100g: { type: "number", description: "Sodium in mg per 100g (optional)" },
             brand: { type: "string", description: "Brand name (optional)" },
             category: { type: "string", description: "Category (optional)" },
+            serving_description: { type: "string", description: "Serving description (e.g., '1 egg (60g)', '1 can', '1 scoop (32g)')" },
+            serving_grams: { type: "number", description: "Weight in grams for the serving size (default: 100)" },
           },
           required: ["name", "calories_per_100g", "protein_per_100g", "fat_per_100g", "carbs_per_100g"],
         },
@@ -760,6 +768,8 @@ mcpServer.tool("bulk_create_ingredients", {
         sodium_per_100g?: number;
         brand?: string;
         category?: string;
+        serving_description?: string;
+        serving_grams?: number;
       }>;
     };
 
@@ -777,6 +787,8 @@ mcpServer.tool("bulk_create_ingredients", {
       sodium_per_100g: ing.sodium_per_100g || 0,
       brand: ing.brand || null,
       category: ing.category || null,
+      serving_description: ing.serving_description || '100g',
+      serving_grams: ing.serving_grams || 100,
       user_id: auth.userId,
     }));
 

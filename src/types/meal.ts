@@ -17,6 +17,9 @@ export interface BaseIngredient {
   sodiumPer100g: number; // in mg
   brand?: string;
   category?: string;
+  // Serving size
+  servingDescription: string; // e.g., "1 can", "1 egg (60g)", "1 scoop (32g)"
+  servingGrams: number; // weight in grams for the serving
 }
 
 export interface RecipeIngredient {

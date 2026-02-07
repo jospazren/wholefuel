@@ -34,7 +34,7 @@ import {
 import { Apple, Plus, Search, Pencil, Trash2, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type SortField = 'name' | 'caloriesPer100g' | 'proteinPer100g' | 'fatPer100g' | 'carbsPer100g' | 'fiberPer100g' | 'sodiumPer100g';
+type SortField = 'name' | 'caloriesPer100g' | 'proteinPer100g' | 'fatPer100g' | 'carbsPer100g' | 'fiberPer100g' | 'sodiumPer100g' | 'servingDescription';
 type SortDirection = 'asc' | 'desc';
 
 const IngredientsPage = () => {
@@ -56,6 +56,8 @@ const IngredientsPage = () => {
     fiberPer100g: '',
     sodiumPer100g: '',
     brand: '',
+    servingDescription: '100g',
+    servingGrams: '100',
   });
 
   const resetForm = () => {
@@ -68,6 +70,8 @@ const IngredientsPage = () => {
       fiberPer100g: '',
       sodiumPer100g: '',
       brand: '',
+      servingDescription: '100g',
+      servingGrams: '100',
     });
   };
 
@@ -106,6 +110,8 @@ const IngredientsPage = () => {
       fiberPer100g: ing.fiberPer100g.toString(),
       sodiumPer100g: ing.sodiumPer100g.toString(),
       brand: ing.brand || '',
+      servingDescription: ing.servingDescription || '100g',
+      servingGrams: (ing.servingGrams || 100).toString(),
     });
     setEditingIngredient(ing);
   };
@@ -121,6 +127,8 @@ const IngredientsPage = () => {
       fiberPer100g: parseFloat(formData.fiberPer100g) || 0,
       sodiumPer100g: parseFloat(formData.sodiumPer100g) || 0,
       brand: formData.brand || undefined,
+      servingDescription: formData.servingDescription || '100g',
+      servingGrams: parseFloat(formData.servingGrams) || 100,
     };
     addIngredient(newIngredient);
     setIsAddOpen(false);
@@ -138,6 +146,8 @@ const IngredientsPage = () => {
       fiberPer100g: parseFloat(formData.fiberPer100g) || 0,
       sodiumPer100g: parseFloat(formData.sodiumPer100g) || 0,
       brand: formData.brand || undefined,
+      servingDescription: formData.servingDescription || '100g',
+      servingGrams: parseFloat(formData.servingGrams) || 100,
     });
     setEditingIngredient(null);
     resetForm();
@@ -201,6 +211,7 @@ const IngredientsPage = () => {
             <TableHeader>
               <TableRow>
                 <SortHeader field="name">Name</SortHeader>
+                <SortHeader field="servingDescription">Serving</SortHeader>
                 <SortHeader field="caloriesPer100g">Calories</SortHeader>
                 <SortHeader field="proteinPer100g">Protein</SortHeader>
                 <SortHeader field="fatPer100g">Fat</SortHeader>
@@ -215,6 +226,7 @@ const IngredientsPage = () => {
               {filteredIngredients.map((ing) => (
                 <TableRow key={ing.id}>
                   <TableCell className="font-medium">{ing.name}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{ing.servingDescription || '100g'}</TableCell>
                   <TableCell className="text-macro-calories">{ing.caloriesPer100g}</TableCell>
                   <TableCell className="text-macro-protein">{ing.proteinPer100g}g</TableCell>
                   <TableCell className="text-macro-fat">{ing.fatPer100g}g</TableCell>
@@ -236,7 +248,7 @@ const IngredientsPage = () => {
               ))}
               {filteredIngredients.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                     No ingredients found
                   </TableCell>
                 </TableRow>
@@ -305,6 +317,16 @@ function IngredientForm({ formData, setFormData }: { formData: any; setFormData:
       <div className="grid gap-2">
         <Label htmlFor="name">Name</Label>
         <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., Chicken Breast" />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="servingDescription">Serving Description</Label>
+          <Input id="servingDescription" value={formData.servingDescription} onChange={(e) => setFormData({ ...formData, servingDescription: e.target.value })} placeholder="e.g., 1 egg (60g)" />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="servingGrams">Serving Weight (g)</Label>
+          <Input id="servingGrams" type="number" value={formData.servingGrams} onChange={(e) => setFormData({ ...formData, servingGrams: e.target.value })} placeholder="100" />
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">

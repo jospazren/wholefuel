@@ -133,6 +133,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
             sodiumPer100g: Number(ing.sodium_per_100g),
             brand: ing.brand || undefined,
             category: ing.category || undefined,
+            servingDescription: (ing as any).serving_description || '100g',
+            servingGrams: Number((ing as any).serving_grams) || 100,
           };
         });
         setIngredients(loadedIngredients);
@@ -273,6 +275,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           sodiumPer100g: Number(ing.sodium_per_100g),
           brand: ing.brand || undefined,
           category: ing.category || undefined,
+          servingDescription: (ing as any).serving_description || '100g',
+          servingGrams: Number((ing as any).serving_grams) || 100,
         };
       });
       setIngredients(loadedIngredients);
@@ -554,7 +558,9 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       sodium_per_100g: ingredient.sodiumPer100g,
       brand: ingredient.brand,
       category: ingredient.category,
-    }).select().single();
+      serving_description: ingredient.servingDescription,
+      serving_grams: ingredient.servingGrams,
+    } as any).select().single();
 
     if (error) {
       console.error('Error adding ingredient:', error);
@@ -582,6 +588,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     if (updates.sodiumPer100g !== undefined) dbUpdates.sodium_per_100g = updates.sodiumPer100g;
     if (updates.brand !== undefined) dbUpdates.brand = updates.brand;
     if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.servingDescription !== undefined) dbUpdates.serving_description = updates.servingDescription;
+    if (updates.servingGrams !== undefined) dbUpdates.serving_grams = updates.servingGrams;
 
     await supabase.from('ingredients').update(dbUpdates).eq('id', id).eq('user_id', user.id);
   };

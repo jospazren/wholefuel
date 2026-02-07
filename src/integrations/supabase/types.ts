@@ -26,6 +26,8 @@ export type Database = {
           id: string
           name: string
           protein_per_100g: number
+          serving_description: string | null
+          serving_grams: number
           sodium_per_100g: number
           updated_at: string
           user_id: string
@@ -41,6 +43,8 @@ export type Database = {
           id?: string
           name: string
           protein_per_100g?: number
+          serving_description?: string | null
+          serving_grams?: number
           sodium_per_100g?: number
           updated_at?: string
           user_id: string
@@ -56,6 +60,8 @@ export type Database = {
           id?: string
           name?: string
           protein_per_100g?: number
+          serving_description?: string | null
+          serving_grams?: number
           sodium_per_100g?: number
           updated_at?: string
           user_id?: string
