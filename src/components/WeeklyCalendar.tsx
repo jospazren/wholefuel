@@ -117,7 +117,7 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
             {MEAL_SLOTS.map((slot) => (
               <div key={slot} className="grid grid-cols-[50px_repeat(7,1fr)] border-b last:border-b-0 flex-1">
                 <div className="px-1 py-0.5 bg-muted/30 flex items-center">
-                  <span className="text-[9px] font-medium text-muted-foreground leading-tight">
+                  <span className="text-[9px] font-sans font-medium text-muted-foreground leading-tight">
                     {MEAL_SLOT_LABELS[slot]}
                   </span>
                 </div>
@@ -142,7 +142,7 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
             {/* Daily Totals Row */}
             <div className="grid grid-cols-[50px_repeat(7,1fr)] border-t border-primary/20 bg-secondary/20">
               <div className="px-1 py-1 bg-muted/30">
-                <span className="text-[9px] font-medium text-muted-foreground">Total</span>
+                <span className="text-[9px] font-sans font-medium text-muted-foreground">Total</span>
               </div>
               {DAYS_OF_WEEK.map((day) => {
                 const macros = getDailyMacros(day);
