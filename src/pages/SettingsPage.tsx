@@ -68,7 +68,7 @@ const SettingsPage = () => {
         {/* Weekly Targets */}
         <WeeklyTargetsForm />
 
-        {/* MCP Server Configuration */}
+        {/* Claude Desktop / MCP Server Configuration */}
         <Card>
           <CardHeader>
             <CardTitle>Claude Desktop Integration</CardTitle>
