@@ -35,6 +35,19 @@ async function hashApiKey(key: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Global auth context store - set before each request, used by tool handlers
+let currentAuthContext: { userId: string; supabase: ReturnType<typeof createClient> } | null = null;
+
+// Helper to get current auth context (for tool handlers)
+function getCurrentAuth(): { userId: string; supabase: ReturnType<typeof createClient> } | null {
+  return currentAuthContext;
+}
+
+// Helper to set current auth context (called before processing request)
+function setCurrentAuth(auth: { userId: string; supabase: ReturnType<typeof createClient> } | null) {
+  currentAuthContext = auth;
+}
+
 // Helper to validate auth - supports both JWT and API keys
 async function validateAuth(authHeader: string | null): Promise<{ userId: string; supabase: ReturnType<typeof createClient> } | null> {
   if (!authHeader?.startsWith('Bearer ')) {
@@ -116,8 +129,8 @@ mcpServer.tool("list_recipes", {
     properties: {},
     required: [],
   },
-  handler: async (_input: unknown, context: { headers?: { authorization?: string } }) => {
-    const auth = await validateAuth(context?.headers?.authorization ?? null);
+  handler: async () => {
+    const auth = getCurrentAuth();
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -177,8 +190,8 @@ mcpServer.tool("create_recipe", {
     },
     required: ["name", "category", "servings", "ingredients"],
   },
-  handler: async (input: unknown, context: { headers?: { authorization?: string } }) => {
-    const auth = await validateAuth(context?.headers?.authorization ?? null);
+  handler: async (input: unknown) => {
+    const auth = getCurrentAuth();
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -274,8 +287,8 @@ mcpServer.tool("list_ingredients", {
     properties: {},
     required: [],
   },
-  handler: async (_input: unknown, context: { headers?: { authorization?: string } }) => {
-    const auth = await validateAuth(context?.headers?.authorization ?? null);
+  handler: async () => {
+    const auth = getCurrentAuth();
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -316,8 +329,8 @@ mcpServer.tool("create_ingredient", {
     },
     required: ["name", "calories_per_100g", "protein_per_100g", "fat_per_100g", "carbs_per_100g"],
   },
-  handler: async (input: unknown, context: { headers?: { authorization?: string } }) => {
-    const auth = await validateAuth(context?.headers?.authorization ?? null);
+  handler: async (input: unknown) => {
+    const auth = getCurrentAuth();
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -375,8 +388,8 @@ mcpServer.tool("list_meal_plan", {
     properties: {},
     required: [],
   },
-  handler: async (_input: unknown, context: { headers?: { authorization?: string } }) => {
-    const auth = await validateAuth(context?.headers?.authorization ?? null);
+  handler: async () => {
+    const auth = getCurrentAuth();
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -443,8 +456,8 @@ mcpServer.tool("add_meal_to_plan", {
     },
     required: ["day", "slot", "recipe_id"],
   },
-  handler: async (input: unknown, context: { headers?: { authorization?: string } }) => {
-    const auth = await validateAuth(context?.headers?.authorization ?? null);
+  handler: async (input: unknown) => {
+    const auth = getCurrentAuth();
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -550,8 +563,8 @@ mcpServer.tool("remove_meal_from_plan", {
     },
     required: ["day", "slot"],
   },
-  handler: async (input: unknown, context: { headers?: { authorization?: string } }) => {
-    const auth = await validateAuth(context?.headers?.authorization ?? null);
+  handler: async (input: unknown) => {
+    const auth = getCurrentAuth();
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -587,8 +600,8 @@ mcpServer.tool("get_shopping_list", {
     properties: {},
     required: [],
   },
-  handler: async (_input: unknown, context: { headers?: { authorization?: string } }) => {
-    const auth = await validateAuth(context?.headers?.authorization ?? null);
+  handler: async () => {
+    const auth = getCurrentAuth();
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -672,8 +685,8 @@ mcpServer.tool("get_weekly_targets", {
     properties: {},
     required: [],
   },
-  handler: async (_input: unknown, context: { headers?: { authorization?: string } }) => {
-    const auth = await validateAuth(context?.headers?.authorization ?? null);
+  handler: async () => {
+    const auth = getCurrentAuth();
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -705,8 +718,61 @@ app.options('/*', (c) => {
   return new Response(null, { headers: corsHeaders });
 });
 
-// Handle all MCP requests
+// Handle all MCP requests with pre-validated auth
 app.all('/*', async (c) => {
+  const authHeader = c.req.header('Authorization');
+  
+  // Parse request body to check the method
+  const clonedReq = c.req.raw.clone();
+  let body: { method?: string; id?: string | number } | null = null;
+  try {
+    body = await clonedReq.json();
+  } catch {
+    // Not JSON, proceed without parsing
+  }
+
+  // For tools/call and other tool operations, require auth at request level
+  const requiresAuth = body?.method === 'tools/call' || 
+                       body?.method === 'tools/list' ||
+                       body?.method === 'resources/list' ||
+                       body?.method === 'resources/read';
+  
+  if (requiresAuth) {
+    const auth = await validateAuth(authHeader ?? null);
+    if (!auth) {
+      return new Response(JSON.stringify({
+        jsonrpc: "2.0",
+        id: body?.id ?? null,
+        error: { code: -32001, message: "Unauthorized: Invalid or missing authentication" }
+      }), { 
+        status: 401, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+    
+    // Set global auth context before processing request
+    setCurrentAuth(auth);
+    
+    try {
+      const response = await httpHandler(c.req.raw);
+      
+      // Add CORS headers to response
+      const newHeaders = new Headers(response.headers);
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        newHeaders.set(key, value);
+      });
+      
+      return new Response(response.body, {
+        status: response.status,
+        headers: newHeaders,
+      });
+    } finally {
+      // Clear auth context after request
+      setCurrentAuth(null);
+    }
+  }
+  
+  // For non-auth-required methods (initialize, ping), pass through
   const response = await httpHandler(c.req.raw);
   
   // Add CORS headers to response
