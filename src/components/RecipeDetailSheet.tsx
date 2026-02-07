@@ -2,6 +2,7 @@ import { Recipe, CATEGORY_LABELS } from '@/types/meal';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Flame, Beef, Wheat, Droplet, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,7 +26,7 @@ export function RecipeDetailSheet({ recipe, open, onClose }: RecipeDetailSheetPr
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <SheetContent className="sm:max-w-md flex flex-col h-full">
+      <SheetContent className="sm:max-w-md flex flex-col h-full overflow-hidden">
         <SheetHeader className="shrink-0">
           <div className="flex items-center gap-2 mb-2">
             <Badge variant="outline" className={cn('text-xs', categoryColors[recipe.category])}>
@@ -35,63 +36,65 @@ export function RecipeDetailSheet({ recipe, open, onClose }: RecipeDetailSheetPr
           <SheetTitle className="text-xl">{recipe.name}</SheetTitle>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto mt-6 space-y-6 pr-1">
-          {/* Macro Summary */}
-          <div className="grid grid-cols-4 gap-3">
-            <MacroCard icon={<Flame className="h-4 w-4" />} label="Calories" value={recipe.totalMacros.calories} unit="kcal" colorClass="text-macro-calories bg-macro-calories/10" />
-            <MacroCard icon={<Beef className="h-4 w-4" />} label="Protein" value={recipe.totalMacros.protein} unit="g" colorClass="text-macro-protein bg-macro-protein/10" />
-            <MacroCard icon={<Wheat className="h-4 w-4" />} label="Carbs" value={recipe.totalMacros.carbs} unit="g" colorClass="text-macro-carbs bg-macro-carbs/10" />
-            <MacroCard icon={<Droplet className="h-4 w-4" />} label="Fat" value={recipe.totalMacros.fat} unit="g" colorClass="text-macro-fat bg-macro-fat/10" />
-          </div>
-
-          <Separator />
-
-          {/* Ingredients */}
-          <div>
-            <h4 className="font-semibold text-foreground mb-3">Ingredients</h4>
-            <div className="space-y-2">
-              {recipe.ingredients.map((ing, idx) => (
-                <div key={idx} className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-lg">
-                  <span className="text-sm text-foreground">{ing.name}</span>
-                  <span className="text-sm font-medium text-muted-foreground">
-                    {ing.amount} {ing.unit}
-                  </span>
-                </div>
-              ))}
+        <ScrollArea className="flex-1 mt-6 -mr-4 pr-4">
+          <div className="space-y-6">
+            {/* Macro Summary */}
+            <div className="grid grid-cols-4 gap-3">
+              <MacroCard icon={<Flame className="h-4 w-4" />} label="Calories" value={recipe.totalMacros.calories} unit="kcal" colorClass="text-macro-calories bg-macro-calories/10" />
+              <MacroCard icon={<Beef className="h-4 w-4" />} label="Protein" value={recipe.totalMacros.protein} unit="g" colorClass="text-macro-protein bg-macro-protein/10" />
+              <MacroCard icon={<Wheat className="h-4 w-4" />} label="Carbs" value={recipe.totalMacros.carbs} unit="g" colorClass="text-macro-carbs bg-macro-carbs/10" />
+              <MacroCard icon={<Droplet className="h-4 w-4" />} label="Fat" value={recipe.totalMacros.fat} unit="g" colorClass="text-macro-fat bg-macro-fat/10" />
             </div>
+
+            <Separator />
+
+            {/* Ingredients */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-3">Ingredients</h4>
+              <div className="space-y-2">
+                {recipe.ingredients.map((ing, idx) => (
+                  <div key={idx} className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-lg">
+                    <span className="text-sm text-foreground">{ing.name}</span>
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {ing.amount} {ing.unit}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Instructions */}
+            {recipe.instructions && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold text-foreground mb-3">Instructions</h4>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                    {recipe.instructions}
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* External Link */}
+            {recipe.link && (
+              <>
+                <Separator />
+                <div>
+                  <a 
+                    href={recipe.link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    View original recipe
+                  </a>
+                </div>
+              </>
+            )}
           </div>
-
-          {/* Instructions */}
-          {recipe.instructions && (
-            <>
-              <Separator />
-              <div>
-                <h4 className="font-semibold text-foreground mb-3">Instructions</h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                  {recipe.instructions}
-                </p>
-              </div>
-            </>
-          )}
-
-          {/* External Link */}
-          {recipe.link && (
-            <>
-              <Separator />
-              <div>
-                <a 
-                  href={recipe.link} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  View original recipe
-                </a>
-              </div>
-            </>
-          )}
-        </div>
+        </ScrollArea>
       </SheetContent>
     </Sheet>
   );
