@@ -279,6 +279,166 @@ mcpServer.tool("create_recipe", {
   },
 });
 
+// Tool: Bulk create recipes
+mcpServer.tool("bulk_create_recipes", {
+  description: "Create multiple recipes at once with their ingredients. Each recipe must reference existing ingredient IDs.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      recipes: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Name of the recipe" },
+            category: { 
+              type: "string", 
+              enum: ["breakfast", "main", "shake", "snack", "side", "dessert"],
+              description: "Category of the recipe"
+            },
+            servings: { type: "number", description: "Number of servings" },
+            instructions: { type: "string", description: "Preparation instructions (optional)" },
+            link: { type: "string", description: "Link to recipe source (optional)" },
+            ingredients: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  ingredient_id: { type: "string", description: "UUID of the ingredient" },
+                  amount: { type: "number", description: "Amount in grams" },
+                  unit: { type: "string", description: "Unit of measurement (default: g)" }
+                },
+                required: ["ingredient_id", "amount"]
+              },
+              description: "List of ingredients with amounts"
+            }
+          },
+          required: ["name", "category", "servings", "ingredients"]
+        },
+        description: "Array of recipes to create"
+      }
+    },
+    required: ["recipes"],
+  },
+  handler: async (input: unknown) => {
+    const auth = getCurrentAuth();
+    if (!auth) {
+      return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
+    }
+
+    const { recipes } = input as {
+      recipes: Array<{
+        name: string;
+        category: string;
+        servings: number;
+        instructions?: string;
+        link?: string;
+        ingredients: Array<{ ingredient_id: string; amount: number; unit?: string }>;
+      }>;
+    };
+
+    if (!recipes || recipes.length === 0) {
+      return { content: [{ type: "text", text: "Error: No recipes provided" }] };
+    }
+
+    // Collect all unique ingredient IDs
+    const allIngredientIds = new Set<string>();
+    for (const recipe of recipes) {
+      for (const ing of recipe.ingredients) {
+        allIngredientIds.add(ing.ingredient_id);
+      }
+    }
+
+    // Fetch all ingredient data at once
+    const { data: ingredientData, error: ingredientError } = await auth.supabase
+      .from('ingredients')
+      .select('id, name, calories_per_100g, protein_per_100g, fat_per_100g, carbs_per_100g')
+      .in('id', Array.from(allIngredientIds));
+
+    if (ingredientError) {
+      return { content: [{ type: "text", text: `Error fetching ingredients: ${ingredientError.message}` }] };
+    }
+
+    const ingredientMap = new Map(ingredientData?.map(i => [i.id, i]) || []);
+
+    const createdRecipes: string[] = [];
+    const errors: string[] = [];
+
+    for (const recipe of recipes) {
+      // Calculate macros for this recipe
+      let totalCalories = 0, totalProtein = 0, totalFat = 0, totalCarbs = 0;
+      
+      for (const ing of recipe.ingredients) {
+        const data = ingredientMap.get(ing.ingredient_id);
+        if (data) {
+          const multiplier = ing.amount / 100;
+          totalCalories += data.calories_per_100g * multiplier;
+          totalProtein += data.protein_per_100g * multiplier;
+          totalFat += data.fat_per_100g * multiplier;
+          totalCarbs += data.carbs_per_100g * multiplier;
+        }
+      }
+
+      // Create the recipe
+      const { data: createdRecipe, error: recipeError } = await auth.supabase
+        .from('recipes')
+        .insert({
+          name: recipe.name,
+          category: recipe.category,
+          servings: recipe.servings,
+          instructions: recipe.instructions || null,
+          link: recipe.link || null,
+          user_id: auth.userId,
+          total_calories: Math.round(totalCalories),
+          total_protein: Math.round(totalProtein),
+          total_fat: Math.round(totalFat),
+          total_carbs: Math.round(totalCarbs),
+        })
+        .select()
+        .single();
+
+      if (recipeError || !createdRecipe) {
+        errors.push(`"${recipe.name}": ${recipeError?.message || 'Unknown error'}`);
+        continue;
+      }
+
+      // Add recipe ingredients
+      const recipeIngredients = recipe.ingredients.map(ing => ({
+        recipe_id: createdRecipe.id,
+        ingredient_id: ing.ingredient_id,
+        name: ingredientMap.get(ing.ingredient_id)?.name || 'Unknown',
+        amount: ing.amount,
+        unit: ing.unit || 'g',
+      }));
+
+      const { error: ingredientsInsertError } = await auth.supabase
+        .from('recipe_ingredients')
+        .insert(recipeIngredients);
+
+      if (ingredientsInsertError) {
+        errors.push(`"${recipe.name}" ingredients: ${ingredientsInsertError.message}`);
+      } else {
+        createdRecipes.push(recipe.name);
+      }
+    }
+
+    let message = `Successfully created ${createdRecipes.length} recipe(s)`;
+    if (createdRecipes.length > 0) {
+      message += `: ${createdRecipes.join(', ')}`;
+    }
+    if (errors.length > 0) {
+      message += `\nErrors (${errors.length}): ${errors.join('; ')}`;
+    }
+
+    return {
+      content: [{
+        type: "text",
+        text: message
+      }]
+    };
+  },
+});
+
 // Tool: Delete a recipe
 mcpServer.tool("delete_recipe", {
   description: "Delete a recipe by ID. Will fail if the recipe is currently used in the meal plan.",
@@ -550,6 +710,90 @@ mcpServer.tool("create_ingredient", {
       content: [{
         type: "text",
         text: `Successfully created ingredient "${name}". ID: ${ingredient.id}`
+      }]
+    };
+  },
+});
+
+// Tool: Bulk create ingredients
+mcpServer.tool("bulk_create_ingredients", {
+  description: "Create multiple ingredients at once with per-100g macro values. Returns a summary of created ingredients.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      ingredients: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Name of the ingredient" },
+            calories_per_100g: { type: "number", description: "Calories per 100g" },
+            protein_per_100g: { type: "number", description: "Protein in grams per 100g" },
+            fat_per_100g: { type: "number", description: "Fat in grams per 100g" },
+            carbs_per_100g: { type: "number", description: "Carbohydrates in grams per 100g" },
+            fiber_per_100g: { type: "number", description: "Fiber in grams per 100g (optional)" },
+            sodium_per_100g: { type: "number", description: "Sodium in mg per 100g (optional)" },
+            brand: { type: "string", description: "Brand name (optional)" },
+            category: { type: "string", description: "Category (optional)" },
+          },
+          required: ["name", "calories_per_100g", "protein_per_100g", "fat_per_100g", "carbs_per_100g"],
+        },
+        description: "Array of ingredients to create"
+      }
+    },
+    required: ["ingredients"],
+  },
+  handler: async (input: unknown) => {
+    const auth = getCurrentAuth();
+    if (!auth) {
+      return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
+    }
+
+    const { ingredients } = input as {
+      ingredients: Array<{
+        name: string;
+        calories_per_100g: number;
+        protein_per_100g: number;
+        fat_per_100g: number;
+        carbs_per_100g: number;
+        fiber_per_100g?: number;
+        sodium_per_100g?: number;
+        brand?: string;
+        category?: string;
+      }>;
+    };
+
+    if (!ingredients || ingredients.length === 0) {
+      return { content: [{ type: "text", text: "Error: No ingredients provided" }] };
+    }
+
+    const toInsert = ingredients.map(ing => ({
+      name: ing.name,
+      calories_per_100g: ing.calories_per_100g,
+      protein_per_100g: ing.protein_per_100g,
+      fat_per_100g: ing.fat_per_100g,
+      carbs_per_100g: ing.carbs_per_100g,
+      fiber_per_100g: ing.fiber_per_100g || 0,
+      sodium_per_100g: ing.sodium_per_100g || 0,
+      brand: ing.brand || null,
+      category: ing.category || null,
+      user_id: auth.userId,
+    }));
+
+    const { data: created, error } = await auth.supabase
+      .from('ingredients')
+      .insert(toInsert)
+      .select('id, name');
+
+    if (error) {
+      return { content: [{ type: "text", text: `Error creating ingredients: ${error.message}` }] };
+    }
+
+    const createdNames = created?.map(i => i.name).join(', ') || '';
+    return {
+      content: [{
+        type: "text",
+        text: `Successfully created ${created?.length || 0} ingredient(s): ${createdNames}`
       }]
     };
   },
