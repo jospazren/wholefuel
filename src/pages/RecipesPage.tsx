@@ -106,16 +106,18 @@ const RecipesPage = () => {
     formIngredients.map(i => ({ ingredientId: i.ingredientId, amount: i.amount }))
   );
 
-  // Calculate macros for individual ingredient
-  const getIngredientMacros = (ingredientId: string, amount: number) => {
+  // Get ingredient info including serving and macros
+  const getIngredientInfo = (ingredientId: string, amount: number) => {
     const ing = ingredientDb.find(i => i.id === ingredientId);
-    if (!ing) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    if (!ing) return { calories: 0, protein: 0, carbs: 0, fat: 0, serving: '' };
     const multiplier = amount / ing.servingGrams;
     return {
       calories: Math.round(ing.caloriesPer100g * multiplier),
       protein: Math.round(ing.proteinPer100g * multiplier),
       carbs: Math.round(ing.carbsPer100g * multiplier),
       fat: Math.round(ing.fatPer100g * multiplier),
+      serving: ing.servingDescription || `${ing.servingGrams}g`,
+      servingGrams: ing.servingGrams,
     };
   };
 
@@ -361,17 +363,28 @@ const RecipesPage = () => {
 
               {/* Ingredients */}
               <div className="space-y-3">
-                <Label>Ingredients</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Ingredients</Label>
+                  {/* Column headers */}
+                  <div className="flex items-center text-[10px] text-muted-foreground gap-1 pr-20">
+                    <span className="w-14 text-center">Amount</span>
+                    <span className="w-20 text-center">Serving</span>
+                    <span className="w-10 text-center">Cal</span>
+                    <span className="w-8 text-center">P</span>
+                    <span className="w-8 text-center">C</span>
+                    <span className="w-8 text-center">F</span>
+                  </div>
+                </div>
                 <div 
                   ref={ingredientsRef}
                   className="max-h-48 overflow-y-auto space-y-2 pr-1"
                 >
                   {formIngredients.map((ing, idx) => {
-                    const ingMacros = getIngredientMacros(ing.ingredientId, ing.amount);
+                    const info = getIngredientInfo(ing.ingredientId, ing.amount);
                     return (
                       <div key={idx} className="flex items-center gap-1 p-2 bg-muted/50 rounded-lg">
                         {/* Move up/down buttons */}
-                        <div className="flex flex-col">
+                        <div className="flex flex-col shrink-0">
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -395,7 +408,7 @@ const RecipesPage = () => {
                         {/* Ingredient name or swap selector */}
                         {swappingIndex === idx ? (
                           <Select onValueChange={(id) => handleSwapIngredient(idx, id)} open={true} onOpenChange={(open) => !open && setSwappingIndex(null)}>
-                            <SelectTrigger className="w-40 h-8">
+                            <SelectTrigger className="flex-1 h-8">
                               <SelectValue placeholder={ing.name} />
                             </SelectTrigger>
                             <SelectContent>
@@ -405,40 +418,46 @@ const RecipesPage = () => {
                             </SelectContent>
                           </Select>
                         ) : (
-                          <span className="w-40 text-sm font-medium truncate">{ing.name}</span>
+                          <span className="flex-1 text-sm font-medium truncate">{ing.name}</span>
                         )}
                         
-                        <Input
-                          type="number"
-                          value={ing.amount}
-                          onChange={(e) => handleIngredientAmountChange(idx, parseFloat(e.target.value) || 0)}
-                          className="w-16 h-8 text-center"
-                          min={0}
-                        />
-                        <span className="text-sm text-muted-foreground w-4">{ing.unit}</span>
-                        
-                        {/* Per-ingredient macros */}
-                        <div className="flex items-center gap-2 text-xs ml-2">
-                          <span className="text-macro-calories">{ingMacros.calories}</span>
-                          <span className="text-macro-protein">{ingMacros.protein}P</span>
-                          <span className="text-macro-carbs">{ingMacros.carbs}C</span>
-                          <span className="text-macro-fat">{ingMacros.fat}F</span>
+                        {/* Amount input */}
+                        <div className="flex items-center shrink-0">
+                          <Input
+                            type="number"
+                            value={ing.amount}
+                            onChange={(e) => handleIngredientAmountChange(idx, parseFloat(e.target.value) || 0)}
+                            className="w-14 h-8 text-center text-sm"
+                            min={0}
+                          />
+                          <span className="text-xs text-muted-foreground ml-1">g</span>
                         </div>
+                        
+                        {/* Serving info */}
+                        <span className="w-20 text-xs text-muted-foreground text-center shrink-0 truncate" title={info.serving}>
+                          {info.serving}
+                        </span>
+                        
+                        {/* Per-ingredient macros - fixed widths */}
+                        <span className="w-10 text-xs text-macro-calories text-center shrink-0">{info.calories}</span>
+                        <span className="w-8 text-xs text-macro-protein text-center shrink-0">{info.protein}</span>
+                        <span className="w-8 text-xs text-macro-carbs text-center shrink-0">{info.carbs}</span>
+                        <span className="w-8 text-xs text-macro-fat text-center shrink-0">{info.fat}</span>
                         
                         {/* Swap button */}
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-primary ml-auto" 
+                          className="h-7 w-7 text-muted-foreground hover:text-primary shrink-0" 
                           onClick={() => setSwappingIndex(swappingIndex === idx ? null : idx)}
                           title="Swap ingredient"
                         >
-                          <RefreshCw className="h-4 w-4" />
+                          <RefreshCw className="h-3.5 w-3.5" />
                         </Button>
                         
                         {/* Remove button */}
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveIngredient(idx)}>
-                          <X className="h-4 w-4" />
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleRemoveIngredient(idx)}>
+                          <X className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     );
