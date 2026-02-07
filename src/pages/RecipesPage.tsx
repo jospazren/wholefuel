@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { Recipe, RecipeCategory, RECIPE_CATEGORIES, CATEGORY_LABELS, RecipeIngredient } from '@/types/meal';
@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
 import {
   Dialog,
   DialogContent,
@@ -29,7 +28,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent } from '@/components/ui/card';
-import { UtensilsCrossed, Plus, Search, Pencil, Trash2, Flame, Beef, Wheat, Droplet, X } from 'lucide-react';
+import { UtensilsCrossed, Plus, Search, Pencil, Trash2, Flame, Beef, Wheat, Droplet, X, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const RecipesPage = () => {
@@ -46,6 +45,24 @@ const RecipesPage = () => {
   const [formIngredients, setFormIngredients] = useState<RecipeIngredient[]>([]);
   const [formInstructions, setFormInstructions] = useState('');
   const [formLink, setFormLink] = useState('');
+  const [swappingIndex, setSwappingIndex] = useState<number | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const ingredientsRef = useRef<HTMLDivElement>(null);
+
+  // Track scroll position for "Add ingredient" visibility
+  useEffect(() => {
+    const el = ingredientsRef.current;
+    if (!el) return;
+    
+    const checkScroll = () => {
+      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 10;
+      setIsAtBottom(atBottom);
+    };
+    
+    checkScroll();
+    el.addEventListener('scroll', checkScroll);
+    return () => el.removeEventListener('scroll', checkScroll);
+  }, [formIngredients.length]);
 
   const resetForm = () => {
     setFormName('');
@@ -103,11 +120,35 @@ const RecipesPage = () => {
 
   const handleRemoveIngredient = (index: number) => {
     setFormIngredients(formIngredients.filter((_, i) => i !== index));
+    setSwappingIndex(null);
   };
 
   const handleIngredientAmountChange = (index: number, amount: number) => {
     const updated = [...formIngredients];
     updated[index] = { ...updated[index], amount };
+    setFormIngredients(updated);
+  };
+
+  const handleSwapIngredient = (index: number, newIngredientId: string) => {
+    const ing = ingredientDb.find(i => i.id === newIngredientId);
+    if (ing) {
+      const updated = [...formIngredients];
+      updated[index] = {
+        ingredientId: ing.id,
+        name: ing.name,
+        amount: updated[index].amount,
+        unit: 'g',
+      };
+      setFormIngredients(updated);
+    }
+    setSwappingIndex(null);
+  };
+
+  const handleMoveIngredient = (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= formIngredients.length) return;
+    const updated = [...formIngredients];
+    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
     setFormIngredients(updated);
   };
 
@@ -297,10 +338,50 @@ const RecipesPage = () => {
               {/* Ingredients */}
               <div className="space-y-3">
                 <Label>Ingredients</Label>
-                <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                <div 
+                  ref={ingredientsRef}
+                  className="max-h-48 overflow-y-auto space-y-2 pr-1"
+                >
                   {formIngredients.map((ing, idx) => (
-                    <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                      <span className="flex-1 text-sm font-medium truncate">{ing.name}</span>
+                    <div key={idx} className="flex items-center gap-1 p-2 bg-muted/50 rounded-lg">
+                      {/* Move up/down buttons */}
+                      <div className="flex flex-col">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-5 w-5 text-muted-foreground hover:text-foreground disabled:opacity-30" 
+                          onClick={() => handleMoveIngredient(idx, 'up')}
+                          disabled={idx === 0}
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-5 w-5 text-muted-foreground hover:text-foreground disabled:opacity-30" 
+                          onClick={() => handleMoveIngredient(idx, 'down')}
+                          disabled={idx === formIngredients.length - 1}
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      
+                      {/* Ingredient name or swap selector */}
+                      {swappingIndex === idx ? (
+                        <Select onValueChange={(id) => handleSwapIngredient(idx, id)} open={true} onOpenChange={(open) => !open && setSwappingIndex(null)}>
+                          <SelectTrigger className="flex-1 h-8">
+                            <SelectValue placeholder={ing.name} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ingredientDb.filter(i => i.id !== ing.ingredientId && !formIngredients.some(fi => fi.ingredientId === i.id)).map((i) => (
+                              <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="flex-1 text-sm font-medium truncate">{ing.name}</span>
+                      )}
+                      
                       <Input
                         type="number"
                         value={ing.amount}
@@ -309,6 +390,19 @@ const RecipesPage = () => {
                         min={0}
                       />
                       <span className="text-sm text-muted-foreground w-6">{ing.unit}</span>
+                      
+                      {/* Swap button */}
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-muted-foreground hover:text-primary" 
+                        onClick={() => setSwappingIndex(swappingIndex === idx ? null : idx)}
+                        title="Swap ingredient"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                      
+                      {/* Remove button */}
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveIngredient(idx)}>
                         <X className="h-4 w-4" />
                       </Button>
@@ -316,7 +410,7 @@ const RecipesPage = () => {
                   ))}
                 </div>
 
-                {availableIngredients.length > 0 && (
+                {availableIngredients.length > 0 && (formIngredients.length === 0 || isAtBottom) && (
                   <div className="flex items-center gap-2">
                     <Plus className="h-4 w-4 text-muted-foreground" />
                     <Select onValueChange={handleAddIngredient}>
