@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import {
   Dialog,
   DialogContent,
@@ -263,15 +263,15 @@ const RecipesPage = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={isAddOpen || !!editingRecipe} onOpenChange={(open) => { if (!open) { setIsAddOpen(false); setEditingRecipe(null); } }}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader className="shrink-0">
             <DialogTitle>{editingRecipe ? 'Edit Dish' : 'Add Dish'}</DialogTitle>
             <DialogDescription>
               {editingRecipe ? 'Update your dish details' : 'Create a new dish for your menu'}
             </DialogDescription>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="flex-1 overflow-y-auto -mx-6 px-6 min-h-0">
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -297,26 +297,24 @@ const RecipesPage = () => {
               {/* Ingredients */}
               <div className="space-y-3">
                 <Label>Ingredients</Label>
-                <ScrollArea className="max-h-48">
-                  <div className="space-y-2 pr-3">
-                    {formIngredients.map((ing, idx) => (
-                      <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                        <span className="flex-1 text-sm font-medium truncate">{ing.name}</span>
-                        <Input
-                          type="number"
-                          value={ing.amount}
-                          onChange={(e) => handleIngredientAmountChange(idx, parseFloat(e.target.value) || 0)}
-                          className="w-20 h-8 text-center"
-                          min={0}
-                        />
-                        <span className="text-sm text-muted-foreground w-6">{ing.unit}</span>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveIngredient(idx)}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
+                <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                  {formIngredients.map((ing, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+                      <span className="flex-1 text-sm font-medium truncate">{ing.name}</span>
+                      <Input
+                        type="number"
+                        value={ing.amount}
+                        onChange={(e) => handleIngredientAmountChange(idx, parseFloat(e.target.value) || 0)}
+                        className="w-20 h-8 text-center"
+                        min={0}
+                      />
+                      <span className="text-sm text-muted-foreground w-6">{ing.unit}</span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveIngredient(idx)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
 
                 {availableIngredients.length > 0 && (
                   <div className="flex items-center gap-2">
@@ -368,7 +366,7 @@ const RecipesPage = () => {
                 </div>
               </div>
             </div>
-          </ScrollArea>
+          </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => { setIsAddOpen(false); setEditingRecipe(null); }}>Cancel</Button>
