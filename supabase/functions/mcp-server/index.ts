@@ -352,6 +352,108 @@ mcpServer.tool("delete_recipe", {
   },
 });
 
+// Tool: Bulk delete recipes
+mcpServer.tool("bulk_delete_recipes", {
+  description: "Delete multiple recipes by their IDs. Skips recipes that are currently used in the meal plan and reports which ones were skipped.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      recipe_ids: { 
+        type: "array", 
+        items: { type: "string" },
+        description: "Array of recipe UUIDs to delete" 
+      },
+    },
+    required: ["recipe_ids"],
+  },
+  handler: async (input: unknown) => {
+    const auth = getCurrentAuth();
+    if (!auth) {
+      return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
+    }
+
+    const { recipe_ids } = input as { recipe_ids: string[] };
+    
+    if (!recipe_ids || recipe_ids.length === 0) {
+      return { content: [{ type: "text", text: "Error: No recipe IDs provided" }] };
+    }
+
+    // Get all recipes to delete
+    const { data: recipes, error: fetchError } = await auth.supabase
+      .from('recipes')
+      .select('id, name')
+      .in('id', recipe_ids);
+
+    if (fetchError) {
+      return { content: [{ type: "text", text: `Error fetching recipes: ${fetchError.message}` }] };
+    }
+
+    if (!recipes || recipes.length === 0) {
+      return { content: [{ type: "text", text: "Error: No matching recipes found" }] };
+    }
+
+    // Check which recipes are used in meal plans
+    const { data: usedRecipes, error: usageError } = await auth.supabase
+      .from('meal_plans')
+      .select('recipe_id, day_of_week, meal_slot')
+      .in('recipe_id', recipe_ids);
+
+    if (usageError) {
+      return { content: [{ type: "text", text: `Error checking recipe usage: ${usageError.message}` }] };
+    }
+
+    const usedRecipeIds = new Set(usedRecipes?.map(m => m.recipe_id) || []);
+    const recipesToDelete = recipes.filter(r => !usedRecipeIds.has(r.id));
+    const skippedRecipes = recipes.filter(r => usedRecipeIds.has(r.id));
+
+    if (recipesToDelete.length === 0) {
+      return { 
+        content: [{ 
+          type: "text", 
+          text: `Cannot delete any recipes: all ${skippedRecipes.length} recipe(s) are currently used in the meal plan` 
+        }] 
+      };
+    }
+
+    const idsToDelete = recipesToDelete.map(r => r.id);
+
+    // Delete recipe ingredients first (cascade)
+    const { error: ingredientsDeleteError } = await auth.supabase
+      .from('recipe_ingredients')
+      .delete()
+      .in('recipe_id', idsToDelete);
+
+    if (ingredientsDeleteError) {
+      return { content: [{ type: "text", text: `Error deleting recipe ingredients: ${ingredientsDeleteError.message}` }] };
+    }
+
+    // Delete the recipes
+    const { error: deleteError } = await auth.supabase
+      .from('recipes')
+      .delete()
+      .in('id', idsToDelete);
+
+    if (deleteError) {
+      return { content: [{ type: "text", text: `Error deleting recipes: ${deleteError.message}` }] };
+    }
+
+    const deletedNames = recipesToDelete.map(r => r.name).join(', ');
+    const skippedNames = skippedRecipes.map(r => r.name).join(', ');
+    
+    let message = `Successfully deleted ${recipesToDelete.length} recipe(s): ${deletedNames}`;
+    if (skippedRecipes.length > 0) {
+      message += `\nSkipped ${skippedRecipes.length} recipe(s) in use: ${skippedNames}`;
+    }
+
+    return {
+      content: [{
+        type: "text",
+        text: message
+      }]
+    };
+  },
+});
+
 // Tool: List all ingredients
 mcpServer.tool("list_ingredients", {
   description: "Get all available ingredients with nutritional data (per 100g)",
@@ -511,6 +613,98 @@ mcpServer.tool("delete_ingredient", {
       content: [{
         type: "text",
         text: `Successfully deleted ingredient "${ingredient.name}"`
+      }]
+    };
+  },
+});
+
+// Tool: Bulk delete ingredients
+mcpServer.tool("bulk_delete_ingredients", {
+  description: "Delete multiple ingredients by their IDs. Skips ingredients that are used in any recipes and reports which ones were skipped.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      ingredient_ids: { 
+        type: "array", 
+        items: { type: "string" },
+        description: "Array of ingredient UUIDs to delete" 
+      },
+    },
+    required: ["ingredient_ids"],
+  },
+  handler: async (input: unknown) => {
+    const auth = getCurrentAuth();
+    if (!auth) {
+      return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
+    }
+
+    const { ingredient_ids } = input as { ingredient_ids: string[] };
+    
+    if (!ingredient_ids || ingredient_ids.length === 0) {
+      return { content: [{ type: "text", text: "Error: No ingredient IDs provided" }] };
+    }
+
+    // Get all ingredients to delete
+    const { data: ingredients, error: fetchError } = await auth.supabase
+      .from('ingredients')
+      .select('id, name')
+      .in('id', ingredient_ids);
+
+    if (fetchError) {
+      return { content: [{ type: "text", text: `Error fetching ingredients: ${fetchError.message}` }] };
+    }
+
+    if (!ingredients || ingredients.length === 0) {
+      return { content: [{ type: "text", text: "Error: No matching ingredients found" }] };
+    }
+
+    // Check which ingredients are used in recipes
+    const { data: usedIngredients, error: usageError } = await auth.supabase
+      .from('recipe_ingredients')
+      .select('ingredient_id')
+      .in('ingredient_id', ingredient_ids);
+
+    if (usageError) {
+      return { content: [{ type: "text", text: `Error checking ingredient usage: ${usageError.message}` }] };
+    }
+
+    const usedIngredientIds = new Set(usedIngredients?.map(r => r.ingredient_id) || []);
+    const ingredientsToDelete = ingredients.filter(i => !usedIngredientIds.has(i.id));
+    const skippedIngredients = ingredients.filter(i => usedIngredientIds.has(i.id));
+
+    if (ingredientsToDelete.length === 0) {
+      return { 
+        content: [{ 
+          type: "text", 
+          text: `Cannot delete any ingredients: all ${skippedIngredients.length} ingredient(s) are used in recipes` 
+        }] 
+      };
+    }
+
+    const idsToDelete = ingredientsToDelete.map(i => i.id);
+
+    // Delete the ingredients
+    const { error: deleteError } = await auth.supabase
+      .from('ingredients')
+      .delete()
+      .in('id', idsToDelete);
+
+    if (deleteError) {
+      return { content: [{ type: "text", text: `Error deleting ingredients: ${deleteError.message}` }] };
+    }
+
+    const deletedNames = ingredientsToDelete.map(i => i.name).join(', ');
+    const skippedNames = skippedIngredients.map(i => i.name).join(', ');
+    
+    let message = `Successfully deleted ${ingredientsToDelete.length} ingredient(s): ${deletedNames}`;
+    if (skippedIngredients.length > 0) {
+      message += `\nSkipped ${skippedIngredients.length} ingredient(s) in use: ${skippedNames}`;
+    }
+
+    return {
+      content: [{
+        type: "text",
+        text: message
       }]
     };
   },
