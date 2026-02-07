@@ -263,7 +263,7 @@ const IngredientsPage = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Ingredient</DialogTitle>
-            <DialogDescription>Add a new ingredient to your database. Values are per 100g.</DialogDescription>
+            <DialogDescription>Add a new ingredient to your database. Values are per serving.</DialogDescription>
           </DialogHeader>
           <IngredientForm formData={formData} setFormData={setFormData} />
           <DialogFooter>
@@ -278,7 +278,7 @@ const IngredientsPage = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Ingredient</DialogTitle>
-            <DialogDescription>Update ingredient values. All values are per 100g.</DialogDescription>
+            <DialogDescription>Update ingredient values. All values are per serving.</DialogDescription>
           </DialogHeader>
           <IngredientForm formData={formData} setFormData={setFormData} />
           <DialogFooter>
@@ -330,31 +330,31 @@ function IngredientForm({ formData, setFormData }: { formData: any; setFormData:
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="calories">Calories (per 100g)</Label>
+          <Label htmlFor="calories">Calories (per serving)</Label>
           <Input id="calories" type="number" value={formData.caloriesPer100g} onChange={(e) => setFormData({ ...formData, caloriesPer100g: e.target.value })} />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="protein">Protein (g)</Label>
+          <Label htmlFor="protein">Protein (g per serving)</Label>
           <Input id="protein" type="number" value={formData.proteinPer100g} onChange={(e) => setFormData({ ...formData, proteinPer100g: e.target.value })} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="fat">Fat (g)</Label>
+          <Label htmlFor="fat">Fat (g per serving)</Label>
           <Input id="fat" type="number" value={formData.fatPer100g} onChange={(e) => setFormData({ ...formData, fatPer100g: e.target.value })} />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="carbs">Carbs (g)</Label>
+          <Label htmlFor="carbs">Carbs (g per serving)</Label>
           <Input id="carbs" type="number" value={formData.carbsPer100g} onChange={(e) => setFormData({ ...formData, carbsPer100g: e.target.value })} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label htmlFor="fiber">Fiber (g)</Label>
+          <Label htmlFor="fiber">Fiber (g per serving)</Label>
           <Input id="fiber" type="number" value={formData.fiberPer100g} onChange={(e) => setFormData({ ...formData, fiberPer100g: e.target.value })} />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="sodium">Sodium (mg)</Label>
+          <Label htmlFor="sodium">Sodium (mg per serving)</Label>
           <Input id="sodium" type="number" value={formData.sodiumPer100g} onChange={(e) => setFormData({ ...formData, sodiumPer100g: e.target.value })} />
         </div>
       </div>
