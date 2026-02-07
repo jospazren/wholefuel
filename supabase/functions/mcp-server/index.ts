@@ -42,16 +42,15 @@ const mcpServer = new McpServer({
 });
 
 // Tool: List all recipes
-mcpServer.tool({
-  name: "list_recipes",
+mcpServer.tool("list_recipes", {
   description: "Get all dishes/recipes with their ingredients and macro information",
   inputSchema: {
     type: "object",
     properties: {},
     required: [],
   },
-  handler: async (_input, context) => {
-    const auth = await validateAuth(context?.headers?.authorization);
+  handler: async (_input: unknown, context: { headers?: { authorization?: string } }) => {
+    const auth = await validateAuth(context?.headers?.authorization ?? null);
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -81,8 +80,7 @@ mcpServer.tool({
 });
 
 // Tool: Create a new recipe
-mcpServer.tool({
-  name: "create_recipe",
+mcpServer.tool("create_recipe", {
   description: "Create a new dish with name, category, servings, and ingredients",
   inputSchema: {
     type: "object",
@@ -112,8 +110,8 @@ mcpServer.tool({
     },
     required: ["name", "category", "servings", "ingredients"],
   },
-  handler: async (input, context) => {
-    const auth = await validateAuth(context?.headers?.authorization);
+  handler: async (input: unknown, context: { headers?: { authorization?: string } }) => {
+    const auth = await validateAuth(context?.headers?.authorization ?? null);
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -202,16 +200,15 @@ mcpServer.tool({
 });
 
 // Tool: List all ingredients
-mcpServer.tool({
-  name: "list_ingredients",
+mcpServer.tool("list_ingredients", {
   description: "Get all available ingredients with nutritional data (per 100g)",
   inputSchema: {
     type: "object",
     properties: {},
     required: [],
   },
-  handler: async (_input, context) => {
-    const auth = await validateAuth(context?.headers?.authorization);
+  handler: async (_input: unknown, context: { headers?: { authorization?: string } }) => {
+    const auth = await validateAuth(context?.headers?.authorization ?? null);
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -235,8 +232,7 @@ mcpServer.tool({
 });
 
 // Tool: Create a new ingredient
-mcpServer.tool({
-  name: "create_ingredient",
+mcpServer.tool("create_ingredient", {
   description: "Add a new ingredient with per-100g macro values",
   inputSchema: {
     type: "object",
@@ -253,8 +249,8 @@ mcpServer.tool({
     },
     required: ["name", "calories_per_100g", "protein_per_100g", "fat_per_100g", "carbs_per_100g"],
   },
-  handler: async (input, context) => {
-    const auth = await validateAuth(context?.headers?.authorization);
+  handler: async (input: unknown, context: { headers?: { authorization?: string } }) => {
+    const auth = await validateAuth(context?.headers?.authorization ?? null);
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -305,16 +301,15 @@ mcpServer.tool({
 });
 
 // Tool: List meal plan
-mcpServer.tool({
-  name: "list_meal_plan",
+mcpServer.tool("list_meal_plan", {
   description: "Get the current week's meal plan with all scheduled meals",
   inputSchema: {
     type: "object",
     properties: {},
     required: [],
   },
-  handler: async (_input, context) => {
-    const auth = await validateAuth(context?.headers?.authorization);
+  handler: async (_input: unknown, context: { headers?: { authorization?: string } }) => {
+    const auth = await validateAuth(context?.headers?.authorization ?? null);
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -361,8 +356,7 @@ mcpServer.tool({
 });
 
 // Tool: Add meal to plan
-mcpServer.tool({
-  name: "add_meal_to_plan",
+mcpServer.tool("add_meal_to_plan", {
   description: "Add a dish to a specific day and meal slot (m1-m5)",
   inputSchema: {
     type: "object",
@@ -382,8 +376,8 @@ mcpServer.tool({
     },
     required: ["day", "slot", "recipe_id"],
   },
-  handler: async (input, context) => {
-    const auth = await validateAuth(context?.headers?.authorization);
+  handler: async (input: unknown, context: { headers?: { authorization?: string } }) => {
+    const auth = await validateAuth(context?.headers?.authorization ?? null);
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -471,8 +465,7 @@ mcpServer.tool({
 });
 
 // Tool: Remove meal from plan
-mcpServer.tool({
-  name: "remove_meal_from_plan",
+mcpServer.tool("remove_meal_from_plan", {
   description: "Remove a meal from a specific day and slot",
   inputSchema: {
     type: "object",
@@ -490,8 +483,8 @@ mcpServer.tool({
     },
     required: ["day", "slot"],
   },
-  handler: async (input, context) => {
-    const auth = await validateAuth(context?.headers?.authorization);
+  handler: async (input: unknown, context: { headers?: { authorization?: string } }) => {
+    const auth = await validateAuth(context?.headers?.authorization ?? null);
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -520,16 +513,15 @@ mcpServer.tool({
 });
 
 // Tool: Get shopping list
-mcpServer.tool({
-  name: "get_shopping_list",
+mcpServer.tool("get_shopping_list", {
   description: "Generate aggregated shopping list from the current meal plan",
   inputSchema: {
     type: "object",
     properties: {},
     required: [],
   },
-  handler: async (_input, context) => {
-    const auth = await validateAuth(context?.headers?.authorization);
+  handler: async (_input: unknown, context: { headers?: { authorization?: string } }) => {
+    const auth = await validateAuth(context?.headers?.authorization ?? null);
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -606,16 +598,15 @@ mcpServer.tool({
 });
 
 // Tool: Get weekly targets
-mcpServer.tool({
-  name: "get_weekly_targets",
+mcpServer.tool("get_weekly_targets", {
   description: "Get user's calorie and macro targets",
   inputSchema: {
     type: "object",
     properties: {},
     required: [],
   },
-  handler: async (_input, context) => {
-    const auth = await validateAuth(context?.headers?.authorization);
+  handler: async (_input: unknown, context: { headers?: { authorization?: string } }) => {
+    const auth = await validateAuth(context?.headers?.authorization ?? null);
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
@@ -638,8 +629,9 @@ mcpServer.tool({
   },
 });
 
-// HTTP transport
+// HTTP transport - bind to server
 const transport = new StreamableHttpTransport();
+const httpHandler = transport.bind(mcpServer);
 
 // Handle CORS preflight
 app.options('/*', (c) => {
@@ -648,7 +640,7 @@ app.options('/*', (c) => {
 
 // Handle all MCP requests
 app.all('/*', async (c) => {
-  const response = await transport.handleRequest(c.req.raw, mcpServer);
+  const response = await httpHandler(c.req.raw);
   
   // Add CORS headers to response
   const newHeaders = new Headers(response.headers);
