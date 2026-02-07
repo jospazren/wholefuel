@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Montserrat:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,116 +6,117 @@
 
 @layer base {
   :root {
-    /* Editorial palette - cream, charcoal, organic greens */
-    --background: 45 30% 96%;
-    --foreground: 30 10% 12%;
+    /* Bauhaus palette - pure geometric colors */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 8%;
 
-    --card: 45 35% 98%;
-    --card-foreground: 30 10% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 8%;
 
-    --popover: 45 35% 98%;
-    --popover-foreground: 30 10% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 8%;
 
-    /* Primary - Deep forest green for organic/bio feel */
-    --primary: 145 35% 28%;
-    --primary-foreground: 45 30% 96%;
+    /* Primary - Bauhaus Blue */
+    --primary: 220 85% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary - Warm cream */
-    --secondary: 40 30% 92%;
-    --secondary-foreground: 30 10% 18%;
+    /* Secondary - Warm off-white */
+    --secondary: 45 20% 95%;
+    --secondary-foreground: 0 0% 8%;
 
-    --muted: 40 15% 92%;
-    --muted-foreground: 30 8% 45%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 40 25% 90%;
-    --accent-foreground: 30 10% 18%;
+    --accent: 45 100% 50%;
+    --accent-foreground: 0 0% 8%;
 
-    --destructive: 0 65% 45%;
-    --destructive-foreground: 45 30% 96%;
+    --destructive: 0 80% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 35 15% 85%;
-    --input: 35 15% 85%;
-    --ring: 145 35% 28%;
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 220 85% 45%;
 
-    --radius: 0.25rem;
+    /* Bauhaus - sharp geometric corners */
+    --radius: 0rem;
 
-    /* Status colors - muted, editorial */
-    --status-success: 145 35% 28%;
-    --status-warning: 40 70% 45%;
-    --status-danger: 0 65% 45%;
+    /* Status colors - bold primary */
+    --status-success: 145 70% 40%;
+    --status-warning: 45 100% 50%;
+    --status-danger: 0 80% 50%;
 
-    /* Macro colors - sophisticated, muted */
-    --macro-calories: 145 35% 28%;
-    --macro-protein: 15 50% 45%;
-    --macro-carbs: 40 65% 48%;
-    --macro-fat: 200 45% 40%;
+    /* Macro colors - Bauhaus primaries + geometric */
+    --macro-calories: 0 80% 50%;
+    --macro-protein: 220 85% 45%;
+    --macro-carbs: 45 100% 50%;
+    --macro-fat: 0 0% 25%;
 
-    /* Gradients - subtle */
-    --gradient-hero: linear-gradient(135deg, hsl(45 30% 96%) 0%, hsl(40 25% 93%) 100%);
-    --gradient-calories: linear-gradient(135deg, hsl(145 35% 28%) 0%, hsl(145 40% 35%) 100%);
-    --gradient-protein: linear-gradient(135deg, hsl(15 50% 45%) 0%, hsl(18 55% 50%) 100%);
-    --gradient-carbs: linear-gradient(135deg, hsl(40 65% 48%) 0%, hsl(42 70% 52%) 100%);
-    --gradient-fat: linear-gradient(135deg, hsl(200 45% 40%) 0%, hsl(205 50% 45%) 100%);
+    /* Gradients - none, solid colors only (Bauhaus aesthetic) */
+    --gradient-hero: linear-gradient(180deg, hsl(0 0% 98%) 0%, hsl(0 0% 95%) 100%);
+    --gradient-calories: hsl(0 80% 50%);
+    --gradient-protein: hsl(220 85% 45%);
+    --gradient-carbs: hsl(45 100% 50%);
+    --gradient-fat: hsl(0 0% 25%);
 
-    /* Category colors */
-    --category-breakfast: 40 65% 48%;
-    --category-lunch: 145 35% 28%;
-    --category-dinner: 15 50% 45%;
-    --category-snack: 200 45% 40%;
+    /* Category colors - primary spectrum */
+    --category-breakfast: 45 100% 50%;
+    --category-lunch: 220 85% 45%;
+    --category-dinner: 0 80% 50%;
+    --category-snack: 0 0% 25%;
 
-    /* Shadows - softer, more elegant */
-    --shadow-sm: 0 1px 2px 0 hsl(30 10% 12% / 0.03);
-    --shadow-md: 0 4px 16px -4px hsl(30 10% 12% / 0.06);
-    --shadow-lg: 0 16px 48px -8px hsl(30 10% 12% / 0.08);
-    --shadow-glow: 0 0 32px -8px hsl(145 35% 28% / 0.15);
+    /* Shadows - minimal, geometric */
+    --shadow-sm: 2px 2px 0 0 hsl(0 0% 0% / 0.08);
+    --shadow-md: 4px 4px 0 0 hsl(0 0% 0% / 0.1);
+    --shadow-lg: 8px 8px 0 0 hsl(0 0% 0% / 0.12);
+    --shadow-glow: 0 0 0 2px hsl(220 85% 45% / 0.2);
 
-    --sidebar-background: 45 35% 98%;
-    --sidebar-foreground: 30 10% 25%;
-    --sidebar-primary: 145 35% 28%;
-    --sidebar-primary-foreground: 45 30% 96%;
-    --sidebar-accent: 40 20% 94%;
-    --sidebar-accent-foreground: 30 10% 18%;
-    --sidebar-border: 35 15% 88%;
-    --sidebar-ring: 145 35% 28%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 15%;
+    --sidebar-primary: 220 85% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 45 100% 50%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 0 0% 0%;
+    --sidebar-ring: 220 85% 45%;
   }
 
   .dark {
-    --background: 30 10% 8%;
-    --foreground: 40 15% 92%;
+    --background: 0 0% 6%;
+    --foreground: 0 0% 95%;
 
-    --card: 30 10% 10%;
-    --card-foreground: 40 15% 92%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 30 10% 10%;
-    --popover-foreground: 40 15% 92%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 145 40% 40%;
-    --primary-foreground: 30 10% 8%;
+    --primary: 220 80% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 10% 15%;
-    --secondary-foreground: 40 15% 88%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 90%;
 
-    --muted: 30 10% 15%;
-    --muted-foreground: 40 10% 55%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 55%;
 
-    --accent: 30 10% 18%;
-    --accent-foreground: 40 15% 88%;
+    --accent: 45 100% 50%;
+    --accent-foreground: 0 0% 8%;
 
-    --destructive: 0 55% 45%;
-    --destructive-foreground: 40 15% 92%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 30 10% 18%;
-    --input: 30 10% 18%;
-    --ring: 145 40% 40%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 220 80% 55%;
 
-    --sidebar-background: 30 10% 10%;
-    --sidebar-foreground: 40 15% 88%;
-    --sidebar-primary: 145 40% 40%;
-    --sidebar-primary-foreground: 30 10% 8%;
-    --sidebar-accent: 30 8% 15%;
-    --sidebar-accent-foreground: 40 15% 88%;
-    --sidebar-border: 30 8% 15%;
-    --sidebar-ring: 145 40% 40%;
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 220 80% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 45 100% 50%;
+    --sidebar-accent-foreground: 0 0% 8%;
+    --sidebar-border: 0 0% 100%;
+    --sidebar-ring: 220 80% 55%;
   }
 }
 
@@ -128,17 +129,16 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
     font-size: 15px;
-    line-height: 1.6;
+    line-height: 1.5;
   }
 
-  /* Serif only for main brand titles */
+  /* Bauhaus - bold geometric headings */
   h1 {
-    @apply font-serif font-medium tracking-tight;
+    @apply font-display font-bold uppercase tracking-wide;
   }
 
-  /* Clean sans-serif for all other headings */
   h2, h3, h4, h5, h6 {
-    @apply font-sans font-semibold tracking-normal;
+    @apply font-display font-semibold uppercase tracking-wide;
   }
 }
 
@@ -157,31 +157,53 @@
   }
 
   .bg-macro-calories-gradient {
-    background: var(--gradient-calories);
+    background: hsl(var(--macro-calories));
   }
   .bg-macro-protein-gradient {
-    background: var(--gradient-protein);
+    background: hsl(var(--macro-protein));
   }
   .bg-macro-carbs-gradient {
-    background: var(--gradient-carbs);
+    background: hsl(var(--macro-carbs));
   }
   .bg-macro-fat-gradient {
-    background: var(--gradient-fat);
+    background: hsl(var(--macro-fat));
   }
 
   .shadow-glow {
     box-shadow: var(--shadow-glow);
   }
 
+  /* Bauhaus glass - sharp, minimal */
   .glass {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50;
+    @apply bg-card border-2 border-foreground/10;
   }
 
   .drag-preview {
-    @apply opacity-90 rotate-2 scale-105;
+    @apply opacity-95 scale-105;
   }
 
   .drop-target {
-    @apply ring-2 ring-primary ring-offset-2 bg-primary/5;
+    @apply ring-2 ring-primary ring-offset-2 bg-primary/10;
+  }
+
+  /* Bauhaus geometric accents */
+  .bauhaus-circle {
+    @apply rounded-full;
+  }
+
+  .bauhaus-block {
+    @apply border-2 border-foreground;
+  }
+
+  .bauhaus-accent-red {
+    background-color: hsl(0 80% 50%);
+  }
+
+  .bauhaus-accent-blue {
+    background-color: hsl(220 85% 45%);
+  }
+
+  .bauhaus-accent-yellow {
+    background-color: hsl(45 100% 50%);
   }
 }
