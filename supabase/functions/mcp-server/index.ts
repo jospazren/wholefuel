@@ -18,14 +18,38 @@ function createAuthClient(authHeader: string) {
   );
 }
 
-// Helper to validate auth and get user ID
+// Helper to create service role client (for API key validation)
+function createServiceClient() {
+  return createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
+}
+
+// Simple hash function for API key validation
+async function hashApiKey(key: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(key);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Helper to validate auth - supports both JWT and API keys
 async function validateAuth(authHeader: string | null): Promise<{ userId: string; supabase: ReturnType<typeof createClient> } | null> {
   if (!authHeader?.startsWith('Bearer ')) {
     return null;
   }
 
-  const supabase = createAuthClient(authHeader);
   const token = authHeader.replace('Bearer ', '');
+  
+  // Check if it's an API key (starts with "wf_")
+  if (token.startsWith('wf_')) {
+    return await validateApiKey(token);
+  }
+
+  // Otherwise, treat as JWT
+  const supabase = createAuthClient(authHeader);
   const { data, error } = await supabase.auth.getUser(token);
   
   if (error || !data?.user) {
@@ -33,6 +57,49 @@ async function validateAuth(authHeader: string | null): Promise<{ userId: string
   }
 
   return { userId: data.user.id, supabase };
+}
+
+// Validate API key and return user context
+async function validateApiKey(apiKey: string): Promise<{ userId: string; supabase: ReturnType<typeof createClient> } | null> {
+  const serviceClient = createServiceClient();
+  const keyHash = await hashApiKey(apiKey);
+
+  // Look up the API key
+  const { data: keyData, error } = await serviceClient
+    .from('mcp_api_keys')
+    .select('id, user_id, expires_at, revoked_at')
+    .eq('key_hash', keyHash)
+    .single();
+
+  if (error || !keyData) {
+    return null;
+  }
+
+  // Check if revoked
+  if (keyData.revoked_at) {
+    return null;
+  }
+
+  // Check if expired
+  if (keyData.expires_at && new Date(keyData.expires_at) < new Date()) {
+    return null;
+  }
+
+  // Update last_used_at (fire and forget)
+  serviceClient
+    .from('mcp_api_keys')
+    .update({ last_used_at: new Date().toISOString() })
+    .eq('id', keyData.id)
+    .then(() => {});
+
+  // Create a client that acts as this user
+  // We use the service role but scope queries to this user
+  const userSupabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
+
+  return { userId: keyData.user_id, supabase: userSupabase };
 }
 
 // Create MCP server
