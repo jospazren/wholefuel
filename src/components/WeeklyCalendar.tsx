@@ -104,7 +104,7 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
         <div className="overflow-x-auto flex-1 flex flex-col">
           <div className="min-w-[600px] flex flex-col flex-1">
             {/* Day Headers */}
-            <div className="grid grid-cols-[50px_repeat(7,1fr)] border-b">
+            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b">
               <div className="px-1 py-1.5 bg-muted/30" />
               {DAYS_OF_WEEK.map((day) => (
                 <div key={day} className="px-0.5 py-1.5 text-center border-l bg-muted/20">
@@ -115,7 +115,7 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
 
             {/* Meal Rows */}
             {MEAL_SLOTS.map((slot) => (
-              <div key={slot} className="grid grid-cols-[50px_repeat(7,1fr)] border-b last:border-b-0 flex-1">
+              <div key={slot} className="grid grid-cols-[60px_repeat(7,1fr)] border-b last:border-b-0 flex-1">
                 <div className="px-1 py-0.5 bg-muted/30 flex items-center">
                   <span className="text-[11px] font-medium text-foreground leading-tight">
                     {MEAL_SLOT_LABELS[slot]}
@@ -140,7 +140,7 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
             ))}
 
             {/* Daily Totals Row */}
-            <div className="grid grid-cols-[50px_repeat(7,1fr)] border-t border-primary/20 bg-secondary/20">
+            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-t border-primary/20 bg-secondary/20">
               <div className="px-1 py-1 bg-muted/30">
                 <span className="text-[11px] font-medium text-foreground">Total</span>
               </div>
