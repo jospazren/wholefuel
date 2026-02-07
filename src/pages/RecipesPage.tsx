@@ -127,7 +127,7 @@ const RecipesPage = () => {
       setFormIngredients([...formIngredients, {
         ingredientId: ing.id,
         name: ing.name,
-        amount: 100,
+        amount: ing.servingGrams, // Default to 1 serving
         unit: 'g',
       }]);
     }
@@ -367,7 +367,7 @@ const RecipesPage = () => {
                   <Label>Ingredients</Label>
                   {/* Column headers */}
                   <div className="flex items-center text-[10px] text-muted-foreground gap-1 pr-20">
-                    <span className="w-14 text-center">Amount</span>
+                    <span className="w-16 text-center">Qty</span>
                     <span className="w-20 text-center">Serving</span>
                     <span className="w-10 text-center">Cal</span>
                     <span className="w-8 text-center">P</span>
@@ -381,6 +381,13 @@ const RecipesPage = () => {
                 >
                   {formIngredients.map((ing, idx) => {
                     const info = getIngredientInfo(ing.ingredientId, ing.amount);
+                    const servingMultiplier = info.servingGrams ? ing.amount / info.servingGrams : 1;
+                    
+                    const handleMultiplierChange = (newMultiplier: number) => {
+                      const newAmount = Math.round(newMultiplier * (info.servingGrams || 100));
+                      handleIngredientAmountChange(idx, newAmount);
+                    };
+                    
                     return (
                       <div key={idx} className="flex items-center gap-1 p-2 bg-muted/50 rounded-lg">
                         {/* Move up/down buttons */}
@@ -421,16 +428,17 @@ const RecipesPage = () => {
                           <span className="flex-1 text-sm font-medium truncate">{ing.name}</span>
                         )}
                         
-                        {/* Amount input */}
+                        {/* Serving multiplier input */}
                         <div className="flex items-center shrink-0">
+                          <span className="text-xs text-muted-foreground mr-1">×</span>
                           <Input
                             type="number"
-                            value={ing.amount}
-                            onChange={(e) => handleIngredientAmountChange(idx, parseFloat(e.target.value) || 0)}
+                            value={Math.round(servingMultiplier * 100) / 100}
+                            onChange={(e) => handleMultiplierChange(parseFloat(e.target.value) || 0)}
                             className="w-14 h-8 text-center text-sm"
                             min={0}
+                            step={0.5}
                           />
-                          <span className="text-xs text-muted-foreground ml-1">g</span>
                         </div>
                         
                         {/* Serving info */}
