@@ -366,13 +366,13 @@ const RecipesPage = () => {
                 <div className="flex items-center justify-between">
                   <Label>Ingredients</Label>
                   {/* Column headers */}
-                  <div className="flex items-center text-[10px] text-muted-foreground gap-1 pr-20">
+                  <div className="flex items-center text-xs text-muted-foreground gap-2 pr-20">
                     <span className="w-16 text-center">Qty</span>
-                    <span className="w-20 text-center">Serving</span>
-                    <span className="w-10 text-center">Cal</span>
-                    <span className="w-8 text-center">P</span>
-                    <span className="w-8 text-center">C</span>
-                    <span className="w-8 text-center">F</span>
+                    <span className="w-24 text-center">Serving</span>
+                    <span className="w-12 text-center">Cal</span>
+                    <span className="w-10 text-center">P</span>
+                    <span className="w-10 text-center">C</span>
+                    <span className="w-10 text-center">F</span>
                   </div>
                 </div>
                 <div 
@@ -389,7 +389,7 @@ const RecipesPage = () => {
                     };
                     
                     return (
-                      <div key={idx} className="flex items-center gap-1 p-2 bg-muted/50 rounded-lg">
+                      <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
                         {/* Move up/down buttons */}
                         <div className="flex flex-col shrink-0">
                           <Button 
@@ -429,28 +429,25 @@ const RecipesPage = () => {
                         )}
                         
                         {/* Serving multiplier input */}
-                        <div className="flex items-center shrink-0">
-                          <span className="text-xs text-muted-foreground mr-1">×</span>
+                        <div className="flex items-center shrink-0 w-16">
+                          <span className="text-sm text-muted-foreground mr-1">×</span>
                           <Input
                             type="number"
                             value={Math.round(servingMultiplier * 100) / 100}
                             onChange={(e) => handleMultiplierChange(parseFloat(e.target.value) || 0)}
-                            className="w-14 h-8 text-center text-sm"
+                            className="w-12 h-8 text-center text-sm px-1"
                             min={0}
                             step={0.5}
                           />
                         </div>
                         
                         {/* Serving info */}
-                        <span className="w-20 text-xs text-muted-foreground text-center shrink-0 truncate" title={info.serving}>
+                        <span className="w-24 text-sm text-muted-foreground text-center shrink-0 truncate" title={info.serving}>
                           {info.serving}
                         </span>
                         
                         {/* Per-ingredient macros - fixed widths */}
-                        <span className="w-10 text-xs text-macro-calories text-center shrink-0">{info.calories}</span>
-                        <span className="w-8 text-xs text-macro-protein text-center shrink-0">{info.protein}</span>
-                        <span className="w-8 text-xs text-macro-carbs text-center shrink-0">{info.carbs}</span>
-                        <span className="w-8 text-xs text-macro-fat text-center shrink-0">{info.fat}</span>
+                        <span className="w-12 text-sm text-macro-calories text-center shrink-0">{info.calories}</span>
                         
                         {/* Swap button */}
                         <Button 
