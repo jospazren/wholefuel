@@ -106,6 +106,19 @@ const RecipesPage = () => {
     formIngredients.map(i => ({ ingredientId: i.ingredientId, amount: i.amount }))
   );
 
+  // Calculate macros for individual ingredient
+  const getIngredientMacros = (ingredientId: string, amount: number) => {
+    const ing = ingredientDb.find(i => i.id === ingredientId);
+    if (!ing) return { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    const multiplier = amount / ing.servingGrams;
+    return {
+      calories: Math.round(ing.caloriesPer100g * multiplier),
+      protein: Math.round(ing.proteinPer100g * multiplier),
+      carbs: Math.round(ing.carbsPer100g * multiplier),
+      fat: Math.round(ing.fatPer100g * multiplier),
+    };
+  };
+
   const handleAddIngredient = (ingredientId: string) => {
     const ing = ingredientDb.find(i => i.id === ingredientId);
     if (ing) {
@@ -304,7 +317,7 @@ const RecipesPage = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={isAddOpen || !!editingRecipe} onOpenChange={(open) => { if (!open) { setIsAddOpen(false); setEditingRecipe(null); } }}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="shrink-0">
             <DialogTitle>{editingRecipe ? 'Edit Dish' : 'Add Dish'}</DialogTitle>
             <DialogDescription>
@@ -314,6 +327,17 @@ const RecipesPage = () => {
 
           <div className="flex-1 overflow-y-auto -mx-6 px-6 min-h-0">
             <div className="space-y-4 py-4">
+              {/* Macro Totals - at top */}
+              <div className="bg-secondary/50 rounded-lg p-4">
+                <Label className="mb-3 block">Dish Totals</Label>
+                <div className="grid grid-cols-4 gap-3">
+                  <MacroCard icon={<Flame className="h-4 w-4" />} label="Calories" value={currentMacros.calories} colorClass="text-macro-calories bg-macro-calories/10" />
+                  <MacroCard icon={<Beef className="h-4 w-4" />} label="Protein" value={currentMacros.protein} colorClass="text-macro-protein bg-macro-protein/10" />
+                  <MacroCard icon={<Wheat className="h-4 w-4" />} label="Carbs" value={currentMacros.carbs} colorClass="text-macro-carbs bg-macro-carbs/10" />
+                  <MacroCard icon={<Droplet className="h-4 w-4" />} label="Fat" value={currentMacros.fat} colorClass="text-macro-fat bg-macro-fat/10" />
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Dish Name</Label>
@@ -342,72 +366,83 @@ const RecipesPage = () => {
                   ref={ingredientsRef}
                   className="max-h-48 overflow-y-auto space-y-2 pr-1"
                 >
-                  {formIngredients.map((ing, idx) => (
-                    <div key={idx} className="flex items-center gap-1 p-2 bg-muted/50 rounded-lg">
-                      {/* Move up/down buttons */}
-                      <div className="flex flex-col">
+                  {formIngredients.map((ing, idx) => {
+                    const ingMacros = getIngredientMacros(ing.ingredientId, ing.amount);
+                    return (
+                      <div key={idx} className="flex items-center gap-1 p-2 bg-muted/50 rounded-lg">
+                        {/* Move up/down buttons */}
+                        <div className="flex flex-col">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-5 w-5 text-muted-foreground hover:text-foreground disabled:opacity-30" 
+                            onClick={() => handleMoveIngredient(idx, 'up')}
+                            disabled={idx === 0}
+                          >
+                            <ArrowUp className="h-3 w-3" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-5 w-5 text-muted-foreground hover:text-foreground disabled:opacity-30" 
+                            onClick={() => handleMoveIngredient(idx, 'down')}
+                            disabled={idx === formIngredients.length - 1}
+                          >
+                            <ArrowDown className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        
+                        {/* Ingredient name or swap selector */}
+                        {swappingIndex === idx ? (
+                          <Select onValueChange={(id) => handleSwapIngredient(idx, id)} open={true} onOpenChange={(open) => !open && setSwappingIndex(null)}>
+                            <SelectTrigger className="w-40 h-8">
+                              <SelectValue placeholder={ing.name} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ingredientDb.filter(i => i.id !== ing.ingredientId && !formIngredients.some(fi => fi.ingredientId === i.id)).map((i) => (
+                                <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span className="w-40 text-sm font-medium truncate">{ing.name}</span>
+                        )}
+                        
+                        <Input
+                          type="number"
+                          value={ing.amount}
+                          onChange={(e) => handleIngredientAmountChange(idx, parseFloat(e.target.value) || 0)}
+                          className="w-16 h-8 text-center"
+                          min={0}
+                        />
+                        <span className="text-sm text-muted-foreground w-4">{ing.unit}</span>
+                        
+                        {/* Per-ingredient macros */}
+                        <div className="flex items-center gap-2 text-xs ml-2">
+                          <span className="text-macro-calories">{ingMacros.calories}</span>
+                          <span className="text-macro-protein">{ingMacros.protein}P</span>
+                          <span className="text-macro-carbs">{ingMacros.carbs}C</span>
+                          <span className="text-macro-fat">{ingMacros.fat}F</span>
+                        </div>
+                        
+                        {/* Swap button */}
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-5 w-5 text-muted-foreground hover:text-foreground disabled:opacity-30" 
-                          onClick={() => handleMoveIngredient(idx, 'up')}
-                          disabled={idx === 0}
+                          className="h-8 w-8 text-muted-foreground hover:text-primary ml-auto" 
+                          onClick={() => setSwappingIndex(swappingIndex === idx ? null : idx)}
+                          title="Swap ingredient"
                         >
-                          <ArrowUp className="h-3 w-3" />
+                          <RefreshCw className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-5 w-5 text-muted-foreground hover:text-foreground disabled:opacity-30" 
-                          onClick={() => handleMoveIngredient(idx, 'down')}
-                          disabled={idx === formIngredients.length - 1}
-                        >
-                          <ArrowDown className="h-3 w-3" />
+                        
+                        {/* Remove button */}
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveIngredient(idx)}>
+                          <X className="h-4 w-4" />
                         </Button>
                       </div>
-                      
-                      {/* Ingredient name or swap selector */}
-                      {swappingIndex === idx ? (
-                        <Select onValueChange={(id) => handleSwapIngredient(idx, id)} open={true} onOpenChange={(open) => !open && setSwappingIndex(null)}>
-                          <SelectTrigger className="flex-1 h-8">
-                            <SelectValue placeholder={ing.name} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ingredientDb.filter(i => i.id !== ing.ingredientId && !formIngredients.some(fi => fi.ingredientId === i.id)).map((i) => (
-                              <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <span className="flex-1 text-sm font-medium truncate">{ing.name}</span>
-                      )}
-                      
-                      <Input
-                        type="number"
-                        value={ing.amount}
-                        onChange={(e) => handleIngredientAmountChange(idx, parseFloat(e.target.value) || 0)}
-                        className="w-20 h-8 text-center"
-                        min={0}
-                      />
-                      <span className="text-sm text-muted-foreground w-6">{ing.unit}</span>
-                      
-                      {/* Swap button */}
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-muted-foreground hover:text-primary" 
-                        onClick={() => setSwappingIndex(swappingIndex === idx ? null : idx)}
-                        title="Swap ingredient"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-                      
-                      {/* Remove button */}
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveIngredient(idx)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {availableIngredients.length > 0 && (formIngredients.length === 0 || isAtBottom) && (
@@ -449,16 +484,6 @@ const RecipesPage = () => {
                 />
               </div>
 
-              {/* Macro Totals */}
-              <div className="bg-secondary/50 rounded-lg p-4">
-                <Label className="mb-3 block">Dish Totals</Label>
-                <div className="grid grid-cols-4 gap-3">
-                  <MacroCard icon={<Flame className="h-4 w-4" />} label="Calories" value={currentMacros.calories} colorClass="text-macro-calories bg-macro-calories/10" />
-                  <MacroCard icon={<Beef className="h-4 w-4" />} label="Protein" value={currentMacros.protein} colorClass="text-macro-protein bg-macro-protein/10" />
-                  <MacroCard icon={<Wheat className="h-4 w-4" />} label="Carbs" value={currentMacros.carbs} colorClass="text-macro-carbs bg-macro-carbs/10" />
-                  <MacroCard icon={<Droplet className="h-4 w-4" />} label="Fat" value={currentMacros.fat} colorClass="text-macro-fat bg-macro-fat/10" />
-                </div>
-              </div>
             </div>
           </div>
 
