@@ -2,22 +2,22 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { Flame } from 'lucide-react';
-
 interface AppLayoutProps {
   children: React.ReactNode;
 }
-
-export function AppLayout({ children }: AppLayoutProps) {
-  const { weeklyTargets } = useMealPlan();
-
-  return (
-    <SidebarProvider>
+export function AppLayout({
+  children
+}: AppLayoutProps) {
+  const {
+    weeklyTargets
+  } = useMealPlan();
+  return <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
         
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
-          <header className="sticky top-0 z-40 glass border-b h-12 flex items-center justify-between px-4">
+          <header className="sticky top-0 z-40 glass border-b h-12 flex items-center justify-between px-4 py-[8px]">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="-ml-1" />
             </div>
@@ -46,6 +46,5 @@ export function AppLayout({ children }: AppLayoutProps) {
           </main>
         </div>
       </div>
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 }
