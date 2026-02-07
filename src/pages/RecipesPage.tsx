@@ -297,24 +297,26 @@ const RecipesPage = () => {
               {/* Ingredients */}
               <div className="space-y-3">
                 <Label>Ingredients</Label>
-                <div className="space-y-2">
-                  {formIngredients.map((ing, idx) => (
-                    <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                      <span className="flex-1 text-sm font-medium truncate">{ing.name}</span>
-                      <Input
-                        type="number"
-                        value={ing.amount}
-                        onChange={(e) => handleIngredientAmountChange(idx, parseFloat(e.target.value) || 0)}
-                        className="w-20 h-8 text-center"
-                        min={0}
-                      />
-                      <span className="text-sm text-muted-foreground w-6">{ing.unit}</span>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveIngredient(idx)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                <ScrollArea className="max-h-48">
+                  <div className="space-y-2 pr-3">
+                    {formIngredients.map((ing, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+                        <span className="flex-1 text-sm font-medium truncate">{ing.name}</span>
+                        <Input
+                          type="number"
+                          value={ing.amount}
+                          onChange={(e) => handleIngredientAmountChange(idx, parseFloat(e.target.value) || 0)}
+                          className="w-20 h-8 text-center"
+                          min={0}
+                        />
+                        <span className="text-sm text-muted-foreground w-6">{ing.unit}</span>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveIngredient(idx)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
 
                 {availableIngredients.length > 0 && (
                   <div className="flex items-center gap-2">
