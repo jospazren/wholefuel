@@ -91,11 +91,11 @@ const RecipesPage = () => {
   };
   const currentMacros = calculateMacrosFromIngredients(formIngredients.map(i => ({
     ingredientId: i.ingredientId,
-    amount: i.amount
+    servingMultiplier: i.servingMultiplier
   })));
 
   // Get ingredient info including serving and macros
-  const getIngredientInfo = (ingredientId: string, amount: number) => {
+  const getIngredientInfo = (ingredientId: string, servingMultiplier: number) => {
     const ing = ingredientDb.find(i => i.id === ingredientId);
     if (!ing) return {
       calories: 0,
@@ -104,12 +104,11 @@ const RecipesPage = () => {
       fat: 0,
       serving: ''
     };
-    const multiplier = amount / ing.servingGrams;
     return {
-      calories: Math.round(ing.caloriesPerServing * multiplier),
-      protein: Math.round(ing.proteinPerServing * multiplier),
-      carbs: Math.round(ing.carbsPerServing * multiplier),
-      fat: Math.round(ing.fatPerServing * multiplier),
+      calories: Math.round(ing.caloriesPerServing * servingMultiplier),
+      protein: Math.round(ing.proteinPerServing * servingMultiplier),
+      carbs: Math.round(ing.carbsPerServing * servingMultiplier),
+      fat: Math.round(ing.fatPerServing * servingMultiplier),
       serving: ing.servingDescription || `${ing.servingGrams}g`,
       servingGrams: ing.servingGrams
     };
@@ -120,9 +119,7 @@ const RecipesPage = () => {
       setFormIngredients([...formIngredients, {
         ingredientId: ing.id,
         name: ing.name,
-        amount: ing.servingGrams,
-        // Default to 1 serving
-        unit: 'g'
+        servingMultiplier: 1, // Default to 1 serving
       }]);
     }
   };
@@ -130,11 +127,11 @@ const RecipesPage = () => {
     setFormIngredients(formIngredients.filter((_, i) => i !== index));
     setSwappingIndex(null);
   };
-  const handleIngredientAmountChange = (index: number, amount: number) => {
+  const handleIngredientMultiplierChange = (index: number, servingMultiplier: number) => {
     const updated = [...formIngredients];
     updated[index] = {
       ...updated[index],
-      amount
+      servingMultiplier
     };
     setFormIngredients(updated);
   };
@@ -145,8 +142,7 @@ const RecipesPage = () => {
       updated[index] = {
         ingredientId: ing.id,
         name: ing.name,
-        amount: updated[index].amount,
-        unit: 'g'
+        servingMultiplier: updated[index].servingMultiplier, // Keep the same multiplier
       };
       setFormIngredients(updated);
     }
@@ -350,11 +346,9 @@ const RecipesPage = () => {
                 </div>
                 <div className="space-y-2">
                   {formIngredients.map((ing, idx) => {
-                  const info = getIngredientInfo(ing.ingredientId, ing.amount);
-                  const servingMultiplier = info.servingGrams ? ing.amount / info.servingGrams : 1;
+                  const info = getIngredientInfo(ing.ingredientId, ing.servingMultiplier);
                   const handleMultiplierChange = (newMultiplier: number) => {
-                    const newAmount = Math.round(newMultiplier * (info.servingGrams || 100) * 100) / 100;
-                    handleIngredientAmountChange(idx, newAmount);
+                    handleIngredientMultiplierChange(idx, newMultiplier);
                   };
                   return <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
                         {/* Drag handle indicator */}
@@ -406,7 +400,7 @@ const RecipesPage = () => {
                         
                         {/* Serving multiplier input */}
                         <div className="shrink-0 w-20">
-                          <Input type="number" value={Math.round(servingMultiplier * 100) / 100} onChange={e => handleMultiplierChange(parseFloat(e.target.value) || 0)} className="w-16 h-8 text-center text-sm px-1" min={0} step={0.5} />
+                          <Input type="number" value={Math.round(ing.servingMultiplier * 100) / 100} onChange={e => handleMultiplierChange(parseFloat(e.target.value) || 0)} className="w-16 h-8 text-center text-sm px-1" min={0} step={0.5} />
                         </div>
                         
                         {/* Serving info */}

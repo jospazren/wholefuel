@@ -25,8 +25,7 @@ export interface BaseIngredient {
 export interface RecipeIngredient {
   ingredientId: string;
   name: string;
-  amount: number; // in grams
-  unit: string;
+  servingMultiplier: number; // multiplier for ingredient's serving size (e.g., 1.0 = one serving, 0.5 = half serving)
 }
 
 export interface Recipe {
@@ -58,8 +57,7 @@ export const CATEGORY_LABELS: Record<RecipeCategory, string> = {
 export interface MealIngredient {
   ingredientId: string;
   name: string;
-  amount: number;
-  unit: string;
+  servingMultiplier: number;
 }
 
 export interface MealInstance {

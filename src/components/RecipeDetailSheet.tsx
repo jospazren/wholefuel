@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Flame, Beef, Wheat, Droplet, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMealPlan } from '@/contexts/MealPlanContext';
 
 interface RecipeDetailSheetProps {
   recipe: Recipe | null;
@@ -22,7 +23,15 @@ const categoryColors = {
 };
 
 export function RecipeDetailSheet({ recipe, open, onClose }: RecipeDetailSheetProps) {
+  const { ingredients: ingredientDb } = useMealPlan();
+  
   if (!recipe) return null;
+
+  // Get serving description for an ingredient
+  const getServingInfo = (ingredientId: string) => {
+    const ing = ingredientDb.find(i => i.id === ingredientId);
+    return ing?.servingDescription || '1 serving';
+  };
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -56,7 +65,7 @@ export function RecipeDetailSheet({ recipe, open, onClose }: RecipeDetailSheetPr
                   <div key={idx} className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-lg">
                     <span className="text-sm text-foreground">{ing.name}</span>
                     <span className="text-sm font-medium text-muted-foreground">
-                      {ing.amount} {ing.unit}
+                      ×{Math.round(ing.servingMultiplier * 100) / 100} {getServingInfo(ing.ingredientId)}
                     </span>
                   </div>
                 ))}

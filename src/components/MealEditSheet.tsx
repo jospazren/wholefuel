@@ -32,12 +32,12 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
   if (!meal || !day || !slot) return null;
 
   const currentMacros = calculateMacrosFromIngredients(
-    editedIngredients.map(i => ({ ingredientId: i.ingredientId, amount: i.amount }))
+    editedIngredients.map(i => ({ ingredientId: i.ingredientId, servingMultiplier: i.servingMultiplier }))
   );
 
-  const handleAmountChange = (index: number, amount: number) => {
+  const handleMultiplierChange = (index: number, servingMultiplier: number) => {
     const updated = [...editedIngredients];
-    updated[index] = { ...updated[index], amount };
+    updated[index] = { ...updated[index], servingMultiplier };
     setEditedIngredients(updated);
   };
 
@@ -51,8 +51,7 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
       setEditedIngredients([...editedIngredients, {
         ingredientId: ing.id,
         name: ing.name,
-        amount: 100,
-        unit: 'g',
+        servingMultiplier: 1, // Default to 1 serving
       }]);
     }
   };
@@ -71,6 +70,12 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
   };
 
   const usedIngredientIds = editedIngredients.map(e => e.ingredientId);
+
+  // Get serving description for an ingredient
+  const getServingInfo = (ingredientId: string) => {
+    const ing = ingredientDb.find(i => i.id === ingredientId);
+    return ing?.servingDescription || '100g';
+  };
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -114,12 +119,15 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
                   <span className="flex-1 text-sm font-medium truncate">{ing.name}</span>
                   <Input
                     type="number"
-                    value={ing.amount}
-                    onChange={(e) => handleAmountChange(idx, parseFloat(e.target.value) || 0)}
+                    value={Math.round(ing.servingMultiplier * 100) / 100}
+                    onChange={(e) => handleMultiplierChange(idx, parseFloat(e.target.value) || 0)}
                     className="w-20 h-8 text-center"
                     min={0}
+                    step={0.5}
                   />
-                  <span className="text-sm text-muted-foreground w-6">{ing.unit}</span>
+                  <span className="text-sm text-muted-foreground w-24 truncate" title={getServingInfo(ing.ingredientId)}>
+                    {getServingInfo(ing.ingredientId)}
+                  </span>
                   <Button
                     variant="ghost"
                     size="icon"
