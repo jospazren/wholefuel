@@ -1110,27 +1110,44 @@ mcpServer.tool("bulk_delete_ingredients", {
   },
 });
 
+// Helper to get Monday of current week
+function getWeekStartDate(date: Date = new Date()): string {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  return d.toISOString().split('T')[0];
+}
+
 // Tool: List meal plan
 mcpServer.tool("list_meal_plan", {
-  description: "Get the current week's meal plan with all scheduled meals",
+  description: "Get the meal plan for a specific week. Defaults to current week.",
   inputSchema: {
     type: "object",
-    properties: {},
+    properties: {
+      week_start_date: { 
+        type: "string", 
+        description: "ISO date string of the Monday of the week (e.g., '2026-02-03'). Defaults to current week."
+      },
+    },
     required: [],
   },
-  handler: async () => {
+  handler: async (input: unknown) => {
     const auth = getCurrentAuth();
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
+
+    const { week_start_date = getWeekStartDate() } = input as { week_start_date?: string };
 
     const { data: mealPlan, error } = await auth.supabase
       .from('meal_plans')
       .select(`
         id, day_of_week, meal_slot, recipe_name, serving_multiplier,
         custom_calories, custom_protein, custom_fat, custom_carbs,
-        recipe_id, ingredients_json
+        recipe_id, ingredients_json, week_start_date
       `)
+      .eq('week_start_date', week_start_date)
       .order('day_of_week')
       .order('meal_slot');
 
@@ -1159,7 +1176,7 @@ mcpServer.tool("list_meal_plan", {
     return {
       content: [{
         type: "text",
-        text: JSON.stringify(sortedGrouped, null, 2)
+        text: JSON.stringify({ week_start_date, meals: sortedGrouped }, null, 2)
       }]
     };
   },
@@ -1183,6 +1200,10 @@ mcpServer.tool("add_meal_to_plan", {
       },
       recipe_id: { type: "string", description: "UUID of the recipe to add" },
       serving_multiplier: { type: "number", description: "Serving multiplier (default: 1)" },
+      week_start_date: { 
+        type: "string", 
+        description: "ISO date string of the Monday of the week (e.g., '2026-02-03'). Defaults to current week."
+      },
     },
     required: ["day", "slot", "recipe_id"],
   },
@@ -1192,11 +1213,12 @@ mcpServer.tool("add_meal_to_plan", {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
 
-    const { day, slot, recipe_id, serving_multiplier = 1 } = input as {
+    const { day, slot, recipe_id, serving_multiplier = 1, week_start_date = getWeekStartDate() } = input as {
       day: string;
       slot: string;
       recipe_id: string;
       serving_multiplier?: number;
+      week_start_date?: string;
     };
 
     // Get recipe details
@@ -1214,6 +1236,7 @@ mcpServer.tool("add_meal_to_plan", {
     const { data: existing } = await auth.supabase
       .from('meal_plans')
       .select('id')
+      .eq('week_start_date', week_start_date)
       .eq('day_of_week', day)
       .eq('meal_slot', slot)
       .single();
@@ -1240,7 +1263,7 @@ mcpServer.tool("add_meal_to_plan", {
       return {
         content: [{
           type: "text",
-          text: `Updated ${day} ${slot} with "${recipe.name}" (${serving_multiplier}x serving)`
+          text: `Updated ${day} ${slot} (week ${week_start_date}) with "${recipe.name}" (${serving_multiplier}x serving)`
         }]
       };
     }
@@ -1250,6 +1273,7 @@ mcpServer.tool("add_meal_to_plan", {
       .from('meal_plans')
       .insert({
         user_id: auth.userId,
+        week_start_date,
         day_of_week: day,
         meal_slot: slot,
         recipe_id,
@@ -1268,7 +1292,7 @@ mcpServer.tool("add_meal_to_plan", {
     return {
       content: [{
         type: "text",
-        text: `Added "${recipe.name}" to ${day} ${slot} (${serving_multiplier}x serving)`
+        text: `Added "${recipe.name}" to ${day} ${slot} (week ${week_start_date}, ${serving_multiplier}x serving)`
       }]
     };
   },
@@ -1290,6 +1314,10 @@ mcpServer.tool("remove_meal_from_plan", {
         enum: ["m1", "m2", "m3", "m4", "m5"],
         description: "Meal slot"
       },
+      week_start_date: { 
+        type: "string", 
+        description: "ISO date string of the Monday of the week (e.g., '2026-02-03'). Defaults to current week."
+      },
     },
     required: ["day", "slot"],
   },
@@ -1299,24 +1327,25 @@ mcpServer.tool("remove_meal_from_plan", {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
 
-    const { day, slot } = input as { day: string; slot: string };
+    const { day, slot, week_start_date = getWeekStartDate() } = input as { day: string; slot: string; week_start_date?: string };
 
     const { data: deleted, error } = await auth.supabase
       .from('meal_plans')
       .delete()
+      .eq('week_start_date', week_start_date)
       .eq('day_of_week', day)
       .eq('meal_slot', slot)
       .select()
       .single();
 
     if (error || !deleted) {
-      return { content: [{ type: "text", text: `No meal found at ${day} ${slot}` }] };
+      return { content: [{ type: "text", text: `No meal found at ${day} ${slot} (week ${week_start_date})` }] };
     }
 
     return {
       content: [{
         type: "text",
-        text: `Removed "${deleted.recipe_name}" from ${day} ${slot}`
+        text: `Removed "${deleted.recipe_name}" from ${day} ${slot} (week ${week_start_date})`
       }]
     };
   },
@@ -1324,22 +1353,30 @@ mcpServer.tool("remove_meal_from_plan", {
 
 // Tool: Get shopping list
 mcpServer.tool("get_shopping_list", {
-  description: "Generate aggregated shopping list from the current meal plan",
+  description: "Generate aggregated shopping list from a specific week's meal plan",
   inputSchema: {
     type: "object",
-    properties: {},
+    properties: {
+      week_start_date: { 
+        type: "string", 
+        description: "ISO date string of the Monday of the week (e.g., '2026-02-03'). Defaults to current week."
+      },
+    },
     required: [],
   },
-  handler: async () => {
+  handler: async (input: unknown) => {
     const auth = getCurrentAuth();
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
 
-    // Get all meals with their recipes
+    const { week_start_date = getWeekStartDate() } = input as { week_start_date?: string };
+
+    // Get all meals with their recipes for the specified week
     const { data: mealPlan, error: mealError } = await auth.supabase
       .from('meal_plans')
-      .select('recipe_id, serving_multiplier, ingredients_json');
+      .select('recipe_id, serving_multiplier, ingredients_json')
+      .eq('week_start_date', week_start_date);
 
     if (mealError) {
       return { content: [{ type: "text", text: `Error fetching meal plan: ${mealError.message}` }] };
@@ -1349,7 +1386,7 @@ mcpServer.tool("get_shopping_list", {
     const recipeIds = [...new Set(mealPlan?.filter(m => m.recipe_id).map(m => m.recipe_id))];
 
     if (recipeIds.length === 0) {
-      return { content: [{ type: "text", text: "No recipes in meal plan. Shopping list is empty." }] };
+      return { content: [{ type: "text", text: `No recipes in meal plan for week ${week_start_date}. Shopping list is empty.` }] };
     }
 
     // Get recipe ingredients
@@ -1414,7 +1451,7 @@ mcpServer.tool("get_shopping_list", {
     return {
       content: [{
         type: "text",
-        text: JSON.stringify(shoppingList, null, 2)
+        text: JSON.stringify({ week_start_date, items: shoppingList }, null, 2)
       }]
     };
   },
@@ -1422,25 +1459,53 @@ mcpServer.tool("get_shopping_list", {
 
 // Tool: Get weekly targets
 mcpServer.tool("get_weekly_targets", {
-  description: "Get user's calorie and macro targets",
+  description: "Get user's calorie and macro targets for a specific week",
   inputSchema: {
     type: "object",
-    properties: {},
+    properties: {
+      week_start_date: { 
+        type: "string", 
+        description: "ISO date string of the Monday of the week (e.g., '2026-02-03'). Defaults to current week."
+      },
+    },
     required: [],
   },
-  handler: async () => {
+  handler: async (input: unknown) => {
     const auth = getCurrentAuth();
     if (!auth) {
       return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
     }
 
+    const { week_start_date = getWeekStartDate() } = input as { week_start_date?: string };
+
     const { data: targets, error } = await auth.supabase
       .from('weekly_targets')
       .select('*')
+      .eq('week_start_date', week_start_date)
       .single();
 
     if (error) {
-      return { content: [{ type: "text", text: `No targets set. Default values assumed.` }] };
+      // Try to get the most recent targets as fallback
+      const { data: latestTargets } = await auth.supabase
+        .from('weekly_targets')
+        .select('*')
+        .order('week_start_date', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (latestTargets) {
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({ 
+              ...latestTargets, 
+              note: `No targets set for week ${week_start_date}. Showing most recent targets from ${latestTargets.week_start_date}.` 
+            }, null, 2)
+          }]
+        };
+      }
+
+      return { content: [{ type: "text", text: `No targets set for week ${week_start_date}. Default values assumed.` }] };
     }
 
     return {

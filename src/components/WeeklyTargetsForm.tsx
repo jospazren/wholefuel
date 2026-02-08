@@ -13,7 +13,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { WeeklyTargets } from '@/types/meal';
-import { Target, Flame, Beef, Wheat, Droplet, Check } from 'lucide-react';
+import { Target, Flame, Beef, Wheat, Droplet, Check, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const strategies = [
@@ -29,7 +29,7 @@ interface WeeklyTargetsFormProps {
 }
 
 export function WeeklyTargetsForm({ onComplete }: WeeklyTargetsFormProps) {
-  const { weeklyTargets, setWeeklyTargets, calculateTargets } = useMealPlan();
+  const { weeklyTargets, setWeeklyTargets, calculateTargets, getWeekLabel } = useMealPlan();
   const [tdee, setTdee] = useState(weeklyTargets.tdee.toString());
   const [strategy, setStrategy] = useState<WeeklyTargets['strategy']>(weeklyTargets.strategy);
   const [inputMode, setInputMode] = useState<'calculated' | 'manual'>('calculated');
@@ -71,13 +71,19 @@ export function WeeklyTargetsForm({ onComplete }: WeeklyTargetsFormProps) {
   return (
     <Card className="border-0 shadow-lg animate-fade-in">
       <CardHeader className="pb-4">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Target className="h-5 w-5 text-primary" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Target className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">Weekly Targets</CardTitle>
+              <CardDescription>Set your daily macro goals</CardDescription>
+            </div>
           </div>
-          <div>
-            <CardTitle className="text-xl">Weekly Targets</CardTitle>
-            <CardDescription>Set your daily macro goals</CardDescription>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/50 px-2 py-1 rounded-md">
+            <CalendarDays className="h-3.5 w-3.5" />
+            <span>{getWeekLabel()}</span>
           </div>
         </div>
       </CardHeader>
@@ -218,7 +224,7 @@ export function WeeklyTargetsForm({ onComplete }: WeeklyTargetsFormProps) {
 
         <Button onClick={handleApply} className="w-full h-12 text-base font-semibold gap-2">
           <Check className="h-5 w-5" />
-          Apply to This Week
+          Apply to {getWeekLabel()}
         </Button>
       </CardContent>
     </Card>
