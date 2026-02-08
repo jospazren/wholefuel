@@ -353,15 +353,15 @@ const RecipesPage = () => {
                         {/* Drag handle indicator */}
                         <span className="text-muted-foreground text-sm font-mono cursor-grab select-none shrink-0">::</span>
                         
-                        {/* Ingredient name or swap selector */}
-                        {swappingIndex === idx ? <Select onValueChange={id => handleSwapIngredient(idx, id)} open={true} onOpenChange={open => !open && setSwappingIndex(null)}>
-                            <SelectTrigger className="flex-1 h-8">
-                              <SelectValue placeholder={ing.name} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ingredientDb.filter(i => i.id !== ing.ingredientId && !formIngredients.some(fi => fi.ingredientId === i.id)).map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
-                            </SelectContent>
-                          </Select> : <span className="flex-1 text-sm font-medium truncate">{ing.name}</span>}
+                        {/* Ingredient name selector */}
+                        <Select value={ing.ingredientId} onValueChange={id => handleSwapIngredient(idx, id)}>
+                          <SelectTrigger className="flex-1 h-8">
+                            <SelectValue placeholder={ing.name} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ingredientDb.filter(i => i.id === ing.ingredientId || !formIngredients.some(fi => fi.ingredientId === i.id)).map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
                         
                         {/* Serving multiplier input */}
                         <div className="shrink-0 w-16">
@@ -378,11 +378,6 @@ const RecipesPage = () => {
                         <span className="w-10 text-sm text-macro-protein text-center shrink-0">{info.protein}</span>
                         <span className="w-10 text-sm text-macro-carbs text-center shrink-0">{info.carbs}</span>
                         <span className="w-10 text-sm text-macro-fat text-center shrink-0">{info.fat}</span>
-                        
-                        {/* Swap button */}
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary shrink-0" onClick={() => setSwappingIndex(swappingIndex === idx ? null : idx)} title="Swap ingredient">
-                          <RefreshCw className="h-3.5 w-3.5" />
-                        </Button>
                         
                         {/* Remove button */}
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleRemoveIngredient(idx)}>
