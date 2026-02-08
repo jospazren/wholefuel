@@ -392,8 +392,7 @@ const RecipesPage = () => {
                 })}
                 </div>
 
-                {availableIngredients.length > 0 && (formIngredients.length === 0 || isAtBottom) && <div className="flex items-center gap-2">
-                    <Plus className="h-4 w-4 text-muted-foreground" />
+                {availableIngredients.length > 0 && (formIngredients.length === 0 || isAtBottom) && <div>
                     <Select onValueChange={handleAddIngredient}>
                       <SelectTrigger className="flex-1">
                         <SelectValue placeholder="Add ingredient..." />
