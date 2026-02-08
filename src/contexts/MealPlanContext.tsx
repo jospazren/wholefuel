@@ -125,12 +125,12 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           return {
             id: ing.id,
             name: ing.name,
-            caloriesPer100g: Number(ing.calories_per_100g),
-            proteinPer100g: Number(ing.protein_per_100g),
-            fatPer100g: Number(ing.fat_per_100g),
-            carbsPer100g: Number(ing.carbs_per_100g),
-            fiberPer100g: Number(ing.fiber_per_100g),
-            sodiumPer100g: Number(ing.sodium_per_100g),
+            caloriesPerServing: Number((ing as any).calories_per_serving),
+            proteinPerServing: Number((ing as any).protein_per_serving),
+            fatPerServing: Number((ing as any).fat_per_serving),
+            carbsPerServing: Number((ing as any).carbs_per_serving),
+            fiberPerServing: Number((ing as any).fiber_per_serving),
+            sodiumPerServing: Number((ing as any).sodium_per_serving),
             brand: ing.brand || undefined,
             category: ing.category || undefined,
             servingDescription: (ing as any).serving_description || '100g',
@@ -241,19 +241,19 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     const ingredientsToInsert = defaultIngredients.map(ing => ({
       user_id: user.id,
       name: ing.name,
-      calories_per_100g: ing.caloriesPer100g,
-      protein_per_100g: ing.proteinPer100g,
-      fat_per_100g: ing.fatPer100g,
-      carbs_per_100g: ing.carbsPer100g,
-      fiber_per_100g: ing.fiberPer100g,
-      sodium_per_100g: ing.sodiumPer100g,
+      calories_per_serving: ing.caloriesPerServing,
+      protein_per_serving: ing.proteinPerServing,
+      fat_per_serving: ing.fatPerServing,
+      carbs_per_serving: ing.carbsPerServing,
+      fiber_per_serving: ing.fiberPerServing,
+      sodium_per_serving: ing.sodiumPerServing,
       brand: ing.brand,
       category: ing.category,
     }));
 
     const { data, error } = await supabase
       .from('ingredients')
-      .insert(ingredientsToInsert)
+      .insert(ingredientsToInsert as any)
       .select();
 
     if (error) {
@@ -267,12 +267,12 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         return {
           id: ing.id,
           name: ing.name,
-          caloriesPer100g: Number(ing.calories_per_100g),
-          proteinPer100g: Number(ing.protein_per_100g),
-          fatPer100g: Number(ing.fat_per_100g),
-          carbsPer100g: Number(ing.carbs_per_100g),
-          fiberPer100g: Number(ing.fiber_per_100g),
-          sodiumPer100g: Number(ing.sodium_per_100g),
+          caloriesPerServing: Number((ing as any).calories_per_serving),
+          proteinPerServing: Number((ing as any).protein_per_serving),
+          fatPerServing: Number((ing as any).fat_per_serving),
+          carbsPerServing: Number((ing as any).carbs_per_serving),
+          fiberPerServing: Number((ing as any).fiber_per_serving),
+          sodiumPerServing: Number((ing as any).sodium_per_serving),
           brand: ing.brand || undefined,
           category: ing.category || undefined,
           servingDescription: (ing as any).serving_description || '100g',
@@ -297,11 +297,11 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     return recipeIngredients.reduce((totals, ing) => {
       const baseIng = ingredients.find(i => i.id === ing.ingredientId);
       if (baseIng) {
-        const multiplier = ing.amount / 100;
-        totals.calories += Math.round(baseIng.caloriesPer100g * multiplier);
-        totals.protein += Math.round(baseIng.proteinPer100g * multiplier);
-        totals.fat += Math.round(baseIng.fatPer100g * multiplier);
-        totals.carbs += Math.round(baseIng.carbsPer100g * multiplier);
+        const multiplier = ing.amount / baseIng.servingGrams;
+        totals.calories += Math.round(baseIng.caloriesPerServing * multiplier);
+        totals.protein += Math.round(baseIng.proteinPerServing * multiplier);
+        totals.fat += Math.round(baseIng.fatPerServing * multiplier);
+        totals.carbs += Math.round(baseIng.carbsPerServing * multiplier);
       }
       return totals;
     }, { calories: 0, protein: 0, fat: 0, carbs: 0 });
@@ -550,12 +550,12 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.from('ingredients').insert({
       user_id: user.id,
       name: ingredient.name,
-      calories_per_100g: ingredient.caloriesPer100g,
-      protein_per_100g: ingredient.proteinPer100g,
-      fat_per_100g: ingredient.fatPer100g,
-      carbs_per_100g: ingredient.carbsPer100g,
-      fiber_per_100g: ingredient.fiberPer100g,
-      sodium_per_100g: ingredient.sodiumPer100g,
+      calories_per_serving: ingredient.caloriesPerServing,
+      protein_per_serving: ingredient.proteinPerServing,
+      fat_per_serving: ingredient.fatPerServing,
+      carbs_per_serving: ingredient.carbsPerServing,
+      fiber_per_serving: ingredient.fiberPerServing,
+      sodium_per_serving: ingredient.sodiumPerServing,
       brand: ingredient.brand,
       category: ingredient.category,
       serving_description: ingredient.servingDescription,
@@ -580,18 +580,18 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
 
     const dbUpdates: any = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.caloriesPer100g !== undefined) dbUpdates.calories_per_100g = updates.caloriesPer100g;
-    if (updates.proteinPer100g !== undefined) dbUpdates.protein_per_100g = updates.proteinPer100g;
-    if (updates.fatPer100g !== undefined) dbUpdates.fat_per_100g = updates.fatPer100g;
-    if (updates.carbsPer100g !== undefined) dbUpdates.carbs_per_100g = updates.carbsPer100g;
-    if (updates.fiberPer100g !== undefined) dbUpdates.fiber_per_100g = updates.fiberPer100g;
-    if (updates.sodiumPer100g !== undefined) dbUpdates.sodium_per_100g = updates.sodiumPer100g;
+    if (updates.caloriesPerServing !== undefined) dbUpdates.calories_per_serving = updates.caloriesPerServing;
+    if (updates.proteinPerServing !== undefined) dbUpdates.protein_per_serving = updates.proteinPerServing;
+    if (updates.fatPerServing !== undefined) dbUpdates.fat_per_serving = updates.fatPerServing;
+    if (updates.carbsPerServing !== undefined) dbUpdates.carbs_per_serving = updates.carbsPerServing;
+    if (updates.fiberPerServing !== undefined) dbUpdates.fiber_per_serving = updates.fiberPerServing;
+    if (updates.sodiumPerServing !== undefined) dbUpdates.sodium_per_serving = updates.sodiumPerServing;
     if (updates.brand !== undefined) dbUpdates.brand = updates.brand;
     if (updates.category !== undefined) dbUpdates.category = updates.category;
     if (updates.servingDescription !== undefined) dbUpdates.serving_description = updates.servingDescription;
     if (updates.servingGrams !== undefined) dbUpdates.serving_grams = updates.servingGrams;
 
-    await supabase.from('ingredients').update(dbUpdates).eq('id', id).eq('user_id', user.id);
+    await supabase.from('ingredients').update(dbUpdates as any).eq('id', id).eq('user_id', user.id);
   };
 
   const deleteIngredient = async (id: string) => {

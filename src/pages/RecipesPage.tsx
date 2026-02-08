@@ -106,10 +106,10 @@ const RecipesPage = () => {
     };
     const multiplier = amount / ing.servingGrams;
     return {
-      calories: Math.round(ing.caloriesPer100g * multiplier),
-      protein: Math.round(ing.proteinPer100g * multiplier),
-      carbs: Math.round(ing.carbsPer100g * multiplier),
-      fat: Math.round(ing.fatPer100g * multiplier),
+      calories: Math.round(ing.caloriesPerServing * multiplier),
+      protein: Math.round(ing.proteinPerServing * multiplier),
+      carbs: Math.round(ing.carbsPerServing * multiplier),
+      fat: Math.round(ing.fatPerServing * multiplier),
       serving: ing.servingDescription || `${ing.servingGrams}g`,
       servingGrams: ing.servingGrams
     };
