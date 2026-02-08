@@ -325,17 +325,23 @@ const RecipesPage = () => {
 
               {/* Ingredients */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Ingredients</Label>
-                  {/* Column headers */}
-                  <div className="flex items-center text-sm font-medium text-muted-foreground gap-2 pr-20">
-                    <span className="w-16 text-center">Qty</span>
-                    <span className="w-24 text-center">Serving</span>
-                    <span className="w-12 text-center">Cal</span>
-                    <span className="space-y-2">P</span>
-                    <span className="w-10 text-center">C</span>
-                    <span className="w-10 text-center">F</span>
-                  </div>
+                {/* Column headers - matching ingredient row structure */}
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground px-2">
+                  {/* Spacer for drag handle */}
+                  <span className="shrink-0 w-4" />
+                  {/* Ingredients label - matches ingredient dropdown */}
+                  <span className="flex-1 min-w-0">Ingredients</span>
+                  {/* Qty */}
+                  <span className="w-20 text-left shrink-0">Qty</span>
+                  {/* Serving */}
+                  <span className="w-24 text-left shrink-0">Serving</span>
+                  {/* Macros */}
+                  <span className="w-12 text-left shrink-0">Cal</span>
+                  <span className="w-10 text-left shrink-0">P</span>
+                  <span className="w-10 text-left shrink-0">C</span>
+                  <span className="w-10 text-left shrink-0">F</span>
+                  {/* Spacer for remove button */}
+                  <span className="w-7 shrink-0" />
                 </div>
                 <div ref={ingredientsRef} className="max-h-48 overflow-y-auto space-y-2 pr-1">
                   {formIngredients.map((ing, idx) => {
@@ -369,11 +375,11 @@ const RecipesPage = () => {
                           {info.serving}
                         </span>
                         
-                        {/* Per-ingredient macros - fixed widths */}
-                        <span className="w-12 text-sm text-macro-calories text-center shrink-0">{info.calories}</span>
-                        <span className="w-10 text-sm text-macro-protein text-center shrink-0">{info.protein}</span>
-                        <span className="w-10 text-sm text-macro-carbs text-center shrink-0">{info.carbs}</span>
-                        <span className="w-10 text-sm text-macro-fat text-center shrink-0">{info.fat}</span>
+                        {/* Per-ingredient macros - fixed widths, left aligned */}
+                        <span className="w-12 text-sm text-macro-calories text-left shrink-0">{info.calories}</span>
+                        <span className="w-10 text-sm text-macro-protein text-left shrink-0">{info.protein}</span>
+                        <span className="w-10 text-sm text-macro-carbs text-left shrink-0">{info.carbs}</span>
+                        <span className="w-10 text-sm text-macro-fat text-left shrink-0">{info.fat}</span>
                         
                         {/* Remove button */}
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleRemoveIngredient(idx)}>
