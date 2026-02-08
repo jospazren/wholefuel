@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { Recipe, RecipeCategory, RECIPE_CATEGORIES, CATEGORY_LABELS, RecipeIngredient } from '@/types/meal';
@@ -12,7 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Card, CardContent } from '@/components/ui/card';
-import { UtensilsCrossed, Plus, Search, Pencil, Trash2, Flame, Beef, Wheat, Droplet, X, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { UtensilsCrossed, Plus, Search, Pencil, Trash2, Flame, Beef, Wheat, Droplet, X, ArrowUp, ArrowDown, RefreshCw, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 const RecipesPage = () => {
   const {
@@ -38,6 +40,8 @@ const RecipesPage = () => {
   const [formLink, setFormLink] = useState('');
   const [swappingIndex, setSwappingIndex] = useState<number | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [openIngredientPopover, setOpenIngredientPopover] = useState<number | null>(null);
+  const [addIngredientOpen, setAddIngredientOpen] = useState(false);
   const ingredientsRef = useRef<HTMLDivElement>(null);
 
   // Track scroll position for "Add ingredient" visibility
@@ -195,7 +199,13 @@ const RecipesPage = () => {
   const isRecipeUsedThisWeek = (id: string) => {
     return Object.values(weeklyPlan).some(day => Object.values(day).some(meal => (meal as any)?.recipeId === id));
   };
-  const availableIngredients = ingredientDb.filter(ing => !formIngredients.some(fi => fi.ingredientId === ing.id));
+  // Sort ingredients alphabetically
+  const sortedIngredientDb = useMemo(() => 
+    [...ingredientDb].sort((a, b) => a.name.localeCompare(b.name)), 
+    [ingredientDb]
+  );
+  
+  const availableIngredients = sortedIngredientDb.filter(ing => !formIngredients.some(fi => fi.ingredientId === ing.id));
   const categoryColors: Record<RecipeCategory, string> = {
     breakfast: 'bg-category-breakfast/10 text-category-breakfast',
     main: 'bg-category-lunch/10 text-category-lunch',
@@ -350,15 +360,44 @@ const RecipesPage = () => {
                         {/* Drag handle indicator */}
                         <span className="text-muted-foreground text-sm font-mono cursor-grab select-none shrink-0">::</span>
                         
-                        {/* Ingredient name selector */}
-                        <Select value={ing.ingredientId} onValueChange={id => handleSwapIngredient(idx, id)}>
-                          <SelectTrigger className="flex-1 min-w-0 h-8">
-                            <SelectValue placeholder={ing.name} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ingredientDb.filter(i => i.id === ing.ingredientId || !formIngredients.some(fi => fi.ingredientId === i.id)).map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                        {/* Ingredient name selector - searchable */}
+                        <Popover open={openIngredientPopover === idx} onOpenChange={(open) => setOpenIngredientPopover(open ? idx : null)}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={openIngredientPopover === idx}
+                              className="flex-1 min-w-0 h-8 justify-between font-normal"
+                            >
+                              <span className="truncate">{ing.name}</span>
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[250px] p-0" align="start">
+                            <Command>
+                              <CommandInput placeholder="Search ingredients..." />
+                              <CommandList>
+                                <CommandEmpty>No ingredient found.</CommandEmpty>
+                                <CommandGroup>
+                                  {sortedIngredientDb
+                                    .filter(i => i.id === ing.ingredientId || !formIngredients.some(fi => fi.ingredientId === i.id))
+                                    .map(i => (
+                                      <CommandItem
+                                        key={i.id}
+                                        value={i.name}
+                                        onSelect={() => {
+                                          handleSwapIngredient(idx, i.id);
+                                          setOpenIngredientPopover(null);
+                                        }}
+                                      >
+                                        {i.name}
+                                      </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         
                         {/* Serving multiplier input */}
                         <div className="shrink-0 w-20">
@@ -385,14 +424,36 @@ const RecipesPage = () => {
                 </div>
 
                 {availableIngredients.length > 0 && <div>
-                    <Select onValueChange={handleAddIngredient}>
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Add ingredient..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableIngredients.map(ing => <SelectItem key={ing.id} value={ing.id}>{ing.name}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={addIngredientOpen} onOpenChange={setAddIngredientOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" role="combobox" className="w-full justify-start gap-2 font-normal">
+                          <Plus className="h-4 w-4" />
+                          Add ingredient...
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search ingredients..." />
+                          <CommandList>
+                            <CommandEmpty>No ingredient found.</CommandEmpty>
+                            <CommandGroup>
+                              {availableIngredients.map(ing => (
+                                <CommandItem
+                                  key={ing.id}
+                                  value={ing.name}
+                                  onSelect={() => {
+                                    handleAddIngredient(ing.id);
+                                    setAddIngredientOpen(false);
+                                  }}
+                                >
+                                  {ing.name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>}
               </div>
 
