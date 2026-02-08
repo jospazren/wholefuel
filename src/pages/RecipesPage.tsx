@@ -291,7 +291,7 @@ const RecipesPage = () => {
           {/* Compact header: Name + Category left, Macros right */}
           <div className="flex items-start justify-between gap-4 pb-4 border-b shrink-0">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Recipe name..." className="text-base font-semibold h-9 max-w-[200px]" />
+              <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Recipe name..." className="text-base font-semibold h-9 flex-1" />
               <Select value={formCategory} onValueChange={v => setFormCategory(v as RecipeCategory)}>
                 <SelectTrigger className="w-[130px] h-9">
                   <SelectValue />
