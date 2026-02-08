@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { Json } from '@/integrations/supabase/types';
+import { startOfWeek, addWeeks, format, parseISO } from 'date-fns';
 import {
   WeeklyPlan,
   WeeklyTargets,
@@ -21,7 +22,20 @@ import {
 import { baseIngredients as defaultIngredients } from '@/data/ingredients';
 import { sampleRecipes as defaultRecipes } from '@/data/recipes';
 
+// Helper to get the Monday of a given week
+const getWeekStartDate = (date: Date = new Date()): string => {
+  const monday = startOfWeek(date, { weekStartsOn: 1 });
+  return format(monday, 'yyyy-MM-dd');
+};
+
 interface MealPlanContextType {
+  // Week navigation
+  currentWeekStart: string; // ISO date string (Monday)
+  goToPreviousWeek: () => void;
+  goToNextWeek: () => void;
+  goToWeek: (date: Date) => void;
+  getWeekLabel: () => string;
+  
   // Weekly plan
   weeklyPlan: WeeklyPlan;
   weeklyTargets: WeeklyTargets;
@@ -80,6 +94,7 @@ const MealPlanContext = createContext<MealPlanContextType | undefined>(undefined
 export function MealPlanProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
+  const [currentWeekStart, setCurrentWeekStart] = useState<string>(getWeekStartDate());
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>(defaultWeeklyPlan);
   const [weeklyTargets, setWeeklyTargetsState] = useState<WeeklyTargets>(defaultTargets);
   const [ingredients, setIngredients] = useState<BaseIngredient[]>(defaultIngredients);
@@ -91,7 +106,49 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
   // Skip data loading on auth page
   const isAuthPage = location.pathname === '/auth';
 
-  // Load user data from database when user logs in
+  // Week navigation functions
+  const goToPreviousWeek = useCallback(() => {
+    const current = parseISO(currentWeekStart);
+    const previous = addWeeks(current, -1);
+    setCurrentWeekStart(format(previous, 'yyyy-MM-dd'));
+  }, [currentWeekStart]);
+
+  const goToNextWeek = useCallback(() => {
+    const current = parseISO(currentWeekStart);
+    const next = addWeeks(current, 1);
+    setCurrentWeekStart(format(next, 'yyyy-MM-dd'));
+  }, [currentWeekStart]);
+
+  const goToWeek = useCallback((date: Date) => {
+    setCurrentWeekStart(getWeekStartDate(date));
+  }, []);
+
+  const getWeekLabel = useCallback((): string => {
+    const monday = parseISO(currentWeekStart);
+    const sunday = addWeeks(monday, 1);
+    sunday.setDate(sunday.getDate() - 1);
+    
+    const today = new Date();
+    const thisWeekStart = getWeekStartDate(today);
+    
+    if (currentWeekStart === thisWeekStart) {
+      return 'This Week';
+    }
+    
+    const nextWeekStart = getWeekStartDate(addWeeks(today, 1));
+    if (currentWeekStart === nextWeekStart) {
+      return 'Next Week';
+    }
+    
+    const lastWeekStart = getWeekStartDate(addWeeks(today, -1));
+    if (currentWeekStart === lastWeekStart) {
+      return 'Last Week';
+    }
+    
+    return `${format(monday, 'MMM d')} - ${format(sunday, 'MMM d')}`;
+  }, [currentWeekStart]);
+
+  // Load user data when week changes or user logs in
   useEffect(() => {
     if (user && !isAuthPage) {
       loadUserData();
@@ -105,14 +162,14 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       setDbRecipeMap(new Map());
       setIsLoading(false);
     }
-  }, [user, isAuthPage]);
+  }, [user, isAuthPage, currentWeekStart]);
 
   const loadUserData = async () => {
     if (!user) return;
     setIsLoading(true);
 
     try {
-      // Load ingredients
+      // Load ingredients (not week-specific)
       const { data: dbIngredients } = await supabase
         .from('ingredients')
         .select('*')
@@ -144,7 +201,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         await seedDefaultIngredients();
       }
 
-      // Load recipes
+      // Load recipes (not week-specific)
       const { data: dbRecipes } = await supabase
         .from('recipes')
         .select('*, recipe_ingredients(*)')
@@ -180,11 +237,12 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         setDbRecipeMap(recipeMap);
       }
 
-      // Load weekly targets
+      // Load weekly targets for the current week
       const { data: dbTargets } = await supabase
         .from('weekly_targets')
         .select('*')
         .eq('user_id', user.id)
+        .eq('week_start_date', currentWeekStart)
         .single();
 
       if (dbTargets) {
@@ -196,13 +254,36 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           fat: Number(dbTargets.fat),
           carbs: Number(dbTargets.carbs),
         });
+      } else {
+        // No targets for this week - try to get the most recent targets as a template
+        const { data: latestTargets } = await supabase
+          .from('weekly_targets')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('week_start_date', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (latestTargets) {
+          setWeeklyTargetsState({
+            tdee: Number(latestTargets.tdee),
+            strategy: latestTargets.strategy as WeeklyTargets['strategy'],
+            dailyCalories: Number(latestTargets.daily_calories),
+            protein: Number(latestTargets.protein),
+            fat: Number(latestTargets.fat),
+            carbs: Number(latestTargets.carbs),
+          });
+        } else {
+          setWeeklyTargetsState(defaultTargets);
+        }
       }
 
-      // Load meal plans
+      // Load meal plans for the current week
       const { data: dbMealPlans } = await supabase
         .from('meal_plans')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .eq('week_start_date', currentWeekStart);
 
       if (dbMealPlans && dbMealPlans.length > 0) {
         const loadedPlan: WeeklyPlan = { ...defaultWeeklyPlan };
@@ -224,6 +305,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           };
         });
         setWeeklyPlan(loadedPlan);
+      } else {
+        setWeeklyPlan(defaultWeeklyPlan);
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -315,13 +398,14 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       .from('weekly_targets')
       .upsert({
         user_id: user.id,
+        week_start_date: currentWeekStart,
         tdee: targets.tdee,
         strategy: targets.strategy,
         daily_calories: targets.dailyCalories,
         protein: targets.protein,
         fat: targets.fat,
         carbs: targets.carbs,
-      }, { onConflict: 'user_id' });
+      } as any, { onConflict: 'user_id,week_start_date' });
 
     if (error) {
       console.error('Error saving targets:', error);
@@ -357,6 +441,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       .from('meal_plans')
       .upsert({
         user_id: user.id,
+        week_start_date: currentWeekStart,
         day_of_week: day,
         meal_slot: slot,
         recipe_id: recipe.id,
@@ -367,7 +452,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         custom_fat: recipe.totalMacros.fat,
         custom_carbs: recipe.totalMacros.carbs,
         ingredients_json: mealInstance.ingredients as unknown as Json,
-      } as any, { onConflict: 'user_id,day_of_week,meal_slot' })
+      } as any, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' })
       .select()
       .single();
 
@@ -401,6 +486,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       .from('meal_plans')
       .delete()
       .eq('user_id', user.id)
+      .eq('week_start_date', currentWeekStart)
       .eq('day_of_week', day)
       .eq('meal_slot', slot);
 
@@ -426,10 +512,15 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     // Delete source, upsert to target, optionally upsert swap
-    await supabase.from('meal_plans').delete().eq('user_id', user.id).eq('day_of_week', fromDay).eq('meal_slot', fromSlot);
+    await supabase.from('meal_plans').delete()
+      .eq('user_id', user.id)
+      .eq('week_start_date', currentWeekStart)
+      .eq('day_of_week', fromDay)
+      .eq('meal_slot', fromSlot);
     
     await supabase.from('meal_plans').upsert({
       user_id: user.id,
+      week_start_date: currentWeekStart,
       day_of_week: toDay,
       meal_slot: toSlot,
       recipe_id: sourceMeal.recipeId,
@@ -440,11 +531,12 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       custom_fat: sourceMeal.customMacros.fat,
       custom_carbs: sourceMeal.customMacros.carbs,
       ingredients_json: sourceMeal.ingredients as unknown as Json,
-    } as any, { onConflict: 'user_id,day_of_week,meal_slot' });
+    } as any, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' });
 
     if (targetMeal) {
       await supabase.from('meal_plans').upsert({
         user_id: user.id,
+        week_start_date: currentWeekStart,
         day_of_week: fromDay,
         meal_slot: fromSlot,
         recipe_id: targetMeal.recipeId,
@@ -455,7 +547,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         custom_fat: targetMeal.customMacros.fat,
         custom_carbs: targetMeal.customMacros.carbs,
         ingredients_json: targetMeal.ingredients as unknown as Json,
-      } as any, { onConflict: 'user_id,day_of_week,meal_slot' });
+      } as any, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' });
     }
   };
 
@@ -501,7 +593,11 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       custom_fat: updatedMeal.customMacros.fat,
       custom_carbs: updatedMeal.customMacros.carbs,
       ingredients_json: updatedMeal.ingredients as unknown as Json,
-    } as any).eq('user_id', user.id).eq('day_of_week', day).eq('meal_slot', slot);
+    } as any)
+      .eq('user_id', user.id)
+      .eq('week_start_date', currentWeekStart)
+      .eq('day_of_week', day)
+      .eq('meal_slot', slot);
   };
 
   const getDailyMacros = (day: DayOfWeek): Macros => {
@@ -729,6 +825,11 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
   return (
     <MealPlanContext.Provider
       value={{
+        currentWeekStart,
+        goToPreviousWeek,
+        goToNextWeek,
+        goToWeek,
+        getWeekLabel,
         weeklyPlan,
         weeklyTargets,
         setWeeklyTargets,
