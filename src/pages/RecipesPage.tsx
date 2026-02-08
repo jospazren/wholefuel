@@ -332,7 +332,7 @@ const RecipesPage = () => {
                 <div className="flex items-center justify-between">
                   <Label>Ingredients</Label>
                   {/* Column headers */}
-                  <div className="flex items-center text-xs text-muted-foreground gap-2 pr-20">
+                  <div className="flex items-center text-sm font-medium gap-2 pr-20">
                     <span className="w-16 text-center">Qty</span>
                     <span className="w-24 text-center">Serving</span>
                     <span className="w-12 text-center">Cal</span>
