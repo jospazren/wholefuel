@@ -291,12 +291,7 @@ const RecipesPage = () => {
           {/* Compact header: Name + Category left, Macros right */}
           <div className="flex items-start justify-between gap-4 pb-4 border-b shrink-0">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <Input 
-                value={formName} 
-                onChange={e => setFormName(e.target.value)} 
-                placeholder="Recipe name..." 
-                className="text-base font-semibold h-9 max-w-[200px]"
-              />
+              <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Recipe name..." className="text-base font-semibold h-9 max-w-[200px]" />
               <Select value={formCategory} onValueChange={v => setFormCategory(v as RecipeCategory)}>
                 <SelectTrigger className="w-[130px] h-9">
                   <SelectValue />
@@ -308,7 +303,7 @@ const RecipesPage = () => {
             </div>
             
             {/* Macro totals */}
-            <div className="flex items-center gap-4 shrink-0">
+            <div className="flex items-center gap-4 shrink-0 py-[8px] mr-[20px]">
               <div className="flex items-center gap-1 text-macro-calories">
                 <Flame className="h-4 w-4" />
                 <span className="font-bold text-sm">{currentMacros.calories}</span>
@@ -341,7 +336,7 @@ const RecipesPage = () => {
                     <span className="w-16 text-center">Qty</span>
                     <span className="w-24 text-center">Serving</span>
                     <span className="w-12 text-center">Cal</span>
-                    <span className="w-10 text-center">P</span>
+                    <span className="space-y-2">P</span>
                     <span className="w-10 text-center">C</span>
                     <span className="w-10 text-center">F</span>
                   </div>
