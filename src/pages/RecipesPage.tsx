@@ -451,6 +451,9 @@ const RecipesPage = () => {
                         
                         {/* Per-ingredient macros - fixed widths */}
                         <span className="w-12 text-sm text-macro-calories text-center shrink-0">{info.calories}</span>
+                        <span className="w-10 text-sm text-macro-protein text-center shrink-0">{info.protein}</span>
+                        <span className="w-10 text-sm text-macro-carbs text-center shrink-0">{info.carbs}</span>
+                        <span className="w-10 text-sm text-macro-fat text-center shrink-0">{info.fat}</span>
                         
                         {/* Swap button */}
                         <Button 
