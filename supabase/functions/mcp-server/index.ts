@@ -614,6 +614,159 @@ mcpServer.tool("bulk_delete_recipes", {
   },
 });
 
+// Tool: Edit/update a recipe
+mcpServer.tool("edit_recipe", {
+  description: "Update an existing recipe. Can modify name, category, servings, instructions, link, and/or replace the ingredients list. Only provided fields will be updated.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      recipe_id: { type: "string", description: "UUID of the recipe to update" },
+      name: { type: "string", description: "New name for the recipe (optional)" },
+      category: { 
+        type: "string", 
+        enum: ["breakfast", "main", "shake", "snack", "side", "dessert"],
+        description: "New category for the recipe (optional)"
+      },
+      servings: { type: "number", description: "New number of servings (optional)" },
+      instructions: { type: "string", description: "New preparation instructions (optional, use empty string to clear)" },
+      link: { type: "string", description: "New link to recipe source (optional, use empty string to clear)" },
+      ingredients: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            ingredient_id: { type: "string", description: "UUID of the ingredient" },
+            amount: { type: "number", description: "Amount in grams" },
+            unit: { type: "string", description: "Unit of measurement (default: g)" }
+          },
+          required: ["ingredient_id", "amount"]
+        },
+        description: "New list of ingredients (optional - if provided, replaces all existing ingredients)"
+      }
+    },
+    required: ["recipe_id"],
+  },
+  handler: async (input: unknown) => {
+    const auth = getCurrentAuth();
+    if (!auth) {
+      return { content: [{ type: "text", text: "Unauthorized: Please provide a valid auth token" }] };
+    }
+
+    const { recipe_id, name, category, servings, instructions, link, ingredients } = input as {
+      recipe_id: string;
+      name?: string;
+      category?: string;
+      servings?: number;
+      instructions?: string;
+      link?: string;
+      ingredients?: Array<{ ingredient_id: string; amount: number; unit?: string }>;
+    };
+
+    // Check if recipe exists
+    const { data: existingRecipe, error: fetchError } = await auth.supabase
+      .from('recipes')
+      .select('id, name, user_id')
+      .eq('id', recipe_id)
+      .single();
+
+    if (fetchError || !existingRecipe) {
+      return { content: [{ type: "text", text: `Error: Recipe not found` }] };
+    }
+
+    // Build update object with only provided fields
+    const updateData: Record<string, unknown> = {};
+    if (name !== undefined) updateData.name = name;
+    if (category !== undefined) updateData.category = category;
+    if (servings !== undefined) updateData.servings = servings;
+    if (instructions !== undefined) updateData.instructions = instructions || null;
+    if (link !== undefined) updateData.link = link || null;
+
+    // If ingredients are provided, recalculate macros
+    if (ingredients && ingredients.length > 0) {
+      const ingredientIds = ingredients.map(i => i.ingredient_id);
+      const { data: ingredientData, error: ingredientError } = await auth.supabase
+        .from('ingredients')
+        .select('id, name, calories_per_serving, protein_per_serving, fat_per_serving, carbs_per_serving, serving_grams')
+        .in('id', ingredientIds);
+
+      if (ingredientError || !ingredientData) {
+        return { content: [{ type: "text", text: `Error fetching ingredients: ${ingredientError?.message}` }] };
+      }
+
+      // Calculate new total macros
+      let totalCalories = 0, totalProtein = 0, totalFat = 0, totalCarbs = 0;
+      const ingredientMap = new Map(ingredientData.map(i => [i.id, i]));
+
+      for (const ing of ingredients) {
+        const data = ingredientMap.get(ing.ingredient_id);
+        if (data) {
+          const multiplier = ing.amount / (data.serving_grams || 100);
+          totalCalories += data.calories_per_serving * multiplier;
+          totalProtein += data.protein_per_serving * multiplier;
+          totalFat += data.fat_per_serving * multiplier;
+          totalCarbs += data.carbs_per_serving * multiplier;
+        }
+      }
+
+      updateData.total_calories = Math.round(totalCalories);
+      updateData.total_protein = Math.round(totalProtein);
+      updateData.total_fat = Math.round(totalFat);
+      updateData.total_carbs = Math.round(totalCarbs);
+
+      // Delete existing ingredients
+      const { error: deleteIngredientsError } = await auth.supabase
+        .from('recipe_ingredients')
+        .delete()
+        .eq('recipe_id', recipe_id);
+
+      if (deleteIngredientsError) {
+        return { content: [{ type: "text", text: `Error removing old ingredients: ${deleteIngredientsError.message}` }] };
+      }
+
+      // Insert new ingredients
+      const recipeIngredients = ingredients.map(ing => ({
+        recipe_id: recipe_id,
+        ingredient_id: ing.ingredient_id,
+        name: ingredientMap.get(ing.ingredient_id)?.name || 'Unknown',
+        amount: ing.amount,
+        unit: ing.unit || 'g',
+      }));
+
+      const { error: insertIngredientsError } = await auth.supabase
+        .from('recipe_ingredients')
+        .insert(recipeIngredients);
+
+      if (insertIngredientsError) {
+        return { content: [{ type: "text", text: `Error adding new ingredients: ${insertIngredientsError.message}` }] };
+      }
+    }
+
+    // Update the recipe if there are fields to update
+    if (Object.keys(updateData).length > 0) {
+      const { error: updateError } = await auth.supabase
+        .from('recipes')
+        .update(updateData)
+        .eq('id', recipe_id);
+
+      if (updateError) {
+        return { content: [{ type: "text", text: `Error updating recipe: ${updateError.message}` }] };
+      }
+    }
+
+    const updatedFields = Object.keys(updateData).length > 0 
+      ? Object.keys(updateData).join(', ') 
+      : 'no fields';
+    const ingredientsMsg = ingredients ? `, replaced ${ingredients.length} ingredient(s)` : '';
+
+    return {
+      content: [{
+        type: "text",
+        text: `Successfully updated recipe "${name || existingRecipe.name}": ${updatedFields}${ingredientsMsg}`
+      }]
+    };
+  },
+});
+
 // Tool: List all ingredients
 mcpServer.tool("list_ingredients", {
   description: "Get all available ingredients with nutritional data (per 100g)",
