@@ -141,7 +141,7 @@ mcpServer.tool("list_recipes", {
         id, name, category, servings, instructions, link,
         total_calories, total_protein, total_fat, total_carbs,
         recipe_ingredients (
-          id, name, amount, unit, ingredient_id
+          id, name, serving_multiplier, ingredient_id
         )
       `)
       .order('name');
@@ -180,12 +180,11 @@ mcpServer.tool("create_recipe", {
           type: "object",
           properties: {
             ingredient_id: { type: "string", description: "UUID of the ingredient" },
-            amount: { type: "number", description: "Amount in grams" },
-            unit: { type: "string", description: "Unit of measurement (default: g)" }
+            serving_multiplier: { type: "number", description: "Serving multiplier (e.g., 1.0 for one serving, 0.5 for half)" },
           },
-          required: ["ingredient_id", "amount"]
+          required: ["ingredient_id", "serving_multiplier"]
         },
-        description: "List of ingredients with amounts"
+        description: "List of ingredients with serving multipliers"
       }
     },
     required: ["name", "category", "servings", "ingredients"],
@@ -202,7 +201,7 @@ mcpServer.tool("create_recipe", {
       servings: number;
       instructions?: string;
       link?: string;
-      ingredients: Array<{ ingredient_id: string; amount: number; unit?: string }>;
+      ingredients: Array<{ ingredient_id: string; serving_multiplier: number }>;
     };
 
     // First, get ingredient details to calculate macros and names
@@ -216,18 +215,17 @@ mcpServer.tool("create_recipe", {
       return { content: [{ type: "text", text: `Error fetching ingredients: ${ingredientError?.message}` }] };
     }
 
-    // Calculate total macros
+    // Calculate total macros - servingMultiplier is the multiplier directly
     let totalCalories = 0, totalProtein = 0, totalFat = 0, totalCarbs = 0;
     const ingredientMap = new Map(ingredientData.map(i => [i.id, i]));
 
     for (const ing of ingredients) {
       const data = ingredientMap.get(ing.ingredient_id);
       if (data) {
-        const multiplier = ing.amount / (data.serving_grams || 100);
-        totalCalories += data.calories_per_serving * multiplier;
-        totalProtein += data.protein_per_serving * multiplier;
-        totalFat += data.fat_per_serving * multiplier;
-        totalCarbs += data.carbs_per_serving * multiplier;
+        totalCalories += data.calories_per_serving * ing.serving_multiplier;
+        totalProtein += data.protein_per_serving * ing.serving_multiplier;
+        totalFat += data.fat_per_serving * ing.serving_multiplier;
+        totalCarbs += data.carbs_per_serving * ing.serving_multiplier;
       }
     }
 
@@ -258,8 +256,7 @@ mcpServer.tool("create_recipe", {
       recipe_id: recipe.id,
       ingredient_id: ing.ingredient_id,
       name: ingredientMap.get(ing.ingredient_id)?.name || 'Unknown',
-      amount: ing.amount,
-      unit: ing.unit || 'g',
+      serving_multiplier: ing.serving_multiplier,
     }));
 
     const { error: ingredientsError } = await auth.supabase
@@ -305,12 +302,11 @@ mcpServer.tool("bulk_create_recipes", {
                 type: "object",
                 properties: {
                   ingredient_id: { type: "string", description: "UUID of the ingredient" },
-                  amount: { type: "number", description: "Amount in grams" },
-                  unit: { type: "string", description: "Unit of measurement (default: g)" }
+                  serving_multiplier: { type: "number", description: "Serving multiplier (e.g., 1.0 for one serving, 0.5 for half)" },
                 },
-                required: ["ingredient_id", "amount"]
+                required: ["ingredient_id", "serving_multiplier"]
               },
-              description: "List of ingredients with amounts"
+              description: "List of ingredients with serving multipliers"
             }
           },
           required: ["name", "category", "servings", "ingredients"]
@@ -333,7 +329,7 @@ mcpServer.tool("bulk_create_recipes", {
         servings: number;
         instructions?: string;
         link?: string;
-        ingredients: Array<{ ingredient_id: string; amount: number; unit?: string }>;
+        ingredients: Array<{ ingredient_id: string; serving_multiplier: number }>;
       }>;
     };
 
@@ -365,17 +361,16 @@ mcpServer.tool("bulk_create_recipes", {
     const errors: string[] = [];
 
     for (const recipe of recipes) {
-      // Calculate macros for this recipe
+      // Calculate macros for this recipe - servingMultiplier is the multiplier directly
       let totalCalories = 0, totalProtein = 0, totalFat = 0, totalCarbs = 0;
       
       for (const ing of recipe.ingredients) {
         const data = ingredientMap.get(ing.ingredient_id);
         if (data) {
-          const multiplier = ing.amount / (data.serving_grams || 100);
-          totalCalories += data.calories_per_serving * multiplier;
-          totalProtein += data.protein_per_serving * multiplier;
-          totalFat += data.fat_per_serving * multiplier;
-          totalCarbs += data.carbs_per_serving * multiplier;
+          totalCalories += data.calories_per_serving * ing.serving_multiplier;
+          totalProtein += data.protein_per_serving * ing.serving_multiplier;
+          totalFat += data.fat_per_serving * ing.serving_multiplier;
+          totalCarbs += data.carbs_per_serving * ing.serving_multiplier;
         }
       }
 
@@ -407,8 +402,7 @@ mcpServer.tool("bulk_create_recipes", {
         recipe_id: createdRecipe.id,
         ingredient_id: ing.ingredient_id,
         name: ingredientMap.get(ing.ingredient_id)?.name || 'Unknown',
-        amount: ing.amount,
-        unit: ing.unit || 'g',
+        serving_multiplier: ing.serving_multiplier,
       }));
 
       const { error: ingredientsInsertError } = await auth.supabase
@@ -636,10 +630,9 @@ mcpServer.tool("edit_recipe", {
           type: "object",
           properties: {
             ingredient_id: { type: "string", description: "UUID of the ingredient" },
-            amount: { type: "number", description: "Amount in grams" },
-            unit: { type: "string", description: "Unit of measurement (default: g)" }
+            serving_multiplier: { type: "number", description: "Serving multiplier (e.g., 1.0 for one serving, 0.5 for half)" },
           },
-          required: ["ingredient_id", "amount"]
+          required: ["ingredient_id", "serving_multiplier"]
         },
         description: "New list of ingredients (optional - if provided, replaces all existing ingredients)"
       }
@@ -659,7 +652,7 @@ mcpServer.tool("edit_recipe", {
       servings?: number;
       instructions?: string;
       link?: string;
-      ingredients?: Array<{ ingredient_id: string; amount: number; unit?: string }>;
+      ingredients?: Array<{ ingredient_id: string; serving_multiplier: number }>;
     };
 
     // Check if recipe exists
@@ -693,18 +686,17 @@ mcpServer.tool("edit_recipe", {
         return { content: [{ type: "text", text: `Error fetching ingredients: ${ingredientError?.message}` }] };
       }
 
-      // Calculate new total macros
+      // Calculate new total macros - servingMultiplier is the multiplier directly
       let totalCalories = 0, totalProtein = 0, totalFat = 0, totalCarbs = 0;
       const ingredientMap = new Map(ingredientData.map(i => [i.id, i]));
 
       for (const ing of ingredients) {
         const data = ingredientMap.get(ing.ingredient_id);
         if (data) {
-          const multiplier = ing.amount / (data.serving_grams || 100);
-          totalCalories += data.calories_per_serving * multiplier;
-          totalProtein += data.protein_per_serving * multiplier;
-          totalFat += data.fat_per_serving * multiplier;
-          totalCarbs += data.carbs_per_serving * multiplier;
+          totalCalories += data.calories_per_serving * ing.serving_multiplier;
+          totalProtein += data.protein_per_serving * ing.serving_multiplier;
+          totalFat += data.fat_per_serving * ing.serving_multiplier;
+          totalCarbs += data.carbs_per_serving * ing.serving_multiplier;
         }
       }
 
@@ -728,8 +720,7 @@ mcpServer.tool("edit_recipe", {
         recipe_id: recipe_id,
         ingredient_id: ing.ingredient_id,
         name: ingredientMap.get(ing.ingredient_id)?.name || 'Unknown',
-        amount: ing.amount,
-        unit: ing.unit || 'g',
+        serving_multiplier: ing.serving_multiplier,
       }));
 
       const { error: insertIngredientsError } = await auth.supabase
@@ -1364,7 +1355,7 @@ mcpServer.tool("get_shopping_list", {
     // Get recipe ingredients
     const { data: recipeIngredients, error: ingredientsError } = await auth.supabase
       .from('recipe_ingredients')
-      .select('recipe_id, name, amount, unit, ingredient_id')
+      .select('recipe_id, name, serving_multiplier, ingredient_id')
       .in('recipe_id', recipeIds);
 
     if (ingredientsError) {
@@ -1379,7 +1370,15 @@ mcpServer.tool("get_shopping_list", {
 
     const recipesMap = new Map(recipes?.map(r => [r.id, r]) || []);
 
-    // Aggregate ingredients
+    // Get ingredient data to look up serving sizes
+    const ingredientIds = [...new Set(recipeIngredients?.map(ri => ri.ingredient_id) || [])];
+    const { data: ingredientData } = await auth.supabase
+      .from('ingredients')
+      .select('id, serving_grams')
+      .in('id', ingredientIds);
+    const ingredientDataMap = new Map(ingredientData?.map(i => [i.id, i]) || []);
+
+    // Aggregate ingredients - calculate grams from serving_multiplier
     const aggregated: Record<string, { name: string; amount: number; unit: string }> = {};
 
     for (const meal of mealPlan || []) {
@@ -1388,14 +1387,19 @@ mcpServer.tool("get_shopping_list", {
       const recipe = recipesMap.get(meal.recipe_id);
       if (!recipe) continue;
 
-      const multiplier = (meal.serving_multiplier || 1) / recipe.servings;
+      const mealMultiplier = (meal.serving_multiplier || 1) / recipe.servings;
 
       for (const ing of recipeIngredients?.filter(i => i.recipe_id === meal.recipe_id) || []) {
-        const key = `${ing.name}-${ing.unit}`;
+        const key = ing.name;
+        const ingData = ingredientDataMap.get(ing.ingredient_id);
+        const gramsPerServing = ingData?.serving_grams || 100;
+        // Calculate grams: ingredient's serving_multiplier × its serving size × meal multiplier
+        const grams = ing.serving_multiplier * gramsPerServing * mealMultiplier;
+        
         if (!aggregated[key]) {
-          aggregated[key] = { name: ing.name, amount: 0, unit: ing.unit };
+          aggregated[key] = { name: ing.name, amount: 0, unit: 'g' };
         }
-        aggregated[key].amount += ing.amount * multiplier;
+        aggregated[key].amount += grams;
       }
     }
 

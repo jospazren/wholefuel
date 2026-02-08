@@ -6,11 +6,11 @@ export function calculateRecipeMacros(ingredients: RecipeIngredient[], ingredien
   return ingredients.reduce((totals, ing) => {
     const baseIng = ingredientDb.find(i => i.id === ing.ingredientId);
     if (baseIng) {
-      const multiplier = ing.amount / baseIng.servingGrams;
-      totals.calories += Math.round(baseIng.caloriesPerServing * multiplier);
-      totals.protein += Math.round(baseIng.proteinPerServing * multiplier);
-      totals.fat += Math.round(baseIng.fatPerServing * multiplier);
-      totals.carbs += Math.round(baseIng.carbsPerServing * multiplier);
+      // servingMultiplier is the multiplier directly (e.g., 1.0 = one serving, 0.5 = half)
+      totals.calories += Math.round(baseIng.caloriesPerServing * ing.servingMultiplier);
+      totals.protein += Math.round(baseIng.proteinPerServing * ing.servingMultiplier);
+      totals.fat += Math.round(baseIng.fatPerServing * ing.servingMultiplier);
+      totals.carbs += Math.round(baseIng.carbsPerServing * ing.servingMultiplier);
     }
     return totals;
   }, { calories: 0, protein: 0, fat: 0, carbs: 0 });

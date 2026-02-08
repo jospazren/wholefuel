@@ -50,7 +50,7 @@ interface MealPlanContextType {
   generateShoppingList: () => ShoppingItem[];
   
   // Helpers
-  calculateMacrosFromIngredients: (ingredients: { ingredientId: string; amount: number }[]) => Macros;
+  calculateMacrosFromIngredients: (ingredients: { ingredientId: string; servingMultiplier: number }[]) => Macros;
   
   // Loading state
   isLoading: boolean;
@@ -164,8 +164,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
             ingredients: (rec.recipe_ingredients || []).map((ri: any) => ({
               ingredientId: ri.ingredient_id,
               name: ri.name,
-              amount: Number(ri.amount),
-              unit: ri.unit,
+              servingMultiplier: Number(ri.serving_multiplier),
             })),
             totalMacros: {
               calories: Number(rec.total_calories),
@@ -293,15 +292,15 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     return { calories, protein, fat, carbs };
   };
 
-  const calculateMacrosFromIngredients = useCallback((recipeIngredients: { ingredientId: string; amount: number }[]): Macros => {
+  const calculateMacrosFromIngredients = useCallback((recipeIngredients: { ingredientId: string; servingMultiplier: number }[]): Macros => {
     return recipeIngredients.reduce((totals, ing) => {
       const baseIng = ingredients.find(i => i.id === ing.ingredientId);
       if (baseIng) {
-        const multiplier = ing.amount / baseIng.servingGrams;
-        totals.calories += Math.round(baseIng.caloriesPerServing * multiplier);
-        totals.protein += Math.round(baseIng.proteinPerServing * multiplier);
-        totals.fat += Math.round(baseIng.fatPerServing * multiplier);
-        totals.carbs += Math.round(baseIng.carbsPerServing * multiplier);
+        // servingMultiplier is the multiplier directly (e.g., 1.0 = one serving)
+        totals.calories += Math.round(baseIng.caloriesPerServing * ing.servingMultiplier);
+        totals.protein += Math.round(baseIng.proteinPerServing * ing.servingMultiplier);
+        totals.fat += Math.round(baseIng.fatPerServing * ing.servingMultiplier);
+        totals.carbs += Math.round(baseIng.carbsPerServing * ing.servingMultiplier);
       }
       return totals;
     }, { calories: 0, protein: 0, fat: 0, carbs: 0 });
@@ -338,8 +337,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       ingredients: recipe.ingredients.map(ing => ({
         ingredientId: ing.ingredientId,
         name: ing.name,
-        amount: ing.amount,
-        unit: ing.unit,
+        servingMultiplier: ing.servingMultiplier,
       })),
       customMacros: { ...recipe.totalMacros },
       servingMultiplier: 1,
@@ -470,7 +468,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       
       if (updates.ingredients) {
         updatedMeal.customMacros = calculateMacrosFromIngredients(
-          updates.ingredients.map(i => ({ ingredientId: i.ingredientId, amount: i.amount }))
+          updates.ingredients.map(i => ({ ingredientId: i.ingredientId, servingMultiplier: i.servingMultiplier }))
         );
       }
 
@@ -491,7 +489,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     const updatedMeal = { ...currentMeal, ...updates };
     if (updates.ingredients) {
       updatedMeal.customMacros = calculateMacrosFromIngredients(
-        updates.ingredients.map(i => ({ ingredientId: i.ingredientId, amount: i.amount }))
+        updates.ingredients.map(i => ({ ingredientId: i.ingredientId, servingMultiplier: i.servingMultiplier }))
       );
     }
 
@@ -636,8 +634,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           recipe_id: recipeData.id,
           ingredient_id: ing.ingredientId,
           name: ing.name,
-          amount: ing.amount,
-          unit: ing.unit,
+          serving_multiplier: ing.servingMultiplier,
         }))
       );
     }
@@ -679,8 +676,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
             recipe_id: id,
             ingredient_id: ing.ingredientId,
             name: ing.name,
-            amount: ing.amount,
-            unit: ing.unit,
+            serving_multiplier: ing.servingMultiplier,
           }))
         );
       }
@@ -695,7 +691,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     await supabase.from('recipes').delete().eq('id', id).eq('user_id', user.id);
   };
 
-  // Shopping list
+  // Shopping list - calculates grams from servingMultiplier for each ingredient
   const generateShoppingList = (): ShoppingItem[] => {
     const itemMap = new Map<string, ShoppingItem>();
 
@@ -704,15 +700,21 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         const meal = weeklyPlan[day][slot];
         if (meal) {
           meal.ingredients.forEach(ing => {
+            // Find the ingredient to get its serving grams
+            const ingData = ingredients.find(i => i.id === ing.ingredientId);
+            const gramsPerServing = ingData?.servingGrams || 100;
+            // Calculate actual grams: ingredient servingMultiplier × ingredient serving size × meal servingMultiplier
+            const gramsNeeded = ing.servingMultiplier * gramsPerServing * meal.servingMultiplier;
+            
             const existing = itemMap.get(ing.ingredientId);
             if (existing) {
-              existing.totalAmount += ing.amount * meal.servingMultiplier;
+              existing.totalAmount += gramsNeeded;
             } else {
               itemMap.set(ing.ingredientId, {
                 ingredientId: ing.ingredientId,
                 name: ing.name,
-                totalAmount: ing.amount * meal.servingMultiplier,
-                unit: ing.unit,
+                totalAmount: gramsNeeded,
+                unit: 'g',
                 purchased: false,
               });
             }

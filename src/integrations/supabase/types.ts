@@ -165,27 +165,27 @@ export type Database = {
       }
       recipe_ingredients: {
         Row: {
-          amount: number
           id: string
           ingredient_id: string
           name: string
           recipe_id: string
+          serving_multiplier: number
           unit: string
         }
         Insert: {
-          amount?: number
           id?: string
           ingredient_id: string
           name: string
           recipe_id: string
+          serving_multiplier?: number
           unit?: string
         }
         Update: {
-          amount?: number
           id?: string
           ingredient_id?: string
           name?: string
           recipe_id?: string
+          serving_multiplier?: number
           unit?: string
         }
         Relationships: [
