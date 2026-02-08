@@ -288,43 +288,48 @@ const RecipesPage = () => {
       }
     }}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader className="shrink-0">
-            <DialogTitle>{editingRecipe ? 'Edit Dish' : 'Add Dish'}</DialogTitle>
-            <DialogDescription>
-              {editingRecipe ? 'Update your dish details' : 'Create a new dish for your menu'}
-            </DialogDescription>
-          </DialogHeader>
+          {/* Compact header: Name + Category left, Macros right */}
+          <div className="flex items-start justify-between gap-4 pb-4 border-b shrink-0">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Input 
+                value={formName} 
+                onChange={e => setFormName(e.target.value)} 
+                placeholder="Recipe name..." 
+                className="text-base font-semibold h-9 max-w-[200px]"
+              />
+              <Select value={formCategory} onValueChange={v => setFormCategory(v as RecipeCategory)}>
+                <SelectTrigger className="w-[130px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {RECIPE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{CATEGORY_LABELS[cat]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Macro totals */}
+            <div className="flex items-center gap-4 shrink-0">
+              <div className="flex items-center gap-1 text-macro-calories">
+                <Flame className="h-4 w-4" />
+                <span className="font-bold text-sm">{currentMacros.calories}</span>
+              </div>
+              <div className="flex items-center gap-1 text-macro-protein">
+                <Beef className="h-4 w-4" />
+                <span className="font-bold text-sm">{currentMacros.protein}g</span>
+              </div>
+              <div className="flex items-center gap-1 text-macro-carbs">
+                <Wheat className="h-4 w-4" />
+                <span className="font-bold text-sm">{currentMacros.carbs}g</span>
+              </div>
+              <div className="flex items-center gap-1 text-macro-fat">
+                <Droplet className="h-4 w-4" />
+                <span className="font-bold text-sm">{currentMacros.fat}g</span>
+              </div>
+            </div>
+          </div>
 
           <div className="flex-1 overflow-y-auto -mx-6 px-6 min-h-0">
             <div className="space-y-4 py-4">
-              {/* Macro Totals - at top */}
-              <div className="bg-secondary/50 rounded-lg p-4">
-                <Label className="mb-3 block">Dish Totals</Label>
-                <div className="grid grid-cols-4 gap-3">
-                  <MacroCard icon={<Flame className="h-4 w-4" />} label="Calories" value={currentMacros.calories} colorClass="text-macro-calories bg-macro-calories/10" />
-                  <MacroCard icon={<Beef className="h-4 w-4" />} label="Protein" value={currentMacros.protein} colorClass="text-macro-protein bg-macro-protein/10" />
-                  <MacroCard icon={<Wheat className="h-4 w-4" />} label="Carbs" value={currentMacros.carbs} colorClass="text-macro-carbs bg-macro-carbs/10" />
-                  <MacroCard icon={<Droplet className="h-4 w-4" />} label="Fat" value={currentMacros.fat} colorClass="text-macro-fat bg-macro-fat/10" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2 py-[8px]">
-                  <Label>Dish Name</Label>
-                  <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="e.g., Chicken Stir Fry" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Select value={formCategory} onValueChange={v => setFormCategory(v as RecipeCategory)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RECIPE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{CATEGORY_LABELS[cat]}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
 
 
               {/* Ingredients */}
@@ -383,6 +388,9 @@ const RecipesPage = () => {
                         
                         {/* Per-ingredient macros - fixed widths */}
                         <span className="w-12 text-sm text-macro-calories text-center shrink-0">{info.calories}</span>
+                        <span className="w-10 text-sm text-macro-protein text-center shrink-0">{info.protein}</span>
+                        <span className="w-10 text-sm text-macro-carbs text-center shrink-0">{info.carbs}</span>
+                        <span className="w-10 text-sm text-macro-fat text-center shrink-0">{info.fat}</span>
                         
                         {/* Swap button */}
                         <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary shrink-0" onClick={() => setSwappingIndex(swappingIndex === idx ? null : idx)} title="Swap ingredient">
@@ -431,7 +439,7 @@ const RecipesPage = () => {
             setEditingRecipe(null);
           }}>Cancel</Button>
             <Button onClick={editingRecipe ? handleSaveEdit : handleSaveNew} disabled={!formName || formIngredients.length === 0}>
-              {editingRecipe ? 'Save Changes' : 'Add Dish'}
+              {editingRecipe ? 'Save Changes' : 'Add Recipe'}
             </Button>
           </DialogFooter>
         </DialogContent>
