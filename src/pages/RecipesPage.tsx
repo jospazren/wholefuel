@@ -288,39 +288,35 @@ const RecipesPage = () => {
       }
     }}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          {/* Compact header: Name + Category left, Macros right */}
-          <div className="flex items-start justify-between gap-4 pb-4 border-b shrink-0">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Recipe name..." className="text-base font-semibold h-9 flex-1" />
-              <Select value={formCategory} onValueChange={v => setFormCategory(v as RecipeCategory)}>
-                <SelectTrigger className="w-[130px] h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {RECIPE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{CATEGORY_LABELS[cat]}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Compact header: Name + Category left, Macros right - aligned with ingredient grid */}
+          <div className="flex items-center gap-2 pb-4 border-b shrink-0">
+            {/* Spacer for drag handle */}
+            <div className="shrink-0 w-4" />
             
-            {/* Macro totals */}
-            <div className="flex items-center gap-4 shrink-0 py-[8px] mr-[20px]">
-              <div className="flex items-center gap-1 text-macro-calories">
-                <Flame className="h-4 w-4" />
-                <span className="font-bold text-sm">{currentMacros.calories}</span>
-              </div>
-              <div className="flex items-center gap-1 text-macro-protein">
-                <Beef className="h-4 w-4" />
-                <span className="font-bold text-sm">{currentMacros.protein}g</span>
-              </div>
-              <div className="flex items-center gap-1 text-macro-carbs">
-                <Wheat className="h-4 w-4" />
-                <span className="font-bold text-sm">{currentMacros.carbs}g</span>
-              </div>
-              <div className="flex items-center gap-1 text-macro-fat">
-                <Droplet className="h-4 w-4" />
-                <span className="font-bold text-sm">{currentMacros.fat}g</span>
-              </div>
-            </div>
+            {/* Recipe name - aligned with ingredient dropdown */}
+            <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Recipe name..." className="text-base font-semibold h-9 flex-1 min-w-0" />
+            
+            {/* Category - aligned with qty */}
+            <Select value={formCategory} onValueChange={v => setFormCategory(v as RecipeCategory)}>
+              <SelectTrigger className="w-20 h-9 shrink-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {RECIPE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{CATEGORY_LABELS[cat]}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            
+            {/* Spacer for serving column */}
+            <div className="w-24 shrink-0" />
+            
+            {/* Macro totals - aligned with macro columns */}
+            <span className="w-12 text-center shrink-0 text-macro-calories font-bold text-sm">{currentMacros.calories}</span>
+            <span className="w-10 text-center shrink-0 text-macro-protein font-bold text-sm">{currentMacros.protein}</span>
+            <span className="w-10 text-center shrink-0 text-macro-carbs font-bold text-sm">{currentMacros.carbs}</span>
+            <span className="w-10 text-center shrink-0 text-macro-fat font-bold text-sm">{currentMacros.fat}</span>
+            
+            {/* Spacer for remove button */}
+            <div className="w-7 shrink-0" />
           </div>
 
           <div className="flex-1 overflow-y-auto -mx-6 px-6 min-h-0">
