@@ -364,8 +364,7 @@ const RecipesPage = () => {
                           </Select> : <span className="flex-1 text-sm font-medium truncate">{ing.name}</span>}
                         
                         {/* Serving multiplier input */}
-                        <div className="flex items-center shrink-0 w-16">
-                          <span className="text-sm text-muted-foreground mr-1">×</span>
+                        <div className="shrink-0 w-16">
                           <Input type="number" value={Math.round(servingMultiplier * 100) / 100} onChange={e => handleMultiplierChange(parseFloat(e.target.value) || 0)} className="w-12 h-8 text-center text-sm px-1" min={0} step={0.5} />
                         </div>
                         
