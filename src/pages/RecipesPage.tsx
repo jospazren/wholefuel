@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { Recipe, RecipeCategory, RECIPE_CATEGORIES, CATEGORY_LABELS, RecipeIngredient } from '@/types/meal';
@@ -42,17 +42,17 @@ const RecipesPage = () => {
   const instructionsRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-resize instructions textarea
-  const adjustTextareaHeight = () => {
+  const adjustTextareaHeight = useCallback(() => {
     const textarea = instructionsRef.current;
     if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = textarea.scrollHeight + 'px';
+      textarea.style.height = '0';
+      textarea.style.height = Math.max(100, textarea.scrollHeight) + 'px';
     }
-  };
+  }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     adjustTextareaHeight();
-  }, [formInstructions]);
+  }, [formInstructions, adjustTextareaHeight]);
 
   // Track scroll position for "Add ingredient" visibility
   useEffect(() => {
@@ -416,9 +416,11 @@ const RecipesPage = () => {
                 <Textarea 
                   ref={instructionsRef}
                   value={formInstructions} 
-                  onChange={e => setFormInstructions(e.target.value)} 
+                  onChange={e => {
+                    setFormInstructions(e.target.value);
+                  }}
                   placeholder="Step-by-step preparation instructions..." 
-                  className="min-h-[100px] resize-none"
+                  className="min-h-[100px] resize-none overflow-hidden"
                 />
               </div>
 
