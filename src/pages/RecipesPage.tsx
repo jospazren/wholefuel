@@ -16,6 +16,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { UtensilsCrossed, Plus, Search, Pencil, Trash2, Flame, Beef, Wheat, Droplet, X, ArrowUp, ArrowDown, RefreshCw, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { SortableIngredientRow } from '@/components/SortableIngredientRow';
 const RecipesPage = () => {
   const {
     recipes,
@@ -148,13 +151,27 @@ const RecipesPage = () => {
     }
     setSwappingIndex(null);
   };
-  const handleMoveIngredient = (index: number, direction: 'up' | 'down') => {
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= formIngredients.length) return;
-    const updated = [...formIngredients];
-    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
-    setFormIngredients(updated);
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = formIngredients.findIndex((ing, idx) => ing.ingredientId + '-' + idx === active.id);
+      const newIndex = formIngredients.findIndex((ing, idx) => ing.ingredientId + '-' + idx === over.id);
+      
+      if (oldIndex !== -1 && newIndex !== -1) {
+        setFormIngredients(arrayMove(formIngredients, oldIndex, newIndex));
+      }
+    }
   };
+
   const handleSaveNew = () => {
     const newRecipe: Recipe = {
       id: `recipe-${Date.now()}`,
@@ -344,85 +361,42 @@ const RecipesPage = () => {
                   <span className="w-10 text-left shrink-0">F</span>
                   <span className="w-7 shrink-0" />
                 </div>
-                <div className="space-y-2">
-                  {formIngredients.map((ing, idx) => {
-                  const info = getIngredientInfo(ing.ingredientId, ing.servingMultiplier);
-                  const handleMultiplierChange = (value: string) => {
-                    // Normalize comma to period for decimal input
-                    const normalized = value.replace(',', '.');
-                    handleIngredientMultiplierChange(idx, parseFloat(normalized) || 0);
-                  };
-                  return <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                        {/* Drag handle indicator */}
-                        <span className="text-muted-foreground text-sm font-mono cursor-grab select-none shrink-0">::</span>
-                        
-                        {/* Ingredient name selector - searchable */}
-                        <Popover open={openIngredientPopover === idx} onOpenChange={(open) => setOpenIngredientPopover(open ? idx : null)}>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={openIngredientPopover === idx}
-                              className="flex-1 min-w-0 h-8 justify-between font-normal"
-                            >
-                              <span className="truncate">
-                                {ing.name}
-                                {ingredientDb.find(i => i.id === ing.ingredientId)?.brand && (
-                                  <span className="text-muted-foreground"> [{ingredientDb.find(i => i.id === ing.ingredientId)?.brand}]</span>
-                                )}
-                              </span>
-                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[250px] p-0" align="start">
-                            <Command>
-                              <CommandInput placeholder="Search ingredients..." />
-                              <CommandList>
-                                <CommandEmpty>No ingredient found.</CommandEmpty>
-                                <CommandGroup>
-                                  {sortedIngredientDb
-                                    .filter(i => i.id === ing.ingredientId || !formIngredients.some(fi => fi.ingredientId === i.id))
-                                    .map(i => (
-                                      <CommandItem
-                                        key={i.id}
-                                        value={`${i.name} ${i.brand || ''}`}
-                                        onSelect={() => {
-                                          handleSwapIngredient(idx, i.id);
-                                          setOpenIngredientPopover(null);
-                                        }}
-                                      >
-                                        {i.name}{i.brand && <span className="text-muted-foreground"> [{i.brand}]</span>}
-                                      </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                        
-                        {/* Serving multiplier input */}
-                        <div className="shrink-0 w-20">
-                          <Input type="text" inputMode="decimal" value={Math.round(ing.servingMultiplier * 100) / 100} onChange={e => handleMultiplierChange(e.target.value)} className="w-16 h-8 text-center text-sm px-1" />
-                        </div>
-                        
-                        {/* Serving info */}
-                        <span className="w-24 text-sm text-muted-foreground text-left shrink-0 truncate" title={info.serving}>
-                          {info.serving}
-                        </span>
-                        
-                        {/* Per-ingredient macros - fixed widths, left aligned */}
-                        <span className="w-12 text-sm text-macro-calories text-left shrink-0">{info.calories}</span>
-                        <span className="w-10 text-sm text-macro-protein text-left shrink-0">{info.protein}</span>
-                        <span className="w-10 text-sm text-macro-carbs text-left shrink-0">{info.carbs}</span>
-                        <span className="w-10 text-sm text-macro-fat text-left shrink-0">{info.fat}</span>
-                        
-                        {/* Remove button */}
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0" onClick={() => handleRemoveIngredient(idx)}>
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>;
-                })}
-                </div>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={formIngredients.map((ing, idx) => ing.ingredientId + '-' + idx)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-2">
+                      {formIngredients.map((ing, idx) => {
+                        const info = getIngredientInfo(ing.ingredientId, ing.servingMultiplier);
+                        const handleMultiplierChange = (value: string) => {
+                          const normalized = value.replace(',', '.');
+                          handleIngredientMultiplierChange(idx, parseFloat(normalized) || 0);
+                        };
+                        return (
+                          <SortableIngredientRow
+                            key={ing.ingredientId + '-' + idx}
+                            ingredient={ing}
+                            index={idx}
+                            ingredientInfo={info}
+                            ingredientDb={ingredientDb}
+                            sortedIngredientDb={sortedIngredientDb}
+                            formIngredients={formIngredients}
+                            openPopover={openIngredientPopover === idx}
+                            onPopoverChange={(open) => setOpenIngredientPopover(open ? idx : null)}
+                            onMultiplierChange={handleMultiplierChange}
+                            onSwap={(newId) => handleSwapIngredient(idx, newId)}
+                            onRemove={() => handleRemoveIngredient(idx)}
+                          />
+                        );
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
 
                 {availableIngredients.length > 0 && <div>
                     <Popover open={addIngredientOpen} onOpenChange={setAddIngredientOpen}>
