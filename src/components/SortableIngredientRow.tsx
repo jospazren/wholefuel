@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X, ChevronsUpDown } from 'lucide-react';
@@ -48,6 +49,36 @@ export function SortableIngredientRow({
     transition,
     isDragging,
   } = useSortable({ id: ingredient.ingredientId + '-' + index });
+
+  // Local state for input to allow typing decimal points
+  const [localValue, setLocalValue] = useState(
+    String(Math.round(ingredient.servingMultiplier * 100) / 100)
+  );
+
+  // Sync local value when prop changes (e.g., from external update)
+  useEffect(() => {
+    setLocalValue(String(Math.round(ingredient.servingMultiplier * 100) / 100));
+  }, [ingredient.servingMultiplier]);
+
+  const handleInputChange = (value: string) => {
+    // Normalize comma to period for decimal separator
+    const normalized = value.replace(',', '.');
+    setLocalValue(normalized);
+    
+    // Only propagate if it's a valid number
+    const num = parseFloat(normalized);
+    if (!isNaN(num) && num >= 0) {
+      onMultiplierChange(normalized);
+    }
+  };
+
+  const handleBlur = () => {
+    // On blur, ensure we have a valid number or reset to prop value
+    const num = parseFloat(localValue);
+    if (isNaN(num) || num < 0) {
+      setLocalValue(String(Math.round(ingredient.servingMultiplier * 100) / 100));
+    }
+  };
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -120,8 +151,9 @@ export function SortableIngredientRow({
         <Input
           type="text"
           inputMode="decimal"
-          value={Math.round(ingredient.servingMultiplier * 100) / 100}
-          onChange={e => onMultiplierChange(e.target.value)}
+          value={localValue}
+          onChange={e => handleInputChange(e.target.value)}
+          onBlur={handleBlur}
           className="w-16 h-8 text-center text-sm px-1"
         />
       </div>
