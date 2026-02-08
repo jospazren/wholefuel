@@ -398,13 +398,24 @@ const RecipesPage = () => {
 
               {/* Instructions */}
               <div className="space-y-2">
-                <Label>Instructions (optional)</Label>
-                <Textarea value={formInstructions} onChange={e => setFormInstructions(e.target.value)} placeholder="Step-by-step preparation instructions..." rows={4} />
+                <Label>Instructions</Label>
+                <Textarea 
+                  value={formInstructions} 
+                  onChange={e => setFormInstructions(e.target.value)} 
+                  placeholder="Step-by-step preparation instructions..." 
+                  className="min-h-[100px] resize-none overflow-hidden"
+                  style={{ height: 'auto' }}
+                  onInput={e => {
+                    const target = e.target as HTMLTextAreaElement;
+                    target.style.height = 'auto';
+                    target.style.height = target.scrollHeight + 'px';
+                  }}
+                />
               </div>
 
               {/* Link */}
               <div className="space-y-2">
-                <Label>Recipe Link (optional)</Label>
+                <Label>Recipe Link</Label>
                 <Input value={formLink} onChange={e => setFormLink(e.target.value)} placeholder="https://..." type="url" />
               </div>
 
