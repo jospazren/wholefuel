@@ -28,6 +28,21 @@ const getWeekStartDate = (date: Date = new Date()): string => {
   return format(monday, 'yyyy-MM-dd');
 };
 
+// Persist the current week to localStorage
+const WEEK_STORAGE_KEY = 'wholefuel-current-week';
+const getSavedWeekStart = (): string => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem(WEEK_STORAGE_KEY);
+    if (saved) return saved;
+  }
+  return getWeekStartDate();
+};
+const saveWeekStart = (weekStart: string) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(WEEK_STORAGE_KEY, weekStart);
+  }
+};
+
 interface MealPlanContextType {
   // Week navigation
   currentWeekStart: string; // ISO date string (Monday)
@@ -94,7 +109,7 @@ const MealPlanContext = createContext<MealPlanContextType | undefined>(undefined
 export function MealPlanProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
-  const [currentWeekStart, setCurrentWeekStart] = useState<string>(getWeekStartDate());
+  const [currentWeekStart, setCurrentWeekStartInternal] = useState<string>(getSavedWeekStart());
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>(defaultWeeklyPlan);
   const [weeklyTargets, setWeeklyTargetsState] = useState<WeeklyTargets>(defaultTargets);
   const [ingredients, setIngredients] = useState<BaseIngredient[]>(defaultIngredients);
@@ -106,22 +121,28 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
   // Skip data loading on auth page
   const isAuthPage = location.pathname === '/auth';
 
+  // Wrapper to persist week changes
+  const setCurrentWeekStart = useCallback((weekStart: string) => {
+    setCurrentWeekStartInternal(weekStart);
+    saveWeekStart(weekStart);
+  }, []);
+
   // Week navigation functions
   const goToPreviousWeek = useCallback(() => {
     const current = parseISO(currentWeekStart);
     const previous = addWeeks(current, -1);
     setCurrentWeekStart(format(previous, 'yyyy-MM-dd'));
-  }, [currentWeekStart]);
+  }, [currentWeekStart, setCurrentWeekStart]);
 
   const goToNextWeek = useCallback(() => {
     const current = parseISO(currentWeekStart);
     const next = addWeeks(current, 1);
     setCurrentWeekStart(format(next, 'yyyy-MM-dd'));
-  }, [currentWeekStart]);
+  }, [currentWeekStart, setCurrentWeekStart]);
 
   const goToWeek = useCallback((date: Date) => {
     setCurrentWeekStart(getWeekStartDate(date));
-  }, []);
+  }, [setCurrentWeekStart]);
 
   const getWeekLabel = useCallback((): string => {
     const monday = parseISO(currentWeekStart);
