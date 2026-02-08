@@ -12,10 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -236,12 +233,12 @@ const RecipesPage = () => {
             </div>
             <div>
               <h1 className="font-display font-bold text-2xl text-foreground">Menu</h1>
-              <p className="text-sm text-muted-foreground">Create and manage your dishes</p>
+              <p className="text-sm text-muted-foreground">Create and manage your recipes</p>
             </div>
           </div>
           <Button onClick={handleAddClick} className="gap-2">
             <Plus className="h-4 w-4" />
-            Add Dish
+            Add Recipe
           </Button>
         </div>
 
@@ -320,45 +317,51 @@ const RecipesPage = () => {
       {/* Add/Edit Dialog */}
       <Dialog open={isAddOpen || !!editingRecipe} onOpenChange={(open) => { if (!open) { setIsAddOpen(false); setEditingRecipe(null); } }}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader className="shrink-0">
-            <DialogTitle>{editingRecipe ? 'Edit Dish' : 'Add Dish'}</DialogTitle>
-            <DialogDescription>
-              {editingRecipe ? 'Update your dish details' : 'Create a new dish for your menu'}
-            </DialogDescription>
-          </DialogHeader>
+          {/* Custom header with name/category left, macros right */}
+          <div className="flex items-start justify-between gap-4 pb-4 border-b shrink-0">
+            {/* Left: Name and Category */}
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Input 
+                value={formName} 
+                onChange={(e) => setFormName(e.target.value)} 
+                placeholder="Recipe name..." 
+                className="text-lg font-semibold h-10 flex-1"
+              />
+              <Select value={formCategory} onValueChange={(v) => setFormCategory(v as RecipeCategory)}>
+                <SelectTrigger className="w-32 shrink-0">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {RECIPE_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{CATEGORY_LABELS[cat]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Right: Macro totals */}
+            <div className="flex items-center gap-4 shrink-0">
+              <div className="flex items-center gap-1.5 text-macro-calories">
+                <Flame className="h-4 w-4" />
+                <span className="font-bold">{currentMacros.calories}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-macro-protein">
+                <Beef className="h-4 w-4" />
+                <span className="font-bold">{currentMacros.protein}g</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-macro-carbs">
+                <Wheat className="h-4 w-4" />
+                <span className="font-bold">{currentMacros.carbs}g</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-macro-fat">
+                <Droplet className="h-4 w-4" />
+                <span className="font-bold">{currentMacros.fat}g</span>
+              </div>
+            </div>
+          </div>
 
           <div className="flex-1 overflow-y-auto -mx-6 px-6 min-h-0">
             <div className="space-y-4 py-4">
-              {/* Macro Totals - at top */}
-              <div className="bg-secondary/50 rounded-lg p-4">
-                <Label className="mb-3 block">Dish Totals</Label>
-                <div className="grid grid-cols-4 gap-3">
-                  <MacroCard icon={<Flame className="h-4 w-4" />} label="Calories" value={currentMacros.calories} colorClass="text-macro-calories bg-macro-calories/10" />
-                  <MacroCard icon={<Beef className="h-4 w-4" />} label="Protein" value={currentMacros.protein} colorClass="text-macro-protein bg-macro-protein/10" />
-                  <MacroCard icon={<Wheat className="h-4 w-4" />} label="Carbs" value={currentMacros.carbs} colorClass="text-macro-carbs bg-macro-carbs/10" />
-                  <MacroCard icon={<Droplet className="h-4 w-4" />} label="Fat" value={currentMacros.fat} colorClass="text-macro-fat bg-macro-fat/10" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Dish Name</Label>
-                  <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="e.g., Chicken Stir Fry" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Select value={formCategory} onValueChange={(v) => setFormCategory(v as RecipeCategory)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RECIPE_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>{CATEGORY_LABELS[cat]}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
 
 
               {/* Ingredients */}
@@ -514,7 +517,7 @@ const RecipesPage = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => { setIsAddOpen(false); setEditingRecipe(null); }}>Cancel</Button>
             <Button onClick={editingRecipe ? handleSaveEdit : handleSaveNew} disabled={!formName || formIngredients.length === 0}>
-              {editingRecipe ? 'Save Changes' : 'Add Dish'}
+              {editingRecipe ? 'Save Changes' : 'Add Recipe'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -542,17 +545,5 @@ const RecipesPage = () => {
     </AppLayout>
   );
 };
-
-function MacroCard({ icon, label, value, colorClass }: { icon: React.ReactNode; label: string; value: number; colorClass: string }) {
-  return (
-    <div className="text-center space-y-1">
-      <div className={cn('inline-flex p-2 rounded-lg', colorClass)}>
-        {icon}
-      </div>
-      <div className="text-base font-bold text-foreground">{value}</div>
-      <div className="text-[10px] text-muted-foreground">{label}</div>
-    </div>
-  );
-}
 
 export default RecipesPage;

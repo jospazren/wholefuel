@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { MealInstance, DayOfWeek, MealSlot, DAY_FULL_LABELS, MEAL_SLOT_LABELS, MealIngredient } from '@/types/meal';
 import { useMealPlan } from '@/contexts/MealPlanContext';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Flame, Beef, Wheat, Droplet, Trash2, Save, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Flame, Trash2, Save, X } from 'lucide-react';
 import { IngredientSelector } from '@/components/IngredientSelector';
 
 interface MealEditSheetProps {
@@ -77,29 +75,36 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <SheetContent className="sm:max-w-lg flex flex-col">
-        <SheetHeader>
-          <SheetTitle className="text-lg">
-            {DAY_FULL_LABELS[day]} - {MEAL_SLOT_LABELS[slot]}
-          </SheetTitle>
-          <SheetDescription>
-            Customize ingredient amounts for this meal
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className="flex-1 overflow-y-auto py-4 space-y-6">
-          {/* Recipe Name */}
-          <div className="space-y-2">
-            <Label htmlFor="recipe-name">Recipe Name</Label>
+        {/* Custom header with name left, macros right */}
+        <div className="flex items-start justify-between gap-3 pb-4 border-b">
+          {/* Left: Day/Slot info and Recipe Name */}
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="text-xs text-muted-foreground">
+              {DAY_FULL_LABELS[day]} · {MEAL_SLOT_LABELS[slot]}
+            </div>
             <Input
-              id="recipe-name"
               value={recipeName}
               onChange={(e) => setRecipeName(e.target.value)}
-              placeholder="Recipe name"
+              placeholder="Recipe name..."
+              className="text-base font-semibold h-9"
             />
           </div>
+          
+          {/* Right: Macro totals */}
+          <div className="flex flex-col items-end gap-1 shrink-0 text-sm">
+            <div className="flex items-center gap-1 text-macro-calories">
+              <Flame className="h-3.5 w-3.5" />
+              <span className="font-bold">{currentMacros.calories}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-macro-protein font-medium">{currentMacros.protein}P</span>
+              <span className="text-macro-carbs font-medium">{currentMacros.carbs}C</span>
+              <span className="text-macro-fat font-medium">{currentMacros.fat}F</span>
+            </div>
+          </div>
+        </div>
 
-          <Separator />
-
+        <div className="flex-1 overflow-y-auto py-4 space-y-6">
           {/* Ingredients */}
           <div className="space-y-3">
             <Label>Ingredients</Label>
@@ -134,19 +139,6 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
               onSelect={handleAddIngredient}
             />
           </div>
-
-          <Separator />
-
-          {/* Macro Totals */}
-          <div className="space-y-3">
-            <Label>Meal Totals</Label>
-            <div className="grid grid-cols-4 gap-3">
-              <MacroCard icon={<Flame className="h-4 w-4" />} label="Calories" value={currentMacros.calories} colorClass="text-macro-calories bg-macro-calories/10" />
-              <MacroCard icon={<Beef className="h-4 w-4" />} label="Protein" value={currentMacros.protein} colorClass="text-macro-protein bg-macro-protein/10" />
-              <MacroCard icon={<Wheat className="h-4 w-4" />} label="Carbs" value={currentMacros.carbs} colorClass="text-macro-carbs bg-macro-carbs/10" />
-              <MacroCard icon={<Droplet className="h-4 w-4" />} label="Fat" value={currentMacros.fat} colorClass="text-macro-fat bg-macro-fat/10" />
-            </div>
-          </div>
         </div>
 
         <SheetFooter className="flex-row gap-2 border-t pt-4">
@@ -166,17 +158,5 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
         </SheetFooter>
       </SheetContent>
     </Sheet>
-  );
-}
-
-function MacroCard({ icon, label, value, colorClass }: { icon: React.ReactNode; label: string; value: number; colorClass: string }) {
-  return (
-    <div className="text-center space-y-1">
-      <div className={cn('inline-flex p-2 rounded-lg', colorClass)}>
-        {icon}
-      </div>
-      <div className="text-base font-bold text-foreground">{value}</div>
-      <div className="text-[10px] text-muted-foreground">{label}</div>
-    </div>
   );
 }
