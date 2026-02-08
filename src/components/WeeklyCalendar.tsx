@@ -4,7 +4,7 @@ import { Recipe, DayOfWeek, MealSlot, DAYS_OF_WEEK, MEAL_SLOTS, MEAL_SLOT_LABELS
 import { MealSlotCell } from '@/components/MealSlotCell';
 import { MealEditSheet } from '@/components/MealEditSheet';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, CalendarDays, Flame, Beef, Wheat, Droplet } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface WeeklyCalendarProps {
@@ -12,7 +12,16 @@ interface WeeklyCalendarProps {
 }
 
 export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
-  const { weeklyPlan, weeklyTargets, addMealToSlot, moveMealToSlot, getDailyMacros } = useMealPlan();
+  const { 
+    weeklyPlan, 
+    weeklyTargets, 
+    addMealToSlot, 
+    moveMealToSlot, 
+    getDailyMacros,
+    goToPreviousWeek,
+    goToNextWeek,
+    getWeekLabel,
+  } = useMealPlan();
   const [dragOverSlot, setDragOverSlot] = useState<{ day: DayOfWeek; slot: MealSlot } | null>(null);
   const [editingMeal, setEditingMeal] = useState<{ meal: MealInstance; day: DayOfWeek; slot: MealSlot } | null>(null);
   const [draggingMeal, setDraggingMeal] = useState<{ day: DayOfWeek; slot: MealSlot } | null>(null);
@@ -90,11 +99,23 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
             <h3 className="font-display font-semibold text-sm">Weekly Plan</h3>
           </div>
           <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="icon" className="h-6 w-6">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6"
+              onClick={goToPreviousWeek}
+            >
               <ChevronLeft className="h-3 w-3" />
             </Button>
-            <span className="text-xs text-muted-foreground px-1">This Week</span>
-            <Button variant="ghost" size="icon" className="h-6 w-6">
+            <span className="text-xs text-muted-foreground px-2 min-w-[80px] text-center">
+              {getWeekLabel()}
+            </span>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-6 w-6"
+              onClick={goToNextWeek}
+            >
               <ChevronRight className="h-3 w-3" />
             </Button>
           </div>

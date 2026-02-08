@@ -120,6 +120,7 @@ export type Database = {
           serving_multiplier: number
           updated_at: string
           user_id: string
+          week_start_date: string
         }
         Insert: {
           created_at?: string
@@ -136,6 +137,7 @@ export type Database = {
           serving_multiplier?: number
           updated_at?: string
           user_id: string
+          week_start_date?: string
         }
         Update: {
           created_at?: string
@@ -152,6 +154,7 @@ export type Database = {
           serving_multiplier?: number
           updated_at?: string
           user_id?: string
+          week_start_date?: string
         }
         Relationships: [
           {
@@ -271,6 +274,7 @@ export type Database = {
           tdee: number
           updated_at: string
           user_id: string
+          week_start_date: string
         }
         Insert: {
           carbs?: number
@@ -283,6 +287,7 @@ export type Database = {
           tdee?: number
           updated_at?: string
           user_id: string
+          week_start_date?: string
         }
         Update: {
           carbs?: number
@@ -295,6 +300,7 @@ export type Database = {
           tdee?: number
           updated_at?: string
           user_id?: string
+          week_start_date?: string
         }
         Relationships: []
       }
