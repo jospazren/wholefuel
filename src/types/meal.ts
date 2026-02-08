@@ -8,13 +8,13 @@ export interface Macros {
 export interface BaseIngredient {
   id: string;
   name: string;
-  // Per 100g values
-  caloriesPer100g: number;
-  proteinPer100g: number;
-  fatPer100g: number;
-  carbsPer100g: number;
-  fiberPer100g: number;
-  sodiumPer100g: number; // in mg
+  // Per serving values
+  caloriesPerServing: number;
+  proteinPerServing: number;
+  fatPerServing: number;
+  carbsPerServing: number;
+  fiberPerServing: number;
+  sodiumPerServing: number; // in mg
   brand?: string;
   category?: string;
   // Serving size

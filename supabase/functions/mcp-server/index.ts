@@ -209,7 +209,7 @@ mcpServer.tool("create_recipe", {
     const ingredientIds = ingredients.map(i => i.ingredient_id);
     const { data: ingredientData, error: ingredientError } = await auth.supabase
       .from('ingredients')
-      .select('id, name, calories_per_100g, protein_per_100g, fat_per_100g, carbs_per_100g')
+      .select('id, name, calories_per_serving, protein_per_serving, fat_per_serving, carbs_per_serving, serving_grams')
       .in('id', ingredientIds);
 
     if (ingredientError || !ingredientData) {
@@ -223,11 +223,11 @@ mcpServer.tool("create_recipe", {
     for (const ing of ingredients) {
       const data = ingredientMap.get(ing.ingredient_id);
       if (data) {
-        const multiplier = ing.amount / 100;
-        totalCalories += data.calories_per_100g * multiplier;
-        totalProtein += data.protein_per_100g * multiplier;
-        totalFat += data.fat_per_100g * multiplier;
-        totalCarbs += data.carbs_per_100g * multiplier;
+        const multiplier = ing.amount / (data.serving_grams || 100);
+        totalCalories += data.calories_per_serving * multiplier;
+        totalProtein += data.protein_per_serving * multiplier;
+        totalFat += data.fat_per_serving * multiplier;
+        totalCarbs += data.carbs_per_serving * multiplier;
       }
     }
 
@@ -352,7 +352,7 @@ mcpServer.tool("bulk_create_recipes", {
     // Fetch all ingredient data at once
     const { data: ingredientData, error: ingredientError } = await auth.supabase
       .from('ingredients')
-      .select('id, name, calories_per_100g, protein_per_100g, fat_per_100g, carbs_per_100g')
+      .select('id, name, calories_per_serving, protein_per_serving, fat_per_serving, carbs_per_serving, serving_grams')
       .in('id', Array.from(allIngredientIds));
 
     if (ingredientError) {
@@ -371,11 +371,11 @@ mcpServer.tool("bulk_create_recipes", {
       for (const ing of recipe.ingredients) {
         const data = ingredientMap.get(ing.ingredient_id);
         if (data) {
-          const multiplier = ing.amount / 100;
-          totalCalories += data.calories_per_100g * multiplier;
-          totalProtein += data.protein_per_100g * multiplier;
-          totalFat += data.fat_per_100g * multiplier;
-          totalCarbs += data.carbs_per_100g * multiplier;
+          const multiplier = ing.amount / (data.serving_grams || 100);
+          totalCalories += data.calories_per_serving * multiplier;
+          totalProtein += data.protein_per_serving * multiplier;
+          totalFat += data.fat_per_serving * multiplier;
+          totalCarbs += data.carbs_per_serving * multiplier;
         }
       }
 
@@ -648,23 +648,23 @@ mcpServer.tool("list_ingredients", {
 
 // Tool: Create a new ingredient
 mcpServer.tool("create_ingredient", {
-  description: "Add a new ingredient with per-100g macro values and optional serving size info",
+  description: "Add a new ingredient with per-serving macro values and serving size info",
   inputSchema: {
     type: "object",
     properties: {
       name: { type: "string", description: "Name of the ingredient" },
-      calories_per_100g: { type: "number", description: "Calories per 100g" },
-      protein_per_100g: { type: "number", description: "Protein in grams per 100g" },
-      fat_per_100g: { type: "number", description: "Fat in grams per 100g" },
-      carbs_per_100g: { type: "number", description: "Carbohydrates in grams per 100g" },
-      fiber_per_100g: { type: "number", description: "Fiber in grams per 100g" },
-      sodium_per_100g: { type: "number", description: "Sodium in mg per 100g" },
+      calories_per_serving: { type: "number", description: "Calories per serving" },
+      protein_per_serving: { type: "number", description: "Protein in grams per serving" },
+      fat_per_serving: { type: "number", description: "Fat in grams per serving" },
+      carbs_per_serving: { type: "number", description: "Carbohydrates in grams per serving" },
+      fiber_per_serving: { type: "number", description: "Fiber in grams per serving" },
+      sodium_per_serving: { type: "number", description: "Sodium in mg per serving" },
       brand: { type: "string", description: "Brand name (optional)" },
       category: { type: "string", description: "Category (optional)" },
       serving_description: { type: "string", description: "Serving description (e.g., '1 egg (60g)', '1 can', '1 scoop (32g)')" },
       serving_grams: { type: "number", description: "Weight in grams for the serving size (default: 100)" },
     },
-    required: ["name", "calories_per_100g", "protein_per_100g", "fat_per_100g", "carbs_per_100g"],
+    required: ["name", "calories_per_serving", "protein_per_serving", "fat_per_serving", "carbs_per_serving"],
   },
   handler: async (input: unknown) => {
     const auth = getCurrentAuth();
@@ -673,16 +673,16 @@ mcpServer.tool("create_ingredient", {
     }
 
     const { 
-      name, calories_per_100g, protein_per_100g, fat_per_100g, carbs_per_100g,
-      fiber_per_100g, sodium_per_100g, brand, category, serving_description, serving_grams
+      name, calories_per_serving, protein_per_serving, fat_per_serving, carbs_per_serving,
+      fiber_per_serving, sodium_per_serving, brand, category, serving_description, serving_grams
     } = input as {
       name: string;
-      calories_per_100g: number;
-      protein_per_100g: number;
-      fat_per_100g: number;
-      carbs_per_100g: number;
-      fiber_per_100g?: number;
-      sodium_per_100g?: number;
+      calories_per_serving: number;
+      protein_per_serving: number;
+      fat_per_serving: number;
+      carbs_per_serving: number;
+      fiber_per_serving?: number;
+      sodium_per_serving?: number;
       brand?: string;
       category?: string;
       serving_description?: string;
@@ -693,12 +693,12 @@ mcpServer.tool("create_ingredient", {
       .from('ingredients')
       .insert({
         name,
-        calories_per_100g,
-        protein_per_100g,
-        fat_per_100g,
-        carbs_per_100g,
-        fiber_per_100g: fiber_per_100g || 0,
-        sodium_per_100g: sodium_per_100g || 0,
+        calories_per_serving,
+        protein_per_serving,
+        fat_per_serving,
+        carbs_per_serving,
+        fiber_per_serving: fiber_per_serving || 0,
+        sodium_per_serving: sodium_per_serving || 0,
         brand: brand || null,
         category: category || null,
         serving_description: serving_description || '100g',
@@ -723,7 +723,7 @@ mcpServer.tool("create_ingredient", {
 
 // Tool: Bulk create ingredients
 mcpServer.tool("bulk_create_ingredients", {
-  description: "Create multiple ingredients at once with per-100g macro values and optional serving info. Returns a summary of created ingredients.",
+  description: "Create multiple ingredients at once with per-serving macro values and serving info. Returns a summary of created ingredients.",
   inputSchema: {
     type: "object",
     properties: {
@@ -733,18 +733,18 @@ mcpServer.tool("bulk_create_ingredients", {
           type: "object",
           properties: {
             name: { type: "string", description: "Name of the ingredient" },
-            calories_per_100g: { type: "number", description: "Calories per 100g" },
-            protein_per_100g: { type: "number", description: "Protein in grams per 100g" },
-            fat_per_100g: { type: "number", description: "Fat in grams per 100g" },
-            carbs_per_100g: { type: "number", description: "Carbohydrates in grams per 100g" },
-            fiber_per_100g: { type: "number", description: "Fiber in grams per 100g (optional)" },
-            sodium_per_100g: { type: "number", description: "Sodium in mg per 100g (optional)" },
+            calories_per_serving: { type: "number", description: "Calories per serving" },
+            protein_per_serving: { type: "number", description: "Protein in grams per serving" },
+            fat_per_serving: { type: "number", description: "Fat in grams per serving" },
+            carbs_per_serving: { type: "number", description: "Carbohydrates in grams per serving" },
+            fiber_per_serving: { type: "number", description: "Fiber in grams per serving (optional)" },
+            sodium_per_serving: { type: "number", description: "Sodium in mg per serving (optional)" },
             brand: { type: "string", description: "Brand name (optional)" },
             category: { type: "string", description: "Category (optional)" },
             serving_description: { type: "string", description: "Serving description (e.g., '1 egg (60g)', '1 can', '1 scoop (32g)')" },
             serving_grams: { type: "number", description: "Weight in grams for the serving size (default: 100)" },
           },
-          required: ["name", "calories_per_100g", "protein_per_100g", "fat_per_100g", "carbs_per_100g"],
+          required: ["name", "calories_per_serving", "protein_per_serving", "fat_per_serving", "carbs_per_serving"],
         },
         description: "Array of ingredients to create"
       }
@@ -760,12 +760,12 @@ mcpServer.tool("bulk_create_ingredients", {
     const { ingredients } = input as {
       ingredients: Array<{
         name: string;
-        calories_per_100g: number;
-        protein_per_100g: number;
-        fat_per_100g: number;
-        carbs_per_100g: number;
-        fiber_per_100g?: number;
-        sodium_per_100g?: number;
+        calories_per_serving: number;
+        protein_per_serving: number;
+        fat_per_serving: number;
+        carbs_per_serving: number;
+        fiber_per_serving?: number;
+        sodium_per_serving?: number;
         brand?: string;
         category?: string;
         serving_description?: string;
@@ -779,12 +779,12 @@ mcpServer.tool("bulk_create_ingredients", {
 
     const toInsert = ingredients.map(ing => ({
       name: ing.name,
-      calories_per_100g: ing.calories_per_100g,
-      protein_per_100g: ing.protein_per_100g,
-      fat_per_100g: ing.fat_per_100g,
-      carbs_per_100g: ing.carbs_per_100g,
-      fiber_per_100g: ing.fiber_per_100g || 0,
-      sodium_per_100g: ing.sodium_per_100g || 0,
+      calories_per_serving: ing.calories_per_serving,
+      protein_per_serving: ing.protein_per_serving,
+      fat_per_serving: ing.fat_per_serving,
+      carbs_per_serving: ing.carbs_per_serving,
+      fiber_per_serving: ing.fiber_per_serving || 0,
+      sodium_per_serving: ing.sodium_per_serving || 0,
       brand: ing.brand || null,
       category: ing.category || null,
       serving_description: ing.serving_description || '100g',

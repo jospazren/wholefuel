@@ -17,52 +17,52 @@ export type Database = {
       ingredients: {
         Row: {
           brand: string | null
-          calories_per_100g: number
-          carbs_per_100g: number
+          calories_per_serving: number
+          carbs_per_serving: number
           category: string | null
           created_at: string
-          fat_per_100g: number
-          fiber_per_100g: number
+          fat_per_serving: number
+          fiber_per_serving: number
           id: string
           name: string
-          protein_per_100g: number
+          protein_per_serving: number
           serving_description: string | null
           serving_grams: number
-          sodium_per_100g: number
+          sodium_per_serving: number
           updated_at: string
           user_id: string
         }
         Insert: {
           brand?: string | null
-          calories_per_100g?: number
-          carbs_per_100g?: number
+          calories_per_serving?: number
+          carbs_per_serving?: number
           category?: string | null
           created_at?: string
-          fat_per_100g?: number
-          fiber_per_100g?: number
+          fat_per_serving?: number
+          fiber_per_serving?: number
           id?: string
           name: string
-          protein_per_100g?: number
+          protein_per_serving?: number
           serving_description?: string | null
           serving_grams?: number
-          sodium_per_100g?: number
+          sodium_per_serving?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           brand?: string | null
-          calories_per_100g?: number
-          carbs_per_100g?: number
+          calories_per_serving?: number
+          carbs_per_serving?: number
           category?: string | null
           created_at?: string
-          fat_per_100g?: number
-          fiber_per_100g?: number
+          fat_per_serving?: number
+          fiber_per_serving?: number
           id?: string
           name?: string
-          protein_per_100g?: number
+          protein_per_serving?: number
           serving_description?: string | null
           serving_grams?: number
-          sodium_per_100g?: number
+          sodium_per_serving?: number
           updated_at?: string
           user_id?: string
         }

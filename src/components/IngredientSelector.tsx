@@ -97,7 +97,7 @@ export function IngredientSelector({ ingredients, usedIngredientIds, onSelect }:
                     <div className="flex items-center justify-between w-full">
                       <span>{ing.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {ing.caloriesPer100g} cal/100g
+                        {ing.caloriesPerServing} cal/{ing.servingDescription || 'serving'}
                       </span>
                     </div>
                   </CommandItem>
