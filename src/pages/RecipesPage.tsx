@@ -350,15 +350,8 @@ const RecipesPage = () => {
                     handleIngredientAmountChange(idx, newAmount);
                   };
                   return <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
-                        {/* Move up/down buttons */}
-                        <div className="flex flex-col shrink-0">
-                          <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-foreground disabled:opacity-30" onClick={() => handleMoveIngredient(idx, 'up')} disabled={idx === 0}>
-                            <ArrowUp className="h-3 w-3" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-foreground disabled:opacity-30" onClick={() => handleMoveIngredient(idx, 'down')} disabled={idx === formIngredients.length - 1}>
-                            <ArrowDown className="h-3 w-3" />
-                          </Button>
-                        </div>
+                        {/* Drag handle indicator */}
+                        <span className="text-muted-foreground text-sm font-mono cursor-grab select-none shrink-0">::</span>
                         
                         {/* Ingredient name or swap selector */}
                         {swappingIndex === idx ? <Select onValueChange={id => handleSwapIngredient(idx, id)} open={true} onOpenChange={open => !open && setSwappingIndex(null)}>
