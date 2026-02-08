@@ -353,7 +353,7 @@ const RecipesPage = () => {
                   const info = getIngredientInfo(ing.ingredientId, ing.amount);
                   const servingMultiplier = info.servingGrams ? ing.amount / info.servingGrams : 1;
                   const handleMultiplierChange = (newMultiplier: number) => {
-                    const newAmount = Math.round(newMultiplier * (info.servingGrams || 100));
+                    const newAmount = Math.round(newMultiplier * (info.servingGrams || 100) * 100) / 100;
                     handleIngredientAmountChange(idx, newAmount);
                   };
                   return <div key={idx} className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
