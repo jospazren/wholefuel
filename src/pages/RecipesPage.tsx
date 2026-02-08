@@ -355,7 +355,7 @@ const RecipesPage = () => {
                         
                         {/* Ingredient name selector */}
                         <Select value={ing.ingredientId} onValueChange={id => handleSwapIngredient(idx, id)}>
-                          <SelectTrigger className="flex-1 h-8">
+                          <SelectTrigger className="flex-1 min-w-0 h-8">
                             <SelectValue placeholder={ing.name} />
                           </SelectTrigger>
                           <SelectContent>
@@ -364,8 +364,8 @@ const RecipesPage = () => {
                         </Select>
                         
                         {/* Serving multiplier input */}
-                        <div className="shrink-0 w-16">
-                          <Input type="number" value={Math.round(servingMultiplier * 100) / 100} onChange={e => handleMultiplierChange(parseFloat(e.target.value) || 0)} className="w-12 h-8 text-center text-sm px-1" min={0} step={0.5} />
+                        <div className="shrink-0 w-20">
+                          <Input type="number" value={Math.round(servingMultiplier * 100) / 100} onChange={e => handleMultiplierChange(parseFloat(e.target.value) || 0)} className="w-16 h-8 text-center text-sm px-1" min={0} step={0.5} />
                         </div>
                         
                         {/* Serving info */}
