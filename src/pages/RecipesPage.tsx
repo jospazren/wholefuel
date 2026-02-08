@@ -39,6 +39,20 @@ const RecipesPage = () => {
   const [swappingIndex, setSwappingIndex] = useState<number | null>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const ingredientsRef = useRef<HTMLDivElement>(null);
+  const instructionsRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize instructions textarea
+  const adjustTextareaHeight = () => {
+    const textarea = instructionsRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    }
+  };
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [formInstructions]);
 
   // Track scroll position for "Add ingredient" visibility
   useEffect(() => {
@@ -400,16 +414,11 @@ const RecipesPage = () => {
               <div className="space-y-2">
                 <Label>Instructions</Label>
                 <Textarea 
+                  ref={instructionsRef}
                   value={formInstructions} 
                   onChange={e => setFormInstructions(e.target.value)} 
                   placeholder="Step-by-step preparation instructions..." 
-                  className="min-h-[100px] resize-none overflow-hidden"
-                  style={{ height: 'auto' }}
-                  onInput={e => {
-                    const target = e.target as HTMLTextAreaElement;
-                    target.style.height = 'auto';
-                    target.style.height = target.scrollHeight + 'px';
-                  }}
+                  className="min-h-[100px] resize-none"
                 />
               </div>
 
