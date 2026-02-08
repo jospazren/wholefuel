@@ -229,7 +229,7 @@ const RecipesPage = () => {
           </div>
           <Button onClick={handleAddClick} className="gap-2">
             <Plus className="h-4 w-4" />
-            Add Dish
+            Add Recipe
           </Button>
         </div>
 
@@ -369,7 +369,12 @@ const RecipesPage = () => {
                               aria-expanded={openIngredientPopover === idx}
                               className="flex-1 min-w-0 h-8 justify-between font-normal"
                             >
-                              <span className="truncate">{ing.name}</span>
+                              <span className="truncate">
+                                {ing.name}
+                                {ingredientDb.find(i => i.id === ing.ingredientId)?.brand && (
+                                  <span className="text-muted-foreground"> [{ingredientDb.find(i => i.id === ing.ingredientId)?.brand}]</span>
+                                )}
+                              </span>
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </PopoverTrigger>
@@ -384,13 +389,13 @@ const RecipesPage = () => {
                                     .map(i => (
                                       <CommandItem
                                         key={i.id}
-                                        value={i.name}
+                                        value={`${i.name} ${i.brand || ''}`}
                                         onSelect={() => {
                                           handleSwapIngredient(idx, i.id);
                                           setOpenIngredientPopover(null);
                                         }}
                                       >
-                                        {i.name}
+                                        {i.name}{i.brand && <span className="text-muted-foreground"> [{i.brand}]</span>}
                                       </CommandItem>
                                     ))}
                                 </CommandGroup>

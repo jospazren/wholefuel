@@ -90,12 +90,15 @@ export function IngredientSelector({ ingredients, usedIngredientIds, onSelect }:
                 {availableIngredients.map((ing) => (
                   <CommandItem
                     key={ing.id}
-                    value={ing.name}
+                    value={`${ing.name} ${ing.brand || ''}`}
                     onSelect={() => handleSelect(ing.id)}
                     className="cursor-pointer"
                   >
                     <div className="flex items-center justify-between w-full">
-                      <span>{ing.name}</span>
+                      <span>
+                        {ing.name}
+                        {ing.brand && <span className="text-muted-foreground"> [{ing.brand}]</span>}
+                      </span>
                       <span className="text-xs text-muted-foreground">
                         {ing.caloriesPerServing} cal/{ing.servingDescription || 'serving'}
                       </span>
