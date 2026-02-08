@@ -369,7 +369,7 @@ const RecipesPage = () => {
                         </div>
                         
                         {/* Serving info */}
-                        <span className="w-24 text-sm text-muted-foreground text-center shrink-0 truncate" title={info.serving}>
+                        <span className="w-24 text-sm text-muted-foreground text-left shrink-0 truncate" title={info.serving}>
                           {info.serving}
                         </span>
                         
