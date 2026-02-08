@@ -324,26 +324,21 @@ const RecipesPage = () => {
 
 
               {/* Ingredients */}
-              <div className="space-y-3">
-                {/* Column headers - matching ingredient row structure */}
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground px-2">
-                  {/* Spacer for drag handle */}
+              <div className="space-y-2">
+                <Label>Ingredients</Label>
+                {/* Column headers */}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground px-2">
                   <span className="shrink-0 w-4" />
-                  {/* Ingredients label - matches ingredient dropdown */}
-                  <span className="flex-1 min-w-0">Ingredients</span>
-                  {/* Qty */}
+                  <span className="flex-1 min-w-0">Name</span>
                   <span className="w-20 text-left shrink-0">Qty</span>
-                  {/* Serving */}
                   <span className="w-24 text-left shrink-0">Serving</span>
-                  {/* Macros */}
                   <span className="w-12 text-left shrink-0">Cal</span>
                   <span className="w-10 text-left shrink-0">P</span>
                   <span className="w-10 text-left shrink-0">C</span>
                   <span className="w-10 text-left shrink-0">F</span>
-                  {/* Spacer for remove button */}
                   <span className="w-7 shrink-0" />
                 </div>
-                <div ref={ingredientsRef} className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                <div className="space-y-2">
                   {formIngredients.map((ing, idx) => {
                   const info = getIngredientInfo(ing.ingredientId, ing.amount);
                   const servingMultiplier = info.servingGrams ? ing.amount / info.servingGrams : 1;
@@ -389,7 +384,7 @@ const RecipesPage = () => {
                 })}
                 </div>
 
-                {availableIngredients.length > 0 && (formIngredients.length === 0 || isAtBottom) && <div>
+                {availableIngredients.length > 0 && <div>
                     <Select onValueChange={handleAddIngredient}>
                       <SelectTrigger className="flex-1">
                         <SelectValue placeholder="Add ingredient..." />
