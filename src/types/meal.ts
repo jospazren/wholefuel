@@ -141,7 +141,7 @@ export const DAY_FULL_LABELS: Record<DayOfWeek, string> = {
 export interface ShoppingItem {
   ingredientId: string;
   name: string;
-  totalAmount: number;
-  unit: string;
+  totalServings: number;
+  servingDescription: string;
   purchased: boolean;
 }

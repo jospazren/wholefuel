@@ -808,7 +808,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     await supabase.from('recipes').delete().eq('id', id).eq('user_id', user.id);
   };
 
-  // Shopping list - calculates grams from servingMultiplier for each ingredient
+  // Shopping list - sums serving multipliers for each ingredient
   const generateShoppingList = (): ShoppingItem[] => {
     const itemMap = new Map<string, ShoppingItem>();
 
@@ -817,21 +817,21 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         const meal = weeklyPlan[day][slot];
         if (meal) {
           meal.ingredients.forEach(ing => {
-            // Find the ingredient to get its serving grams
+            // Find the ingredient to get its serving description
             const ingData = ingredients.find(i => i.id === ing.ingredientId);
-            const gramsPerServing = ingData?.servingGrams || 100;
-            // Calculate actual grams: ingredient servingMultiplier × ingredient serving size × meal servingMultiplier
-            const gramsNeeded = ing.servingMultiplier * gramsPerServing * meal.servingMultiplier;
+            const servingDescription = ingData?.servingDescription || '100g';
+            // Sum serving multipliers: ingredient servingMultiplier × meal servingMultiplier
+            const servingsNeeded = ing.servingMultiplier * meal.servingMultiplier;
             
             const existing = itemMap.get(ing.ingredientId);
             if (existing) {
-              existing.totalAmount += gramsNeeded;
+              existing.totalServings += servingsNeeded;
             } else {
               itemMap.set(ing.ingredientId, {
                 ingredientId: ing.ingredientId,
                 name: ing.name,
-                totalAmount: gramsNeeded,
-                unit: 'g',
+                totalServings: servingsNeeded,
+                servingDescription,
                 purchased: false,
               });
             }
