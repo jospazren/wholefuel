@@ -57,7 +57,6 @@ const IngredientsPage = () => {
     sodiumPerServing: '',
     brand: '',
     servingDescription: '100g',
-    servingGrams: '100',
   });
 
   const resetForm = () => {
@@ -71,7 +70,6 @@ const IngredientsPage = () => {
       sodiumPerServing: '',
       brand: '',
       servingDescription: '100g',
-      servingGrams: '100',
     });
   };
 
@@ -111,7 +109,6 @@ const IngredientsPage = () => {
       sodiumPerServing: ing.sodiumPerServing.toString(),
       brand: ing.brand || '',
       servingDescription: ing.servingDescription || '100g',
-      servingGrams: (ing.servingGrams || 100).toString(),
     });
     setEditingIngredient(ing);
   };
@@ -128,7 +125,7 @@ const IngredientsPage = () => {
       sodiumPerServing: parseFloat(formData.sodiumPerServing) || 0,
       brand: formData.brand || undefined,
       servingDescription: formData.servingDescription || '100g',
-      servingGrams: parseFloat(formData.servingGrams) || 100,
+      servingGrams: 100, // Default value, no longer user-editable
     };
     addIngredient(newIngredient);
     setIsAddOpen(false);
@@ -147,7 +144,6 @@ const IngredientsPage = () => {
       sodiumPerServing: parseFloat(formData.sodiumPerServing) || 0,
       brand: formData.brand || undefined,
       servingDescription: formData.servingDescription || '100g',
-      servingGrams: parseFloat(formData.servingGrams) || 100,
     });
     setEditingIngredient(null);
     resetForm();
@@ -318,15 +314,9 @@ function IngredientForm({ formData, setFormData }: { formData: any; setFormData:
         <Label htmlFor="name">Name</Label>
         <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., Chicken Breast" />
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor="servingDescription">Serving Description</Label>
-          <Input id="servingDescription" value={formData.servingDescription} onChange={(e) => setFormData({ ...formData, servingDescription: e.target.value })} placeholder="e.g., 1 egg (60g)" />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="servingGrams">Serving Weight (g)</Label>
-          <Input id="servingGrams" type="number" value={formData.servingGrams} onChange={(e) => setFormData({ ...formData, servingGrams: e.target.value })} placeholder="100" />
-        </div>
+      <div className="grid gap-2">
+        <Label htmlFor="servingDescription">Serving Description</Label>
+        <Input id="servingDescription" value={formData.servingDescription} onChange={(e) => setFormData({ ...formData, servingDescription: e.target.value })} placeholder="e.g., 1 egg (60g), 100g, 1 scoop (32g)" />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">

@@ -34,24 +34,23 @@ const ShoppingPage = () => {
     ));
   };
 
-  const handleAmountChange = (ingredientId: string, amount: number) => {
+  const handleServingsChange = (ingredientId: string, servings: number) => {
     setShoppingList(prev => prev.map(item =>
       item.ingredientId === ingredientId
-        ? { ...item, totalAmount: amount }
+        ? { ...item, totalServings: servings }
         : item
     ));
   };
 
-  const formatAmount = (amount: number): string => {
-    if (amount >= 1000) {
-      return `${(amount / 1000).toFixed(1)} kg`;
-    }
-    return `${Math.round(amount)} g`;
+  const formatServings = (totalServings: number, servingDescription: string): string => {
+    // Format nicely: show multiplier × serving description
+    const roundedServings = Math.round(totalServings * 10) / 10; // Round to 1 decimal
+    return `${roundedServings} × ${servingDescription}`;
   };
 
   const handleExport = () => {
     const text = shoppingList
-      .map(item => `${item.purchased ? '✓' : '☐'} ${item.name}: ${formatAmount(item.totalAmount)}`)
+      .map(item => `${item.purchased ? '✓' : '☐'} ${item.name}: ${formatServings(item.totalServings, item.servingDescription)}`)
       .join('\n');
     
     const blob = new Blob([text], { type: 'text/plain' });
@@ -155,16 +154,14 @@ const ShoppingPage = () => {
                       <div className="flex items-center gap-2">
                         <Input
                           type="number"
-                          value={Math.round(item.totalAmount)}
-                          onChange={(e) => handleAmountChange(item.ingredientId, parseFloat(e.target.value) || 0)}
-                          className="w-20 h-8 text-center"
+                          value={Math.round(item.totalServings * 10) / 10}
+                          onChange={(e) => handleServingsChange(item.ingredientId, parseFloat(e.target.value) || 0)}
+                          className="w-16 h-8 text-center"
                           min={0}
+                          step={0.5}
                         />
-                        <span className="text-sm text-muted-foreground w-8">{item.unit}</span>
+                        <span className="text-sm text-muted-foreground">× {item.servingDescription}</span>
                       </div>
-                      <Badge variant="outline" className="text-xs">
-                        {formatAmount(item.totalAmount)}
-                      </Badge>
                     </div>
                   ))}
                   {shoppingList.length === 0 && (
