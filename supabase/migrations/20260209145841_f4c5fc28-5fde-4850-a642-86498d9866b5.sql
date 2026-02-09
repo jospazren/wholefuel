@@ -1,0 +1,1 @@
+ALTER TABLE public.weekly_targets DROP CONSTRAINT weekly_targets_user_id_key;
