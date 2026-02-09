@@ -151,16 +151,16 @@ const ShoppingPage = () => {
                       )}>
                         {item.name}
                       </span>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-[200px]">
                         <Input
                           type="number"
                           value={Math.round(item.totalServings * 10) / 10}
                           onChange={(e) => handleServingsChange(item.ingredientId, parseFloat(e.target.value) || 0)}
-                          className="w-16 h-8 text-center"
+                          className="w-14 h-8 text-left"
                           min={0}
                           step={0.5}
                         />
-                        <span className="text-sm text-muted-foreground">× {item.servingDescription}</span>
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">× {item.servingDescription}</span>
                       </div>
                     </div>
                   ))}

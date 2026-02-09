@@ -314,9 +314,15 @@ function IngredientForm({ formData, setFormData }: { formData: any; setFormData:
         <Label htmlFor="name">Name</Label>
         <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., Chicken Breast" />
       </div>
-      <div className="grid gap-2">
-        <Label htmlFor="servingDescription">Serving Description</Label>
-        <Input id="servingDescription" value={formData.servingDescription} onChange={(e) => setFormData({ ...formData, servingDescription: e.target.value })} placeholder="e.g., 1 egg (60g), 100g, 1 scoop (32g)" />
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid gap-2">
+          <Label htmlFor="servingDescription">Serving Description</Label>
+          <Input id="servingDescription" value={formData.servingDescription} onChange={(e) => setFormData({ ...formData, servingDescription: e.target.value })} placeholder="e.g., 1 egg (60g)" />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="brand">Brand (optional)</Label>
+          <Input id="brand" value={formData.brand} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} placeholder="e.g., Generic" />
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
@@ -347,10 +353,6 @@ function IngredientForm({ formData, setFormData }: { formData: any; setFormData:
           <Label htmlFor="sodium">Sodium (mg per serving)</Label>
           <Input id="sodium" type="number" value={formData.sodiumPerServing} onChange={(e) => setFormData({ ...formData, sodiumPerServing: e.target.value })} />
         </div>
-      </div>
-      <div className="grid gap-2">
-        <Label htmlFor="brand">Brand (optional)</Label>
-        <Input id="brand" value={formData.brand} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} placeholder="e.g., Generic" />
       </div>
     </div>
   );
