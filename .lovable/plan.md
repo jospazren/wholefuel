@@ -1,109 +1,89 @@
 
-# Refactor: Store Serving Multiplier Instead of Grams
+# Plan: Change Shopping List to Serving Multiples
 
-## Problem
-Currently, recipe ingredients store amounts in grams, and the UI displays serving multipliers (e.g., ×0.5, ×2). This causes precision issues:
-- User types `0.5` (serving multiplier) for garlic (3g serving)
-- System converts to grams: `0.5 × 3 = 1.5g`, rounds to `2g`
-- UI recalculates multiplier: `2g ÷ 3g = 0.67`
-- Value "jumps" from 0.5 to 0.67
+## Overview
+Update the shopping list to display items as multiples of their serving size (e.g., "2.5 × 1 egg" or "3 × 100g") instead of calculated gram totals. This makes the list more intuitive since users already define ingredients with serving descriptions.
 
-## Solution
-Store the **serving multiplier** directly instead of converting to grams. Gram calculations will only happen when needed (for macros and shopping lists).
+## Changes
 
----
+### 1. Update ShoppingItem Type
+**File:** `src/types/meal.ts`
+- Change `totalAmount` to `totalServings` (a serving multiplier)
+- Add `servingDescription` to display what one serving is
+- Remove `unit` field (no longer needed)
 
-## Changes Overview
-
-### 1. Database Schema
-Rename the `amount` column to `serving_multiplier` in `recipe_ingredients` table:
-
-```sql
-ALTER TABLE recipe_ingredients 
-  RENAME COLUMN amount TO serving_multiplier;
+```
+interface ShoppingItem {
+  ingredientId: string;
+  name: string;
+  totalServings: number;        // was totalAmount
+  servingDescription: string;   // e.g., "1 egg (60g)", "100g"
+  purchased: boolean;
+}
 ```
 
-### 2. Type Definitions
-Update `RecipeIngredient` in `src/types/meal.ts`:
-- Replace `amount: number` (grams) with `servingMultiplier: number`
-- Remove `unit` field (no longer needed since multiplier is unitless)
+### 2. Update generateShoppingList Function
+**File:** `src/contexts/MealPlanContext.tsx`
+- Sum up serving multipliers instead of calculating grams
+- Include the ingredient's `servingDescription` in each item
 
-### 3. Frontend Components
+### 3. Update Shopping Page Display
+**File:** `src/pages/ShoppingPage.tsx`
+- Change display from "500 g" to "2.5 × 100g" format
+- Update the editable input to modify `totalServings`
+- Remove the `formatAmount` gram/kg conversion logic
 
-**RecipesPage.tsx**:
-- Store/read `servingMultiplier` directly instead of converting from grams
-- Update the input to bind directly to the multiplier value
-- Simplify `handleMultiplierChange` to set the value directly
+### 4. Remove Serving Weight Field from Ingredients
+**File:** `src/pages/IngredientsPage.tsx`
+- Remove the "Serving Weight (g)" input field from the form
+- Keep `servingDescription` as it's still useful for display
 
-### 4. Context & Data Layer
-
-**MealPlanContext.tsx**:
-- Update `calculateMacrosFromIngredients` to use multiplier directly:
-  ```typescript
-  const multiplier = ing.servingMultiplier;
-  totals.calories += baseIng.caloriesPerServing * multiplier;
-  ```
-- Update recipe loading/saving to use `serving_multiplier` column
-- Update shopping list generation to calculate grams on-the-fly:
-  ```typescript
-  const grams = ing.servingMultiplier * ingredientServingGrams;
-  ```
-
-### 5. MCP Server
-
-**supabase/functions/mcp-server/index.ts**:
-- Update all tools (`create_recipe`, `edit_recipe`, `bulk_create_recipes`, `list_recipes`) to use `serving_multiplier`
-- Update macro calculations to multiply by the multiplier directly
-- Update input schema descriptions from "Amount in grams" to "Serving multiplier (e.g., 1.0 for one serving, 0.5 for half)"
-
----
-
-## Data Migration
-Existing data will need conversion. The migration will:
-1. Rename the column
-2. Convert existing gram values to multipliers by dividing by the ingredient's `serving_grams`
-
-```sql
--- First rename the column
-ALTER TABLE recipe_ingredients RENAME COLUMN amount TO serving_multiplier;
-
--- Then update existing values: convert grams to multiplier
-UPDATE recipe_ingredients ri
-SET serving_multiplier = ri.serving_multiplier / COALESCE(
-  (SELECT i.serving_grams FROM ingredients i WHERE i.id = ri.ingredient_id),
-  100
-);
-```
+### 5. Database Migration (Optional)
+The `serving_grams` column can remain in the database with its default value of 100 for backward compatibility. No migration is strictly required, but the UI will no longer expose this field.
 
 ---
 
 ## Technical Details
 
-### Macro Calculation (before → after)
+### ShoppingItem Type Change
 ```typescript
-// BEFORE: amount is grams
-const multiplier = ing.amount / baseIng.servingGrams;
-totals.calories += baseIng.caloriesPerServing * multiplier;
+// Before
+export interface ShoppingItem {
+  ingredientId: string;
+  name: string;
+  totalAmount: number;
+  unit: string;
+  purchased: boolean;
+}
 
-// AFTER: servingMultiplier is the multiplier directly
-totals.calories += baseIng.caloriesPerServing * ing.servingMultiplier;
+// After
+export interface ShoppingItem {
+  ingredientId: string;
+  name: string;
+  totalServings: number;
+  servingDescription: string;
+  purchased: boolean;
+}
 ```
 
-### Shopping List (grams calculated on-the-fly)
+### generateShoppingList Logic Change
 ```typescript
-// BEFORE
-totalAmount: ing.amount * meal.servingMultiplier
+// Before: calculates grams
+const gramsNeeded = ing.servingMultiplier * gramsPerServing * meal.servingMultiplier;
 
-// AFTER: need ingredient's servingGrams
-const ingData = ingredientMap.get(ing.ingredientId);
-const gramsPerServing = ingData?.servingGrams || 100;
-totalAmount: ing.servingMultiplier * gramsPerServing * meal.servingMultiplier
+// After: sums serving multipliers
+const servingsNeeded = ing.servingMultiplier * meal.servingMultiplier;
 ```
 
-### Files to Update
-1. `supabase/migrations/` – new migration file
-2. `src/types/meal.ts` – update `RecipeIngredient` type
-3. `src/pages/RecipesPage.tsx` – simplify multiplier handling
-4. `src/contexts/MealPlanContext.tsx` – update calculations and DB operations
-5. `src/data/recipes.ts` – update `calculateRecipeMacros` helper
-6. `supabase/functions/mcp-server/index.ts` – update all recipe tools
+### Display Format Examples
+| Before | After |
+|--------|-------|
+| Eggs: 360 g | Eggs: 6 × 1 egg (60g) |
+| Chicken Breast: 1.2 kg | Chicken Breast: 12 × 100g |
+| Olive Oil: 45 g | Olive Oil: 3 × 1 tbsp (15g) |
+
+### Files Changed
+1. `src/types/meal.ts` - Update ShoppingItem interface
+2. `src/contexts/MealPlanContext.tsx` - Update generateShoppingList
+3. `src/pages/ShoppingPage.tsx` - Update display and input handling
+4. `src/pages/IngredientsPage.tsx` - Remove servingGrams field from form
