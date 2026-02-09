@@ -71,10 +71,11 @@ export interface MealInstance {
 
 export interface DayPlan {
   m1?: MealInstance;
-  m2?: MealInstance;
   m3?: MealInstance;
   m4?: MealInstance;
   m5?: MealInstance;
+  m6?: MealInstance;
+  m7?: MealInstance;
 }
 
 export interface WeeklyPlan {
@@ -107,15 +108,16 @@ export const STRATEGY_MULTIPLIERS = {
   bulk20: 1.2,
 } as const;
 
-export const MEAL_SLOTS: MealSlot[] = ['m1', 'm2', 'm3', 'm4', 'm5'];
+export const MEAL_SLOTS: MealSlot[] = ['m1', 'm3', 'm4', 'm5', 'm6', 'm7'];
 export const DAYS_OF_WEEK: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 export const MEAL_SLOT_LABELS: Record<MealSlot, string> = {
   m1: 'Breakfast',
-  m2: 'Snack 1',
   m3: 'Lunch',
-  m4: 'Snack 2',
+  m4: 'Snack',
   m5: 'Dinner',
+  m6: 'Extra 1',
+  m7: 'Extra 2',
 };
 
 export const DAY_LABELS: Record<DayOfWeek, string> = {
