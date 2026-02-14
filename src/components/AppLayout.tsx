@@ -88,9 +88,9 @@ export function AppLayout({ children }: AppLayoutProps) {
       <main className="flex-1 overflow-auto relative">
         {/* Decorative gradient circles */}
         <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
-          <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-gradient-to-br from-emerald-200 via-teal-200 to-cyan-200 blur-3xl opacity-40" />
-          <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full bg-gradient-to-br from-teal-400/40 to-emerald-400/50 blur-3xl" />
-          <div className="absolute top-1/3 right-1/4 w-72 h-72 rounded-full bg-gradient-to-br from-cyan-400/50 to-blue-400/50 blur-3xl" />
+          <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full blur-[64px]" style={{ background: 'linear-gradient(135deg, rgba(0,212,146,0.5), rgba(0,213,190,0.5))' }} />
+          <div className="absolute bottom-0 right-0 w-80 h-80 rounded-full blur-[64px]" style={{ background: 'linear-gradient(135deg, rgba(0,211,243,0.5), rgba(81,162,255,0.5))' }} />
+          <div className="absolute top-1/3 right-1/4 w-72 h-72 rounded-full blur-[64px]" style={{ background: 'linear-gradient(135deg, rgba(0,213,190,0.4), rgba(0,212,146,0.4))' }} />
         </div>
         <div className="relative z-10">
           {children}

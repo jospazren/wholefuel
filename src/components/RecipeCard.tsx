@@ -1,6 +1,6 @@
 import { Recipe } from '@/types/meal';
 import { cn } from '@/lib/utils';
-import { MacroBadgeRow } from '@/components/MacroBadge';
+import { MacroBand } from '@/components/MacroBadge';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -38,12 +38,11 @@ export function RecipeCard({
       <h4 className="text-[13px] text-slate-950 truncate mb-1.5">
         {recipe.name}
       </h4>
-      <MacroBadgeRow
+      <MacroBand
         calories={recipe.totalMacros.calories}
         protein={recipe.totalMacros.protein}
         carbs={recipe.totalMacros.carbs}
         fat={recipe.totalMacros.fat}
-        size="sm"
       />
     </div>
   );

@@ -69,3 +69,49 @@ export function MacroBadgeRow({ calories, protein, carbs, fat, size = 'sm', clas
     </div>
   );
 }
+
+/* Connected band variant for recipe cards */
+const bandConfig: Record<MacroType, { bg: string; text: string; suffix: string }> = {
+  calories: { bg: 'bg-[rgba(98,116,142,0.1)]', text: 'text-[#45556c]', suffix: 'K' },
+  protein:  { bg: 'bg-[rgba(0,153,102,0.1)]', text: 'text-[#096]', suffix: 'P' },
+  carbs:    { bg: 'bg-[rgba(0,146,184,0.1)]', text: 'text-[#0092b8]', suffix: 'C' },
+  fat:      { bg: 'bg-[rgba(255,105,0,0.1)]', text: 'text-[#ff6900]', suffix: 'F' },
+};
+
+interface MacroBandProps {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  className?: string;
+}
+
+export function MacroBand({ calories, protein, carbs, fat, className }: MacroBandProps) {
+  const items: { type: MacroType; value: number }[] = [
+    { type: 'calories', value: calories },
+    { type: 'protein', value: protein },
+    { type: 'carbs', value: carbs },
+    { type: 'fat', value: fat },
+  ];
+
+  return (
+    <div className={cn('flex h-[19px] rounded-[10px] overflow-hidden', className)}>
+      {items.map(({ type, value }, i) => {
+        const { bg, text, suffix } = bandConfig[type];
+        return (
+          <div
+            key={type}
+            className={cn(
+              'flex-1 flex items-center justify-center text-[10px] font-medium',
+              bg,
+              text,
+              i < items.length - 1 && 'border-r border-white/50'
+            )}
+          >
+            {value}{suffix}
+          </div>
+        );
+      })}
+    </div>
+  );
+}

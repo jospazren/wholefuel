@@ -44,18 +44,18 @@ export function MealSlotCell({
     return (
       <div
         className={cn(
-          'rounded-2xl transition-all duration-150 py-2.5 px-2',
+          'rounded-2xl transition-all duration-150 py-3 px-2',
           'flex items-center justify-center',
           isDragOver && 'border-primary bg-primary/10 border border-solid',
-          !isDragOver && 'glass-faint hover:bg-white/30'
+          !isDragOver && 'hover:bg-white/20'
         )}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
       >
         <span className={cn(
-          'text-[11px] font-medium',
-          isDragOver ? 'text-primary' : 'text-muted-foreground'
+          'text-[13px] font-medium',
+          isDragOver ? 'text-primary' : 'text-[#99A1AF] hover:text-[#4a5565]'
         )}>
           + Add meal
         </span>
@@ -84,7 +84,7 @@ export function MealSlotCell({
     >
       <div className="px-2.5 py-2">
         <div className="flex items-start justify-between gap-1 mb-1.5">
-          <span className="text-[12px] text-foreground line-clamp-2 leading-tight flex-1">
+          <span className="text-[12px] font-semibold text-foreground line-clamp-2 leading-tight flex-1">
             {meal.recipeName}
           </span>
           <Button
@@ -96,7 +96,7 @@ export function MealSlotCell({
             <X className="h-2.5 w-2.5" />
           </Button>
         </div>
-        <MacroBadgeRow calories={cals} protein={protein} carbs={carbs} fat={fat} size="sm" />
+        <MacroBadgeRow calories={cals} protein={protein} carbs={carbs} fat={fat} size="md" />
       </div>
     </div>
   );
