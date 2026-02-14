@@ -3,7 +3,7 @@ import { useMealPlan } from '@/contexts/MealPlanContext';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MacroBadgeRow } from '@/components/MacroBadge';
+import { MacroBand } from '@/components/MacroBadge';
 
 interface MealSlotCellProps {
   day: DayOfWeek;
@@ -96,7 +96,7 @@ export function MealSlotCell({
             <X className="h-2.5 w-2.5" />
           </Button>
         </div>
-        <MacroBadgeRow calories={cals} protein={protein} carbs={carbs} fat={fat} size="md" />
+        <MacroBand calories={cals} protein={protein} carbs={carbs} fat={fat} />
       </div>
     </div>
   );

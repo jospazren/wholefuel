@@ -46,7 +46,7 @@ const OVER_TEXT = 'text-[#e7000b]';
 
 export function DayMacroBars({ macros, targets }: DayMacroBarsProps) {
   return (
-    <div className="space-y-1 px-2 py-2">
+    <div className="space-y-1">{/* No extra padding - container handles it */}
       {bars.map(({ key, targetKey, trackClass, fillClass, textClass }) => {
         const actual = macros[key];
         const target = targets[targetKey];
