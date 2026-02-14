@@ -35,7 +35,7 @@ export function RecipeCard({
         className
       )}
     >
-      <h4 className="text-[13px] text-foreground truncate mb-1.5">
+      <h4 className="text-[13px] text-slate-950 truncate mb-1.5">
         {recipe.name}
       </h4>
       <MacroBadgeRow

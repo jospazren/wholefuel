@@ -5,23 +5,23 @@ type MacroType = 'calories' | 'protein' | 'carbs' | 'fat';
 const config: Record<MacroType, { suffix: string; bg: string; text: string }> = {
   calories: {
     suffix: 'K',
-    bg: 'bg-macro-calories/10',
-    text: 'text-macro-calories',
+    bg: 'bg-slate-500/10',
+    text: 'text-slate-600',
   },
   protein: {
     suffix: 'P',
-    bg: 'bg-macro-protein/10',
-    text: 'text-macro-protein',
+    bg: 'bg-emerald-600/10',
+    text: 'text-emerald-600',
   },
   carbs: {
     suffix: 'C',
-    bg: 'bg-macro-carbs/10',
-    text: 'text-macro-carbs',
+    bg: 'bg-cyan-600/10',
+    text: 'text-cyan-600',
   },
   fat: {
     suffix: 'F',
-    bg: 'bg-macro-fat/10',
-    text: 'text-macro-fat',
+    bg: 'bg-orange-500/10',
+    text: 'text-orange-500',
   },
 };
 

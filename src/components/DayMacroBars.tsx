@@ -14,54 +14,47 @@ const bars = [
   {
     key: 'calories' as const,
     targetKey: 'dailyCalories' as const,
-    label: 'K',
-    trackBg: 'rgba(98,116,142,0.1)',
-    fillGradient: 'linear-gradient(90deg, hsl(var(--bar-calories-from)), hsl(var(--bar-calories-to)))',
-    textClass: 'text-macro-calories',
+    trackClass: 'bg-slate-500/10',
+    fillClass: 'bg-gradient-to-r from-slate-600 to-slate-500',
+    textClass: 'text-slate-600',
   },
   {
     key: 'protein' as const,
     targetKey: 'protein' as const,
-    label: 'P',
-    trackBg: 'rgba(0,153,102,0.1)',
-    fillGradient: 'linear-gradient(90deg, hsl(var(--bar-protein-from)), hsl(var(--bar-protein-to)))',
-    textClass: 'text-[hsl(var(--bar-protein-from))]',
+    trackClass: 'bg-emerald-600/10',
+    fillClass: 'bg-gradient-to-r from-red-600 to-red-500',
+    textClass: 'text-red-600',
   },
   {
     key: 'carbs' as const,
     targetKey: 'carbs' as const,
-    label: 'C',
-    trackBg: 'rgba(0,146,184,0.1)',
-    fillGradient: 'linear-gradient(90deg, hsl(var(--bar-carbs-from)), hsl(var(--bar-carbs-to)))',
-    textClass: 'text-macro-carbs',
+    trackClass: 'bg-cyan-600/10',
+    fillClass: 'bg-gradient-to-r from-cyan-600 to-cyan-500',
+    textClass: 'text-cyan-600',
   },
   {
     key: 'fat' as const,
     targetKey: 'fat' as const,
-    label: 'F',
-    trackBg: 'rgba(255,105,0,0.1)',
-    fillGradient: 'linear-gradient(90deg, hsl(var(--bar-fat-from)), hsl(var(--bar-fat-to)))',
-    textClass: 'text-macro-fat',
+    trackClass: 'bg-orange-500/10',
+    fillClass: 'bg-gradient-to-r from-orange-500 to-orange-400',
+    textClass: 'text-orange-500',
   },
 ];
 
 export function DayMacroBars({ macros, targets }: DayMacroBarsProps) {
   return (
     <div className="space-y-1 px-2 py-2">
-      {bars.map(({ key, targetKey, trackBg, fillGradient, textClass }) => {
+      {bars.map(({ key, targetKey, trackClass, fillClass, textClass }) => {
         const actual = macros[key];
         const target = targets[targetKey];
         const percent = target > 0 ? Math.min((actual / target) * 100, 100) : 0;
 
         return (
           <div key={key} className="flex items-center gap-1.5">
-            <div
-              className="relative h-1.5 flex-1 rounded-full overflow-hidden"
-              style={{ background: trackBg }}
-            >
+            <div className={`relative h-1.5 flex-1 rounded-full overflow-hidden ${trackClass}`}>
               <div
-                className="h-full rounded-full transition-all duration-300"
-                style={{ width: `${percent}%`, background: fillGradient }}
+                className={`h-full rounded-full transition-all duration-300 ${fillClass}`}
+                style={{ width: `${percent}%` }}
               />
             </div>
             <span className={`text-[10px] font-bold w-7 text-right tabular-nums ${textClass}`}>
