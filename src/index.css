@@ -7,8 +7,7 @@
 
 @layer base {
   :root {
-    /* Mint/Green fresh theme */
-    --background: 150 20% 97%;
+    --background: 155 60% 90%;
     --foreground: 220 15% 18%;
 
     --card: 0 0% 100%;
@@ -18,7 +17,7 @@
     --popover-foreground: 220 15% 18%;
 
     /* Primary - Green/Mint */
-    --primary: 152 55% 45%;
+    --primary: 160 100% 37%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary */
@@ -36,7 +35,7 @@
 
     --border: 220 10% 88%;
     --input: 220 10% 88%;
-    --ring: 152 55% 45%;
+    --ring: 160 100% 37%;
 
     --radius: 0.75rem;
 
@@ -45,18 +44,24 @@
     --status-warning: 38 92% 50%;
     --status-danger: 0 72% 51%;
 
-    /* Macro colors - Figma palette */
-    --macro-calories: 220 15% 25%;
-    --macro-protein: 152 55% 45%;
-    --macro-carbs: 217 70% 55%;
-    --macro-fat: 15 80% 55%;
+    /* Macro colors - Figma tonal palette (badge text/bg) */
+    --macro-calories: 216 17% 35%;
+    --macro-protein: 160 100% 30%;
+    --macro-carbs: 193 100% 36%;
+    --macro-fat: 25 100% 50%;
+
+    /* Macro bar gradients (progress fills) */
+    --bar-calories-from: 216 17% 35%;
+    --bar-calories-to: 216 18% 47%;
+    --bar-protein-from: 358 95% 48%;
+    --bar-protein-to: 355 96% 58%;
+    --bar-carbs-from: 193 100% 36%;
+    --bar-carbs-to: 191 100% 43%;
+    --bar-fat-from: 25 100% 50%;
+    --bar-fat-to: 26 100% 51%;
 
     /* Gradients */
     --gradient-hero: linear-gradient(180deg, hsl(150 20% 97%) 0%, hsl(150 15% 93%) 100%);
-    --gradient-calories: linear-gradient(135deg, hsl(220 15% 25%) 0%, hsl(220 15% 18%) 100%);
-    --gradient-protein: linear-gradient(135deg, hsl(152 55% 45%) 0%, hsl(152 55% 38%) 100%);
-    --gradient-carbs: linear-gradient(135deg, hsl(217 70% 55%) 0%, hsl(217 70% 48%) 100%);
-    --gradient-fat: linear-gradient(135deg, hsl(15 80% 55%) 0%, hsl(15 80% 48%) 100%);
 
     /* Category colors */
     --category-breakfast: 38 92% 50%;
@@ -72,22 +77,23 @@
     --shadow-lg: 0 10px 15px -3px hsl(220 15% 18% / 0.08), 0 4px 6px -4px hsl(220 15% 18% / 0.04);
     --shadow-xl: 0 20px 25px -5px hsl(220 15% 18% / 0.08), 0 8px 10px -6px hsl(220 15% 18% / 0.04);
     --shadow-2xl: 0 25px 50px -12px hsl(220 15% 18% / 0.15);
-    --shadow-glow: 0 0 0 3px hsl(152 55% 45% / 0.2);
+    --shadow-glow: 0 0 0 3px hsl(160 100% 37% / 0.2);
     --shadow: 0 2px 6px 0 hsl(220 15% 18% / 0.06);
+    --shadow-green: 0 8px 10px 0 hsl(160 100% 37% / 0.05);
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 15% 18%;
-    --sidebar-primary: 152 55% 45%;
+    --sidebar-primary: 160 100% 37%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 150 15% 93%;
     --sidebar-accent-foreground: 220 15% 18%;
     --sidebar-border: 220 10% 88%;
-    --sidebar-ring: 152 55% 45%;
+    --sidebar-ring: 160 100% 37%;
     --sidebar: 150 20% 97%;
 
-    --chart-1: 152 55% 45%;
-    --chart-2: 217 70% 55%;
-    --chart-3: 15 80% 55%;
+    --chart-1: 160 100% 37%;
+    --chart-2: 193 100% 36%;
+    --chart-3: 25 100% 50%;
     --chart-4: 38 92% 50%;
     --chart-5: 262 52% 47%;
 
@@ -109,7 +115,7 @@
     --popover: 220 15% 12%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 152 55% 50%;
+    --primary: 160 100% 42%;
     --primary-foreground: 220 15% 8%;
 
     --secondary: 220 15% 16%;
@@ -126,21 +132,21 @@
 
     --border: 220 15% 22%;
     --input: 220 15% 22%;
-    --ring: 152 55% 50%;
+    --ring: 160 100% 42%;
 
     --sidebar-background: 220 15% 10%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 152 55% 50%;
+    --sidebar-primary: 160 100% 42%;
     --sidebar-primary-foreground: 220 15% 8%;
     --sidebar-accent: 220 15% 16%;
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 220 15% 22%;
-    --sidebar-ring: 152 55% 50%;
+    --sidebar-ring: 160 100% 42%;
     --sidebar: 220 15% 8%;
 
-    --chart-1: 152 55% 50%;
-    --chart-2: 217 70% 60%;
-    --chart-3: 15 80% 60%;
+    --chart-1: 160 100% 42%;
+    --chart-2: 193 100% 40%;
+    --chart-3: 25 100% 55%;
     --chart-4: 38 92% 55%;
     --chart-5: 262 52% 52%;
 
@@ -151,8 +157,9 @@
     --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.35);
     --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.35);
     --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.5);
-    --shadow-glow: 0 0 0 3px hsl(152 55% 50% / 0.3);
+    --shadow-glow: 0 0 0 3px hsl(160 100% 42% / 0.3);
     --shadow: 0 2px 6px 0 hsl(0 0% 0% / 0.25);
+    --shadow-green: 0 8px 10px 0 hsl(160 100% 42% / 0.08);
     --radius: 0.75rem;
   }
 }
@@ -163,11 +170,13 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
     font-size: 14px;
     line-height: 1.5;
     letter-spacing: 0.01em;
+    background: linear-gradient(180deg, rgba(164,244,207,1) 0%, rgba(150,247,228,1) 100%);
+    min-height: 100vh;
   }
 
   h1 {
@@ -201,19 +210,6 @@
     @apply text-macro-fat;
   }
 
-  .bg-macro-calories-gradient {
-    background: var(--gradient-calories);
-  }
-  .bg-macro-protein-gradient {
-    background: var(--gradient-protein);
-  }
-  .bg-macro-carbs-gradient {
-    background: var(--gradient-carbs);
-  }
-  .bg-macro-fat-gradient {
-    background: var(--gradient-fat);
-  }
-
   .shadow-glow {
     box-shadow: var(--shadow-glow);
   }
@@ -224,6 +220,28 @@
 
   .surface-tonal {
     @apply bg-accent text-accent-foreground rounded-lg;
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .glass-subtle {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .glass-faint {
+    background: rgba(255, 255, 255, 0.2);
   }
 
   .ripple {

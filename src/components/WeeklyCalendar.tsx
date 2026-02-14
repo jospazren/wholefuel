@@ -4,8 +4,9 @@ import { Recipe, DayOfWeek, MealSlot, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, Meal
 import { MealSlotCell } from '@/components/MealSlotCell';
 import { MealEditSheet } from '@/components/MealEditSheet';
 import { DayMacroBars } from '@/components/DayMacroBars';
+import { MacroBadgeRow } from '@/components/MacroBadge';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -110,31 +111,19 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
     });
   };
 
-  // Compute weekly totals for header badges
-  const weeklyTotals = DAYS_OF_WEEK.reduce(
-    (acc, day) => {
-      const m = getDailyMacros(day);
-      acc.calories += m.calories;
-      acc.protein += m.protein;
-      acc.carbs += m.carbs;
-      acc.fat += m.fat;
-      return acc;
-    },
-    { calories: 0, protein: 0, carbs: 0, fat: 0 }
-  );
-
-  const avgDaily = {
-    calories: Math.round(weeklyTotals.calories / 7),
-    protein: Math.round(weeklyTotals.protein / 7),
-    carbs: Math.round(weeklyTotals.carbs / 7),
-    fat: Math.round(weeklyTotals.fat / 7),
-  };
-
   return (
     <>
-      <div className={cn('bg-card rounded-xl border shadow-sm overflow-hidden flex flex-col', className)}>
+      <div
+        className={cn('rounded-3xl overflow-hidden flex flex-col', className)}
+        style={{
+          background: 'rgba(255,255,255,0.5)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          boxShadow: '0 8px 10px rgba(0,188,125,0.05)',
+        }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b bg-card">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/30">
           {/* Left: Title */}
           <div className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-primary" />
@@ -154,10 +143,10 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
             </Button>
           </div>
 
-          {/* Right: Strategy + Macro Summary */}
+          {/* Right: Strategy + Macro Summary + Filter */}
           <div className="flex items-center gap-3">
             <Select value={weeklyTargets.strategy} onValueChange={handleStrategyChange}>
-              <SelectTrigger className="h-8 w-[110px] text-xs">
+              <SelectTrigger className="h-8 w-[110px] text-xs glass-subtle border-0 rounded-xl">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -169,20 +158,19 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
               </SelectContent>
             </Select>
 
-            <div className="hidden md:flex items-center gap-1">
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-semibold text-white bg-macro-calories">
-                {weeklyTargets.dailyCalories}K
-              </span>
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-semibold text-white bg-macro-protein">
-                {weeklyTargets.protein}P
-              </span>
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-semibold text-white bg-macro-carbs">
-                {weeklyTargets.carbs}C
-              </span>
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-semibold text-white bg-macro-fat">
-                {weeklyTargets.fat}F
-              </span>
+            <div className="hidden md:block">
+              <MacroBadgeRow
+                calories={weeklyTargets.dailyCalories}
+                protein={weeklyTargets.protein}
+                carbs={weeklyTargets.carbs}
+                fat={weeklyTargets.fat}
+                size="md"
+              />
             </div>
+
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
+              <SlidersHorizontal className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
@@ -196,11 +184,11 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
               return (
                 <div
                   key={day}
-                  className="flex flex-col border-r last:border-r-0 min-h-0"
+                  className="flex flex-col border-r border-white/20 last:border-r-0 min-h-0"
                 >
                   {/* Day Header */}
-                  <div className="text-center py-2 border-b bg-muted/30">
-                    <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                  <div className="text-center py-2 border-b border-white/20">
+                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">
                       {DAY_LABELS[day]}
                     </span>
                   </div>

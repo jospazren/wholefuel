@@ -1,18 +1,18 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
-import { CalendarDays, UtensilsCrossed, Apple, ShoppingCart, Settings, LogOut, Leaf } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Leaf } from 'lucide-react';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 const navItems = [
-  { title: 'Meal Planner', url: '/', icon: CalendarDays },
-  { title: 'Recipes', url: '/recipes', icon: UtensilsCrossed },
-  { title: 'Ingredients', url: '/ingredients', icon: Apple },
-  { title: 'Shopping List', url: '/shopping', icon: ShoppingCart },
+  { title: 'Meal Planner', url: '/' },
+  { title: 'Recipes', url: '/recipes' },
+  { title: 'Ingredients', url: '/ingredients' },
+  { title: 'Shopping List', url: '/shopping' },
+  { title: 'Targets', url: '/settings' },
 ];
 
 export function AppLayout({ children }: AppLayoutProps) {
@@ -33,59 +33,53 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-card border-b shadow-sm">
-        <div className="flex items-center h-14 px-4 gap-1">
+      <header className="sticky top-0 z-40 glass-subtle border-b border-white/30">
+        <div className="flex items-center h-11 px-4 gap-1">
           {/* Brand */}
           <button 
             onClick={() => navigate('/')}
             className="flex items-center gap-2 mr-6 hover:opacity-80 transition-opacity"
           >
-            <Leaf className="h-6 w-6 text-primary" strokeWidth={2} />
-            <span className="font-semibold text-lg text-primary">WholeFuel</span>
+            <Leaf className="h-5 w-5 text-primary" strokeWidth={2.5} />
+            <span className="font-semibold text-base text-primary">WholeFuel</span>
           </button>
 
-          {/* Nav Tabs */}
-          <nav className="flex items-center gap-1">
+          {/* Nav Tabs - text only */}
+          <nav className="flex items-center gap-0.5">
             {navItems.map((item) => (
               <button
                 key={item.title}
                 onClick={() => navigate(item.url)}
                 className={cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  'px-3 py-1.5 rounded-full text-sm font-medium transition-all',
                   isActive(item.url)
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    ? 'text-white shadow-md'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-white/40'
                 )}
+                style={isActive(item.url) ? {
+                  background: 'linear-gradient(135deg, rgba(0,188,125,1), rgba(0,187,167,1))',
+                  boxShadow: '0 4px 12px rgba(0,188,125,0.3)',
+                } : undefined}
               >
-                <item.icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{item.title}</span>
+                {item.title}
               </button>
             ))}
           </nav>
 
           {/* Right side */}
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex items-center gap-3">
             <button
               onClick={() => navigate('/settings')}
-              className={cn(
-                'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                isActive('/settings')
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-              )}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Settings</span>
+              Settings
             </button>
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={handleSignOut}
-              className="text-muted-foreground hover:text-destructive gap-2"
+              className="text-sm text-muted-foreground hover:text-destructive transition-colors"
             >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Sign Out</span>
-            </Button>
+              Sign Out
+            </button>
           </div>
         </div>
       </header>

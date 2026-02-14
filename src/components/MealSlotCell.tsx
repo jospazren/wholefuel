@@ -1,8 +1,9 @@
 import { MealInstance, DayOfWeek, MealSlot } from '@/types/meal';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { cn } from '@/lib/utils';
-import { Plus, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MacroBadgeRow } from '@/components/MacroBadge';
 
 interface MealSlotCellProps {
   day: DayOfWeek;
@@ -14,14 +15,6 @@ interface MealSlotCellProps {
   onDrop: (e: React.DragEvent) => void;
   onEditClick: () => void;
   onMealDragStart?: (e: React.DragEvent) => void;
-}
-
-function MacroBadge({ value, label, colorClass }: { value: number; label: string; colorClass: string }) {
-  return (
-    <span className={cn('inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold text-white', colorClass)}>
-      {value}{label}
-    </span>
-  );
 }
 
 export function MealSlotCell({
@@ -51,19 +44,21 @@ export function MealSlotCell({
     return (
       <div
         className={cn(
-          'rounded-lg border border-dashed transition-all duration-150 py-2 px-2',
+          'rounded-2xl transition-all duration-150 py-2.5 px-2',
           'flex items-center justify-center',
-          isDragOver && 'border-primary bg-primary/10 border-solid',
-          !isDragOver && 'border-border/40 hover:border-border hover:bg-muted/30'
+          isDragOver && 'border-primary bg-primary/10 border border-solid',
+          !isDragOver && 'glass-faint hover:bg-white/30'
         )}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
         onDrop={onDrop}
       >
-        <Plus className={cn(
-          'h-3 w-3 text-muted-foreground/40',
-          isDragOver && 'text-primary scale-110'
-        )} />
+        <span className={cn(
+          'text-[11px] font-medium',
+          isDragOver ? 'text-primary' : 'text-muted-foreground'
+        )}>
+          + Add meal
+        </span>
       </div>
     );
   }
@@ -76,7 +71,7 @@ export function MealSlotCell({
   return (
     <div
       className={cn(
-        'rounded-lg bg-card border shadow-xs transition-all duration-150 relative group',
+        'rounded-2xl glass-card transition-all duration-150 relative group',
         'cursor-grab active:cursor-grabbing hover:shadow-sm',
         isDragOver && 'border-primary bg-primary/10'
       )}
@@ -87,9 +82,9 @@ export function MealSlotCell({
       draggable
       onDragStart={handleDragStart}
     >
-      <div className="px-2 py-1.5">
-        <div className="flex items-start justify-between gap-1 mb-1">
-          <span className="text-[11px] font-medium text-foreground line-clamp-2 leading-tight flex-1">
+      <div className="px-2.5 py-2">
+        <div className="flex items-start justify-between gap-1 mb-1.5">
+          <span className="text-[12px] text-foreground line-clamp-2 leading-tight flex-1">
             {meal.recipeName}
           </span>
           <Button
@@ -101,12 +96,7 @@ export function MealSlotCell({
             <X className="h-2.5 w-2.5" />
           </Button>
         </div>
-        <div className="flex flex-wrap gap-0.5">
-          <MacroBadge value={cals} label="K" colorClass="bg-macro-calories" />
-          <MacroBadge value={protein} label="P" colorClass="bg-macro-protein" />
-          <MacroBadge value={carbs} label="C" colorClass="bg-macro-carbs" />
-          <MacroBadge value={fat} label="F" colorClass="bg-macro-fat" />
-        </div>
+        <MacroBadgeRow calories={cals} protein={protein} carbs={carbs} fat={fat} size="sm" />
       </div>
     </div>
   );
