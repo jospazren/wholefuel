@@ -106,7 +106,7 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
         </div>
 
         <ScrollArea className="flex-1 px-2 pb-2">
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 flex flex-col items-center">
             {filteredRecipes.map((recipe) => (
               <RecipeCard
                 key={recipe.id}
