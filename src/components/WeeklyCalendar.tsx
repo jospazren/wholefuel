@@ -191,13 +191,16 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
               return (
               <div
                   key={day}
-                  className={cn(
-                    "flex flex-col min-h-0",
-                    day !== DAYS_OF_WEEK[DAYS_OF_WEEK.length - 1] && "border-r border-white/20"
-                  )}
+                  className="flex flex-col min-h-0"
                 >
-                    {/* Day Header + Macros */}
-                    <div className="px-2 pt-2 pb-1.5 space-y-1.5">
+                    {/* Day Header + Macros in a card container */}
+                    <div
+                      className="mx-1.5 mt-1.5 rounded-2xl p-[13px] space-y-3"
+                      style={{
+                        backgroundImage: 'linear-gradient(137deg, rgba(255,255,255,0.6), rgba(249,250,251,0.3))',
+                        border: '1px solid rgba(255,255,255,0.5)',
+                      }}
+                    >
                       <div className="text-center">
                         <span className="text-[11px] font-bold text-[#6a7282] uppercase" style={{ letterSpacing: '0.34px' }}>
                           {DAY_LABELS[day]}
@@ -207,7 +210,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                     </div>
 
                     {/* Meal Cards */}
-                    <div className="flex-1 overflow-y-auto px-1.5 pb-1.5 space-y-1">
+                    <div className="flex-1 overflow-y-auto px-1.5 pb-1.5 pt-1.5 space-y-1">
                       {dayMeals.map(({ slot, meal }) => (
                         <MealSlotCell
                           key={slot}
