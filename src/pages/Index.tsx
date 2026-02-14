@@ -27,13 +27,13 @@ const Index = () => {
             <RecipeLibrary
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
-              className="h-[calc(100vh-7rem)]"
+              className="h-[calc(100vh-5.5rem)]"
             />
           </div>
 
           {/* Main Content - Calendar */}
           <div className="lg:col-span-9 order-1 lg:order-2">
-            <WeeklyCalendar />
+            <WeeklyCalendar className="h-[calc(100vh-5.5rem)]" />
           </div>
         </div>
       </div>

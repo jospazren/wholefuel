@@ -1,50 +1,99 @@
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/AppSidebar';
-import { useMealPlan } from '@/contexts/MealPlanContext';
-import { Flame } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { cn } from '@/lib/utils';
+import { CalendarDays, UtensilsCrossed, Apple, ShoppingCart, Settings, LogOut, Leaf } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
 interface AppLayoutProps {
   children: React.ReactNode;
 }
-export function AppLayout({
-  children
-}: AppLayoutProps) {
-  const {
-    weeklyTargets
-  } = useMealPlan();
-  return <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar />
-        
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Header */}
-          <header className="sticky top-0 z-40 glass border-b h-12 flex items-center justify-between px-4 py-[8px]">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger className="-ml-1" />
-            </div>
-            
-            {/* Quick Stats */}
-            <div className="hidden md:flex items-center gap-4 px-4 py-1.5 bg-secondary/50 rounded-lg">
-              <div className="flex items-center gap-1.5">
-                <Flame className="h-4 w-4 text-macro-calories" />
-                <span className="text-sm font-semibold text-foreground">{weeklyTargets.dailyCalories}</span>
-                <span className="text-xs text-muted-foreground">kcal/day</span>
-              </div>
-              <div className="w-px h-5 bg-border" />
-              <div className="text-sm">
-                <span className="font-semibold text-macro-protein">{weeklyTargets.protein}P</span>
-                <span className="text-muted-foreground mx-1">/</span>
-                <span className="font-semibold text-macro-carbs">{weeklyTargets.carbs}C</span>
-                <span className="text-muted-foreground mx-1">/</span>
-                <span className="font-semibold text-macro-fat">{weeklyTargets.fat}F</span>
-              </div>
-            </div>
-          </header>
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-auto">
-            {children}
-          </main>
+const navItems = [
+  { title: 'Meal Planner', url: '/', icon: CalendarDays },
+  { title: 'Recipes', url: '/recipes', icon: UtensilsCrossed },
+  { title: 'Ingredients', url: '/ingredients', icon: Apple },
+  { title: 'Shopping List', url: '/shopping', icon: ShoppingCart },
+];
+
+export function AppLayout({ children }: AppLayoutProps) {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+
+  const isActive = (url: string) => {
+    if (url === '/') return location.pathname === '/';
+    return location.pathname.startsWith(url);
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Top Navigation Bar */}
+      <header className="sticky top-0 z-40 bg-card border-b shadow-sm">
+        <div className="flex items-center h-14 px-4 gap-1">
+          {/* Brand */}
+          <button 
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 mr-6 hover:opacity-80 transition-opacity"
+          >
+            <Leaf className="h-6 w-6 text-primary" strokeWidth={2} />
+            <span className="font-semibold text-lg text-primary">WholeFuel</span>
+          </button>
+
+          {/* Nav Tabs */}
+          <nav className="flex items-center gap-1">
+            {navItems.map((item) => (
+              <button
+                key={item.title}
+                onClick={() => navigate(item.url)}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  isActive(item.url)
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                <span className="hidden sm:inline">{item.title}</span>
+              </button>
+            ))}
+          </nav>
+
+          {/* Right side */}
+          <div className="ml-auto flex items-center gap-1">
+            <button
+              onClick={() => navigate('/settings')}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                isActive('/settings')
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+              )}
+            >
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Settings</span>
+            </button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="text-muted-foreground hover:text-destructive gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </Button>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>;
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        {children}
+      </main>
+    </div>
+  );
 }

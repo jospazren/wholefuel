@@ -2,7 +2,6 @@ import { Recipe, CATEGORY_LABELS, RecipeCategory } from '@/types/meal';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Flame, Beef, Wheat, Droplet } from 'lucide-react';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -30,7 +29,6 @@ export function RecipeCard({
   onClick,
   className,
 }: RecipeCardProps) {
-  const isCompact = variant === 'compact';
   const isDragging = variant === 'dragging';
 
   return (
@@ -41,14 +39,14 @@ export function RecipeCard({
       onClick={onClick}
       className={cn(
         'cursor-grab active:cursor-grabbing transition-all duration-150',
-        'hover:bg-muted/50 hover:border-primary/20',
+        'hover:bg-muted/30 hover:shadow-sm',
         isDragging && 'opacity-50 rotate-1 scale-105 shadow-lg',
         onClick && 'cursor-pointer',
         className
       )}
     >
       <CardContent className="px-2.5 py-2">
-        <div className="flex items-center justify-between gap-2 mb-0.5">
+        <div className="flex items-center justify-between gap-2 mb-1">
           <h4 className="text-sm font-medium text-foreground truncate flex-1">
             {recipe.name}
           </h4>
@@ -56,12 +54,19 @@ export function RecipeCard({
             {CATEGORY_LABELS[recipe.category]}
           </Badge>
         </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <span className="font-medium">{recipe.totalMacros.calories}</span>
-          <span className="text-muted-foreground/50">|</span>
-          <span className="text-macro-protein">{recipe.totalMacros.protein}P</span>
-          <span className="text-macro-fat">{recipe.totalMacros.fat}F</span>
-          <span className="text-macro-carbs">{recipe.totalMacros.carbs}C</span>
+        <div className="flex items-center gap-1">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold text-white bg-macro-calories">
+            {recipe.totalMacros.calories}K
+          </span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold text-white bg-macro-protein">
+            {recipe.totalMacros.protein}P
+          </span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold text-white bg-macro-carbs">
+            {recipe.totalMacros.carbs}C
+          </span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold text-white bg-macro-fat">
+            {recipe.totalMacros.fat}F
+          </span>
         </div>
       </CardContent>
     </Card>
