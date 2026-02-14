@@ -141,14 +141,22 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
           </div>
 
           {/* Center: Week Navigation */}
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToPreviousWeek}>
+          <div
+            className="flex items-center gap-0 rounded-full px-1"
+            style={{
+              background: 'rgba(255,255,255,0.55)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.5)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+            }}
+          >
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={goToPreviousWeek}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium px-3 min-w-[90px] text-center">
+            <span className="text-sm font-semibold px-4 min-w-[90px] text-center">
               {getWeekLabel()}
             </span>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToNextWeek}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={goToNextWeek}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
