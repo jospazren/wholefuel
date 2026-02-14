@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
-import { Leaf } from 'lucide-react';
+
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -40,8 +40,17 @@ export function AppLayout({ children }: AppLayoutProps) {
             onClick={() => navigate('/')}
             className="flex items-center gap-2 mr-6 hover:opacity-80 transition-opacity"
           >
-            <Leaf className="h-5 w-5 text-primary" strokeWidth={2.5} />
-            <span className="font-semibold text-base text-primary">WholeFuel</span>
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="url(#leaf-grad)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <defs>
+                <linearGradient id="leaf-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="rgba(0,188,125,1)" />
+                  <stop offset="100%" stopColor="rgba(0,187,167,1)" />
+                </linearGradient>
+              </defs>
+              <path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 1c1 2 2 4.5 1 8-2 3-3 4.5-3 6.5 0 2-1 4-3 5.5" />
+              <path d="M10 10c-2 5 .5 10 .5 10" />
+            </svg>
+            <span className="font-semibold text-base bg-gradient-to-r from-[hsl(160,100%,37%)] to-[hsl(174,100%,37%)] bg-clip-text text-transparent">WholeFuel</span>
           </button>
 
           {/* Nav Tabs - text only */}
@@ -51,7 +60,7 @@ export function AppLayout({ children }: AppLayoutProps) {
                 key={item.title}
                 onClick={() => navigate(item.url)}
                 className={cn(
-                  'px-3 py-1.5 rounded-full text-sm font-medium transition-all',
+                  'px-3 py-1.5 rounded-full text-[13px] font-medium transition-all font-sans',
                   isActive(item.url)
                     ? 'text-white shadow-md'
                     : 'text-muted-foreground hover:text-foreground hover:bg-white/40'
