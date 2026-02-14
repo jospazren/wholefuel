@@ -57,7 +57,7 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
         <div className="p-3 space-y-3">
           <div className="flex items-center gap-2">
             <UtensilsCrossed className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-sm">Menu</h3>
+            <h3 className="font-semibold text-sm bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">Menu</h3>
           </div>
           
           <div className="relative">

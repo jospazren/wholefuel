@@ -188,7 +188,7 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
                 >
                   {/* Day Header */}
                   <div className="text-center py-2 border-b border-white/20">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">
+                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
                       {DAY_LABELS[day]}
                     </span>
                   </div>

@@ -44,21 +44,11 @@
     --status-warning: 38 92% 50%;
     --status-danger: 0 72% 51%;
 
-    /* Macro colors - Figma tonal palette (badge text/bg) */
+    /* Macro colors kept for legacy utility classes */
     --macro-calories: 216 17% 35%;
     --macro-protein: 160 100% 30%;
     --macro-carbs: 193 100% 36%;
     --macro-fat: 25 100% 50%;
-
-    /* Macro bar gradients (progress fills) */
-    --bar-calories-from: 216 17% 35%;
-    --bar-calories-to: 216 18% 47%;
-    --bar-protein-from: 358 95% 48%;
-    --bar-protein-to: 355 96% 58%;
-    --bar-carbs-from: 193 100% 36%;
-    --bar-carbs-to: 191 100% 43%;
-    --bar-fat-from: 25 100% 50%;
-    --bar-fat-to: 26 100% 51%;
 
     /* Gradients */
     --gradient-hero: linear-gradient(180deg, hsl(150 20% 97%) 0%, hsl(150 15% 93%) 100%);
