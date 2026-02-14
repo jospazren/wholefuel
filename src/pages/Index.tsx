@@ -22,28 +22,26 @@ const Index = () => {
 
   return (
     <AppLayout>
-      <div className="p-4 lg:p-6">
-        <div className="flex gap-4">
-          {/* Left Sidebar - Recipe Library */}
-          <div className={cn(
-            "transition-all duration-300 overflow-hidden shrink-0",
-            sidebarOpen ? "w-[240px] opacity-100" : "w-0 opacity-0"
-          )}>
-            <RecipeLibrary
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              className="h-[calc(100vh-5.5rem)]"
-            />
-          </div>
+      <div className="flex h-[calc(100vh-2.75rem)]">
+        {/* Left Sidebar - Recipe Library */}
+        <div className={cn(
+          "transition-all duration-300 overflow-hidden shrink-0 border-r border-white/30",
+          sidebarOpen ? "w-[240px] opacity-100" : "w-0 opacity-0 border-r-0"
+        )}>
+          <RecipeLibrary
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            className="h-full"
+          />
+        </div>
 
-          {/* Main Content - Calendar */}
-          <div className="flex-1 min-w-0">
-            <WeeklyCalendar
-              className="h-[calc(100vh-5.5rem)]"
-              sidebarOpen={sidebarOpen}
-              onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-            />
-          </div>
+        {/* Main Content - Calendar */}
+        <div className="flex-1 min-w-0 p-4 lg:p-6 overflow-auto">
+          <WeeklyCalendar
+            className="h-full"
+            sidebarOpen={sidebarOpen}
+            onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+          />
         </div>
       </div>
     </AppLayout>
