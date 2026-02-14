@@ -1,107 +1,152 @@
 
 
-# WholeFuel Figma Redesign Implementation Plan
+# Figma Alignment -- Pixel-Perfect Refinements
 
-## Overview
+Based on the Figma CSS export, here are the exact design tokens and remaining gaps to fix.
 
-This is a significant UI overhaul that changes the navigation pattern, calendar layout, color scheme, and adds the diet strategy selector to the meal plan header. The core data model and backend remain unchanged.
+## Key Design Tokens Extracted from Figma
 
-## Changes Summary
+### Background
+- Page background: `linear-gradient(rgba(164,244,207,1), rgba(150,247,228,1))` -- a vivid mint-to-cyan gradient
+- Three decorative blurred circles overlaid (green and blue gradient circles) for depth
+- The current app background is too subtle; needs to be noticeably mint/cyan
 
-### 1. Navigation: Sidebar to Top Nav Bar
-**Current**: Vertical collapsible sidebar with icon+text links
-**New**: Horizontal top navigation bar with: WholeFuel brand (green), nav tabs (Meal Planner, Shopping List, Targets, Recipes, Ingredients), and right-aligned Settings + Sign Out
+### Macro Badge Colors (Tonal Style, NOT Solid)
+The Figma uses **tonal badges** (light background + colored text), not solid colored backgrounds:
+- **Calories (K)**: `background: rgba(98,116,142,0.1)`, `color: rgba(69,85,108,1)` -- slate/gray tonal
+- **Protein (P)**: `background: rgba(0,153,102,0.1)`, `color: rgba(0,153,102,1)` -- green tonal
+- **Carbs (C)**: `background: rgba(0,146,184,0.1)`, `color: rgba(0,146,184,1)` -- teal/cyan tonal
+- **Fat (F)**: `background: rgba(255,105,0,0.1)`, `color: rgba(255,105,0,1)` -- orange tonal
 
-Files affected:
-- `src/components/AppLayout.tsx` -- Replace sidebar layout with top nav bar
-- `src/components/AppSidebar.tsx` -- Remove or repurpose
-- `src/pages/Index.tsx` -- Adjust page layout (no sidebar wrapper needed)
-- All page components that use `AppLayout`
+This is a significant difference from the current solid white-on-color badges.
 
-### 2. Calendar Redesign: Grid to Day Columns
-**Current**: Table-like grid with meal slot rows (Breakfast, Lunch, etc.) and day columns, plus a totals row
-**New**: Each day is a vertical column showing:
-- Day label (MON, TUE, etc.) at top
-- 4 colored horizontal macro progress bars (calories=dark, protein=green, carbs=blue, fat=red) with numeric values
-- Meal cards stacked vertically (recipe name + colored macro badges: K, P, C, F)
-- "+ Add meal" text buttons for empty slots and at the bottom
+### Macro Progress Bar Gradients (Day Columns)
+- **Calories**: `linear-gradient(rgba(69,85,108,1), rgba(98,116,142,1))` on `rgba(98,116,142,0.1)` track
+- **Protein**: `linear-gradient(rgba(231,0,11,1), rgba(251,44,54,1))` on `rgba(0,153,102,0.1)` track -- RED gradient (not green!)
+- **Carbs**: `linear-gradient(rgba(0,146,184,1), rgba(0,184,219,1))` on `rgba(0,146,184,0.1)` track
+- **Fat**: `linear-gradient(rgba(255,105,0,1), rgba(255,137,4,1))` on `rgba(255,105,0,0.1)` track
+- Bar height: 6px, fully rounded
+- Numeric values shown to the right in bold 10px, colored to match
 
-Files affected:
-- `src/components/WeeklyCalendar.tsx` -- Complete redesign to column-based layout
-- `src/components/MealSlotCell.tsx` -- Redesign as a card with macro badges instead of grid cell
+### Header Macro Badges (Pill Style)
+- Same tonal colors as recipe badges but slightly larger (24px height, fully rounded pill)
+- Font: Inter Medium, 11px
 
-### 3. Meal Plan Header with Diet Strategy Selector
-**Current**: Diet strategy is only on the Targets page
-**New**: The meal plan header shows:
-- Left: Calendar icon + "Meal Plan" title
-- Center: Week navigation arrows + "This Week" label
-- Right: Strategy dropdown, macro totals as colored badges (2716K, 110P, 497C, 32F), and a settings/filter icon
+### Recipe Cards
+- Background: `rgba(255,255,255,0.7)` -- semi-transparent white
+- Border-radius: 16px
+- Padding: 11px
+- Recipe name: Inter Regular, 13px, `rgba(2,6,24,1)`
+- Macro badge row: 10px font, tonal style (not solid)
 
-Files affected:
-- `src/components/WeeklyCalendar.tsx` -- Add strategy dropdown and macro summary to header
-- May add a new `StrategySelector` component
+### Recipe Panel (Left Sidebar)
+- Panel background: `linear-gradient(rgba(255,255,255,0.5), rgba(236,253,245,0.2))` -- subtle white-to-mint
+- Search bar: `rgba(255,255,255,0.6)` background, 16px rounded, shadow `0px 1px 2px rgba(0,0,0,0.1)`
+- Category "All" button: gradient `linear-gradient(rgba(0,188,125,1), rgba(0,187,167,1))`, white text, green shadow
+- Other category pills: `rgba(255,255,255,0.6)` background, gray text
 
-### 4. Color Scheme and Styling
-**Current**: Black/white brutalist Material Design with hard shadows, 0 border-radius
-**New**: Soft mint/green tinted background, rounded corners, softer shadows, colored macro badges
+### Meal Plan Card (Main Area)
+- Card: `rgba(255,255,255,0.5)` background, 24px border-radius, green-tinted shadow `0px 8px 10px rgba(0,188,125,0.05)`
+- Strategy dropdown: `rgba(255,255,255,0.6)`, 10px rounded, with chevron icon
 
-Files affected:
-- `src/index.css` -- Update CSS variables for background tints, border-radius, shadows
-- Various component styles
+### Day Column Cards (Meal Cards in Day Columns)
+- Day label: Inter Bold, 11px, `rgba(106,114,130,1)`
+- Meal card background: `rgba(255,255,255,0.7)`, 16px rounded
+- Meal name: Inter Regular, 12px
+- Meal macro badges: 9px font (slightly smaller than recipe cards), same tonal colors
+- Empty slots: `rgba(255,255,255,0.2)` background, 16px rounded, with "+ Add meal" text in `rgba(106,114,130,1)`
 
-### 5. Recipe Library Panel Updates
-**Current**: Has category filter pills (no "All" option), search, recipe cards
-**New**: Adds an "All" filter button (highlighted green when active), same search and card layout but styled to match new theme
+### Navigation Bar
+- Not visible in the exported CSS (it's at the very top, likely a separate frame). The nav bar is outside the main frame at y=0, 44px height.
 
-Files affected:
-- `src/components/RecipeLibrary.tsx` -- Add "All" toggle button, style updates
-- `src/components/RecipeCard.tsx` -- Match macro badge styling from Figma
+---
 
-### 6. Macro Progress Bars (New Component)
-Each day column in the Figma shows 4 horizontal bars representing progress toward daily targets for calories, protein, carbs, and fat. This is a new visual element.
+## Changes to Implement
 
-Files to create:
-- `src/components/DayMacroBars.tsx` -- Horizontal progress bars per macro
+### 1. Update CSS Variables (`src/index.css`)
+- Update `--background` to use the mint-cyan gradient
+- Add new CSS variables for the exact Figma macro colors:
+  - `--macro-calories: 69, 85, 108` (slate)
+  - `--macro-protein: 0, 153, 102` (green) 
+  - `--macro-carbs: 0, 146, 184` (teal)
+  - `--macro-fat: 255, 105, 0` (orange)
+- Add protein bar override color: `rgba(231,0,11,1)` (red gradient for the progress bar fill, while badge stays green)
+
+### 2. Fix Macro Badges Everywhere -- Tonal Instead of Solid
+**Current**: White text on solid colored background (e.g., white on green)
+**Figma**: Colored text on light tinted background (e.g., green text on green/10%)
+
+Files: `MealSlotCell.tsx`, `RecipeCard.tsx`, `WeeklyCalendar.tsx` (header badges)
+
+### 3. Fix Progress Bars (`DayMacroBars.tsx`)
+- Change bar height from `h-2` to `h-1.5` (6px)
+- Use gradient fills instead of solid colors
+- Protein bar uses RED gradient (not green) -- this is a key Figma detail
+- Show numeric values in bold, matching color, to the right
+- Track backgrounds use 10% opacity of the macro color
+
+### 4. Fix Recipe Cards (`RecipeCard.tsx`)
+- Background: `bg-white/70` instead of `bg-card`
+- Border-radius: 16px (`rounded-2xl`)
+- Remove the category badge from cards (not in Figma)
+- Recipe name: 13px regular weight
+- Macro badges: tonal style
+
+### 5. Fix Recipe Library Panel (`RecipeLibrary.tsx`)
+- Panel background: gradient from white/50 to ecfdf5/20 (mint tint)
+- Search bar: white/60 background, fully rounded (16px), subtle shadow
+- "All" button: green gradient background with white text and green shadow
+- Other category pills: white/60 background
+
+### 6. Fix Meal Plan Area (`WeeklyCalendar.tsx`)
+- Main card: white/50 background, 24px rounded, green-tinted shadow
+- Strategy dropdown: white/60 background, rounded
+- Header macro badges: tonal pill style (fully rounded, 24px height)
+- Day labels: bold 11px, gray color `rgba(106,114,130,1)`
+
+### 7. Fix Day Column Meal Cards (`MealSlotCell.tsx`)
+- Filled cards: white/70 background, 16px rounded
+- Empty slots: white/20 background, 16px rounded, show "+ Add meal" text
+- Macro badges: 9px tonal style
+
+### 8. Fix Page Background (`AppLayout.tsx` or `Index.tsx`)
+- Add the vivid mint-cyan gradient as the page background
+- Optionally add the decorative blurred gradient circles for the "glassmorphism" effect
+
+### 9. Navigation Bar Polish (`AppLayout.tsx`)
+- Remove icons from nav tabs (text only)
+- Add "Targets" as a separate tab
+- Style active tab with the green gradient pill (matching the "All" button style)
+- Nav bar itself: could use backdrop-blur with white/60 for the glass effect
 
 ---
 
 ## Technical Details
 
-### Navigation Architecture Change
-The `AppLayout` component currently wraps content with `SidebarProvider` and `AppSidebar`. This will be replaced with a simpler layout:
+### Macro Color System Refactor
+The biggest change is switching from solid-background badges to tonal badges. This affects 3 components. A shared `MacroBadge` component should be extracted or the existing one in `MealSlotCell` updated:
 
 ```text
-+----------------------------------------------------------+
-| WholeFuel | Meal Planner | Shopping List | Targets | ...  |
-+----------------------------------------------------------+
-|                     Page Content                          |
-+----------------------------------------------------------+
+Before: white text on bg-macro-protein (solid green)
+After:  green text on bg-[rgba(0,153,102,0.1)] (tonal)
 ```
 
-The `AppSidebar` and sidebar-related UI components can remain installed but won't be used in the main layout.
+### Progress Bar Protein Color
+The Figma shows the protein progress bar fill as RED (`rgba(231,0,11)`) while the protein badge color remains GREEN (`rgba(0,153,102)`). This is intentional -- bars use a "danger" gradient when at/over target. We should implement this: bars turn red when >= 100% of target.
 
-### Calendar Column Layout
-The current `WeeklyCalendar` uses a CSS grid with `grid-cols-[60px_repeat(7,1fr)]` for rows of meal slots. The new design flips this: each day is a column containing a vertical stack of meal cards.
-
-The meal slots (m1, m3, m4, m5, m6, m7) still exist in the data model -- they just won't have visible labels. Each slot renders as a meal card or a "+ Add meal" button.
-
-### Strategy Dropdown in Header
-The strategy dropdown (Cut 10/20%, Maintain, Bulk 10/20%) currently lives in `WeeklyTargetsForm.tsx` on a dedicated Targets page. A compact version will be added to the `WeeklyCalendar` header. Changing the strategy here will recalculate daily calorie/macro targets using the existing `calculateTargets` function and persist via `setWeeklyTargets`.
-
-### Macro Badge Styling
-The Figma shows macro values as small colored rounded pills:
-- Calories: dark/black background
-- Protein: green
-- Carbs: blue  
-- Fat: orange/red
-
-This pattern applies to both meal cards and the header summary.
+### Glassmorphism Effect
+The Figma uses semi-transparent backgrounds with backdrop-blur throughout. Key values:
+- Panels: `bg-white/50` with `backdrop-blur-xl`
+- Cards: `bg-white/70`
+- Inputs/pills: `bg-white/60`
 
 ### Implementation Sequence
-1. Update CSS variables (colors, radius, backgrounds)
-2. Replace sidebar navigation with horizontal top nav
-3. Redesign the weekly calendar to column layout with macro bars
-4. Add strategy selector dropdown to calendar header
-5. Update recipe library styling (add "All" filter)
-6. Update meal card/cell styling with colored macro badges
+1. Update `index.css` -- background gradient and macro CSS variables
+2. Create shared `MacroBadge` component with tonal styling
+3. Update `DayMacroBars.tsx` -- gradients, bar height, bold numbers
+4. Update `MealSlotCell.tsx` -- glassmorphism cards, tonal badges, empty state
+5. Update `RecipeCard.tsx` -- remove category badge, tonal macro badges, white/70 bg
+6. Update `RecipeLibrary.tsx` -- panel gradient, search styling, green "All" button
+7. Update `WeeklyCalendar.tsx` -- glassmorphism card, tonal header badges, strategy dropdown
+8. Update `AppLayout.tsx` -- nav tab polish, gradient background, blur nav bar
 
