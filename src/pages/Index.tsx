@@ -25,8 +25,8 @@ const Index = () => {
       <div className="flex h-[calc(100vh-2.75rem)]">
         {/* Left Sidebar - Recipe Library */}
         <div className={cn(
-          "transition-all duration-300 overflow-hidden shrink-0 border-r border-white/30",
-          sidebarOpen ? "w-[240px] opacity-100" : "w-0 opacity-0 border-r-0"
+          "transition-all duration-300 shrink-0 border-r border-white/30 overflow-hidden",
+          sidebarOpen ? "w-[260px] opacity-100" : "w-0 opacity-0 border-r-0"
         )}>
           <RecipeLibrary
             onDragStart={handleDragStart}

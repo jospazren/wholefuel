@@ -48,6 +48,11 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
           'flex flex-col h-full overflow-hidden',
           className
         )}
+        style={{
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(236,253,245,0.2) 100%)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        }}
       >
         <div className="p-3 space-y-3">
 
