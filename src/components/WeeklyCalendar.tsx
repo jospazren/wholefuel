@@ -182,28 +182,25 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
               const dayMeals = MEAL_SLOTS.map((slot) => ({ slot, meal: weeklyPlan[day][slot] }));
 
               return (
-                <div
+              <div
                   key={day}
-                  className="flex flex-col min-h-0 p-1.5"
+                  className={cn(
+                    "flex flex-col min-h-0",
+                    day !== DAYS_OF_WEEK[DAYS_OF_WEEK.length - 1] && "border-r border-white/20"
+                  )}
                 >
-                  <div
-                    className="flex flex-col flex-1 rounded-2xl border border-white/50 p-[13px] gap-3"
-                    style={{
-                      backgroundImage: 'linear-gradient(137deg, rgba(255,255,255,0.6), rgba(249,250,251,0.3))',
-                    }}
-                  >
-                    {/* Day Header */}
-                    <div className="text-center">
-                      <span className="text-[11px] font-bold text-[#6a7282] uppercase" style={{ letterSpacing: '0.34px' }}>
-                        {DAY_LABELS[day]}
-                      </span>
+                    {/* Day Header + Macros */}
+                    <div className="px-2 pt-2 pb-1.5 space-y-1.5">
+                      <div className="text-center">
+                        <span className="text-[11px] font-bold text-[#6a7282] uppercase" style={{ letterSpacing: '0.34px' }}>
+                          {DAY_LABELS[day]}
+                        </span>
+                      </div>
+                      <DayMacroBars macros={dayMacros} targets={weeklyTargets} />
                     </div>
 
-                    {/* Macro Progress Bars */}
-                    <DayMacroBars macros={dayMacros} targets={weeklyTargets} />
-
                     {/* Meal Cards */}
-                    <div className="flex-1 space-y-1.5 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto px-1.5 pb-1.5 space-y-1">
                       {dayMeals.map(({ slot, meal }) => (
                         <MealSlotCell
                           key={slot}
@@ -219,7 +216,6 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
                         />
                       ))}
                     </div>
-                  </div>
                 </div>
               );
             })}
