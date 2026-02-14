@@ -44,7 +44,7 @@ export function MealSlotCell({
     return (
       <div
         className={cn(
-          'rounded-2xl transition-all duration-150 py-3 px-2',
+          'rounded-2xl transition-all duration-150 px-2 min-h-[60px]',
           'flex items-center justify-center',
           isDragOver && 'border-primary bg-primary/10 border border-solid',
           !isDragOver && 'hover:bg-white/20'
@@ -71,7 +71,7 @@ export function MealSlotCell({
   return (
     <div
       className={cn(
-        'rounded-2xl glass-card transition-all duration-150 relative group',
+        'rounded-2xl glass-card transition-all duration-150 relative group min-h-[60px]',
         'cursor-grab active:cursor-grabbing hover:shadow-sm',
         isDragOver && 'border-primary bg-primary/10'
       )}
