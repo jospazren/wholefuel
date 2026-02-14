@@ -184,34 +184,41 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
               return (
                 <div
                   key={day}
-                  className="flex flex-col border-r border-white/20 last:border-r-0 min-h-0"
+                  className="flex flex-col min-h-0 p-1.5"
                 >
-                  {/* Day Header */}
-                  <div className="text-center py-2 border-b border-white/20">
-                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-                      {DAY_LABELS[day]}
-                    </span>
-                  </div>
+                  <div
+                    className="flex flex-col flex-1 rounded-2xl border border-white/50 p-[13px] gap-3"
+                    style={{
+                      backgroundImage: 'linear-gradient(137deg, rgba(255,255,255,0.6), rgba(249,250,251,0.3))',
+                    }}
+                  >
+                    {/* Day Header */}
+                    <div className="text-center">
+                      <span className="text-[11px] font-bold text-[#6a7282] uppercase" style={{ letterSpacing: '0.34px' }}>
+                        {DAY_LABELS[day]}
+                      </span>
+                    </div>
 
-                  {/* Macro Progress Bars */}
-                  <DayMacroBars macros={dayMacros} targets={weeklyTargets} />
+                    {/* Macro Progress Bars */}
+                    <DayMacroBars macros={dayMacros} targets={weeklyTargets} />
 
-                  {/* Meal Cards */}
-                  <div className="flex-1 p-1.5 space-y-1.5 overflow-y-auto">
-                    {dayMeals.map(({ slot, meal }) => (
-                      <MealSlotCell
-                        key={slot}
-                        day={day}
-                        slot={slot}
-                        meal={meal}
-                        isDragOver={isSlotDraggedOver(day, slot)}
-                        onDragOver={(e) => handleDragOver(e, day, slot)}
-                        onDragLeave={handleDragLeave}
-                        onDrop={(e) => handleDrop(e, day, slot)}
-                        onEditClick={() => handleEditClick(day, slot)}
-                        onMealDragStart={(e) => handleMealDragStart(e, day, slot)}
-                      />
-                    ))}
+                    {/* Meal Cards */}
+                    <div className="flex-1 space-y-1.5 overflow-y-auto">
+                      {dayMeals.map(({ slot, meal }) => (
+                        <MealSlotCell
+                          key={slot}
+                          day={day}
+                          slot={slot}
+                          meal={meal}
+                          isDragOver={isSlotDraggedOver(day, slot)}
+                          onDragOver={(e) => handleDragOver(e, day, slot)}
+                          onDragLeave={handleDragLeave}
+                          onDrop={(e) => handleDrop(e, day, slot)}
+                          onEditClick={() => handleEditClick(day, slot)}
+                          onMealDragStart={(e) => handleMealDragStart(e, day, slot)}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
               );
