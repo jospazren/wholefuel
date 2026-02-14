@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { Recipe, DayOfWeek, MealSlot, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, MealInstance, WeeklyTargets } from '@/types/meal';
+import { ViewSettingsDialog, getMacroVisibility, MacroVisibility } from '@/components/ViewSettingsDialog';
 import { MealSlotCell } from '@/components/MealSlotCell';
 import { MealEditSheet } from '@/components/MealEditSheet';
 import { DayMacroBars } from '@/components/DayMacroBars';
@@ -46,6 +47,8 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
   const [dragOverSlot, setDragOverSlot] = useState<{ day: DayOfWeek; slot: MealSlot } | null>(null);
   const [editingMeal, setEditingMeal] = useState<{ meal: MealInstance; day: DayOfWeek; slot: MealSlot } | null>(null);
   const [draggingMeal, setDraggingMeal] = useState<{ day: DayOfWeek; slot: MealSlot } | null>(null);
+  const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
+  const [macroVisibility, setMacroVisibility] = useState<MacroVisibility>(getMacroVisibility);
 
   const handleDragOver = (e: React.DragEvent, day: DayOfWeek, slot: MealSlot) => {
     e.preventDefault();
@@ -175,7 +178,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
               />
             </div>
 
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setViewSettingsOpen(true)}>
               <SlidersHorizontal className="h-4 w-4" />
             </Button>
           </div>
@@ -206,7 +209,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                           {DAY_LABELS[day]}
                         </span>
                       </div>
-                      <DayMacroBars macros={dayMacros} targets={weeklyTargets} />
+                      <DayMacroBars macros={dayMacros} targets={weeklyTargets} visibility={macroVisibility} />
                     </div>
 
                     {/* Meal Cards */}
@@ -239,6 +242,13 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
         slot={editingMeal?.slot || null}
         open={!!editingMeal}
         onClose={() => setEditingMeal(null)}
+      />
+
+      <ViewSettingsDialog
+        open={viewSettingsOpen}
+        onOpenChange={setViewSettingsOpen}
+        visibility={macroVisibility}
+        onSave={setMacroVisibility}
       />
     </>
   );

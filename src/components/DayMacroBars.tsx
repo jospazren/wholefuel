@@ -1,4 +1,5 @@
 import { Macros } from '@/types/meal';
+import { MacroVisibility } from '@/components/ViewSettingsDialog';
 
 interface DayMacroBarsProps {
   macros: Macros;
@@ -8,6 +9,7 @@ interface DayMacroBarsProps {
     carbs: number;
     fat: number;
   };
+  visibility?: MacroVisibility;
 }
 
 const bars = [
@@ -44,10 +46,12 @@ const bars = [
 const OVER_FILL = 'bg-gradient-to-r from-[#e7000b] to-[#fb2c36]';
 const OVER_TEXT = 'text-[#e7000b]';
 
-export function DayMacroBars({ macros, targets }: DayMacroBarsProps) {
+export function DayMacroBars({ macros, targets, visibility }: DayMacroBarsProps) {
+  const visibleBars = visibility ? bars.filter(b => visibility[b.key]) : bars;
+
   return (
     <div className="space-y-1">{/* No extra padding - container handles it */}
-      {bars.map(({ key, targetKey, trackClass, fillClass, textClass }) => {
+      {visibleBars.map(({ key, targetKey, trackClass, fillClass, textClass }) => {
         const actual = macros[key];
         const target = targets[targetKey];
         const percent = target > 0 ? Math.min((actual / target) * 100, 100) : 0;
