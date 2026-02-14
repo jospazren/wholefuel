@@ -1,11 +1,8 @@
 import { useState } from 'react';
-import { sampleRecipes } from '@/data/recipes';
 import { Recipe, RECIPE_CATEGORIES, CATEGORY_LABELS, RecipeCategory } from '@/types/meal';
 import { RecipeCard } from '@/components/RecipeCard';
 import { RecipeDetailSheet } from '@/components/RecipeDetailSheet';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, UtensilsCrossed } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -33,6 +30,10 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
     setSelectedCategories(newSet);
   };
 
+  const clearCategories = () => {
+    setSelectedCategories(new Set());
+  };
+
   const filteredRecipes = recipes.filter((recipe) => {
     const matchesSearch = recipe.name.toLowerCase().includes(search.toLowerCase()) ||
       recipe.description.toLowerCase().includes(search.toLowerCase());
@@ -43,10 +44,10 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
   return (
     <>
       <div className={cn('flex flex-col h-full bg-card rounded-xl border shadow-sm', className)}>
-      <div className="p-3 border-b space-y-3">
+        <div className="p-3 border-b space-y-3">
           <div className="flex items-center gap-2">
             <UtensilsCrossed className="h-4 w-4 text-primary" />
-            <h3 className="font-display font-semibold text-sm">Menu</h3>
+            <h3 className="font-semibold text-sm">Menu</h3>
           </div>
           
           <div className="relative">
@@ -59,8 +60,19 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
             />
           </div>
 
-          {/* Category Filters */}
+          {/* Category Filters with All button */}
           <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={clearCategories}
+              className={cn(
+                'text-[10px] px-2 py-0.5 rounded-full border transition-colors',
+                selectedCategories.size === 0
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+              )}
+            >
+              All
+            </button>
             {RECIPE_CATEGORIES.map((cat) => (
               <button
                 key={cat}

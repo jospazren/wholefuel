@@ -1,20 +1,38 @@
 import { useState } from 'react';
 import { useMealPlan } from '@/contexts/MealPlanContext';
-import { Recipe, DayOfWeek, MealSlot, DAYS_OF_WEEK, MEAL_SLOTS, MEAL_SLOT_LABELS, DAY_LABELS, MealInstance } from '@/types/meal';
+import { Recipe, DayOfWeek, MealSlot, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, MealInstance, WeeklyTargets } from '@/types/meal';
 import { MealSlotCell } from '@/components/MealSlotCell';
 import { MealEditSheet } from '@/components/MealEditSheet';
+import { DayMacroBars } from '@/components/DayMacroBars';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface WeeklyCalendarProps {
   className?: string;
 }
 
+const strategies = [
+  { value: 'cut20', label: 'Cut 20%' },
+  { value: 'cut10', label: 'Cut 10%' },
+  { value: 'maintain', label: 'Maintain' },
+  { value: 'bulk10', label: 'Bulk 10%' },
+  { value: 'bulk20', label: 'Bulk 20%' },
+] as const;
+
 export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
   const { 
     weeklyPlan, 
     weeklyTargets, 
+    setWeeklyTargets,
+    calculateTargets,
     addMealToSlot, 
     moveMealToSlot, 
     getDailyMacros,
@@ -39,7 +57,6 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
     e.preventDefault();
     setDragOverSlot(null);
     
-    // Check if we're moving an existing meal
     const mealMoveData = e.dataTransfer.getData('meal-move');
     if (mealMoveData) {
       try {
@@ -52,7 +69,6 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
       }
     }
     
-    // Otherwise, it's a new recipe from library
     try {
       const recipeData = e.dataTransfer.getData('recipe');
       if (recipeData) {
@@ -81,104 +97,137 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
     return dragOverSlot?.day === day && dragOverSlot?.slot === slot;
   };
 
-  // Calculate target adherence color
-  const getAdherenceColor = (actual: number, target: number): string => {
-    const ratio = actual / target;
-    if (ratio >= 0.95 && ratio <= 1.05) return 'text-primary bg-primary/10';
-    if (ratio >= 0.85 && ratio <= 1.15) return 'text-yellow-600 bg-yellow-500/10';
-    return 'text-destructive bg-destructive/10';
+  const handleStrategyChange = (value: string) => {
+    const newStrategy = value as WeeklyTargets['strategy'];
+    const targets = calculateTargets(weeklyTargets.tdee, newStrategy);
+    setWeeklyTargets({
+      ...weeklyTargets,
+      strategy: newStrategy,
+      dailyCalories: targets.calories,
+      protein: targets.protein,
+      fat: targets.fat,
+      carbs: targets.carbs,
+    });
+  };
+
+  // Compute weekly totals for header badges
+  const weeklyTotals = DAYS_OF_WEEK.reduce(
+    (acc, day) => {
+      const m = getDailyMacros(day);
+      acc.calories += m.calories;
+      acc.protein += m.protein;
+      acc.carbs += m.carbs;
+      acc.fat += m.fat;
+      return acc;
+    },
+    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+
+  const avgDaily = {
+    calories: Math.round(weeklyTotals.calories / 7),
+    protein: Math.round(weeklyTotals.protein / 7),
+    carbs: Math.round(weeklyTotals.carbs / 7),
+    fat: Math.round(weeklyTotals.fat / 7),
   };
 
   return (
     <>
-      <div className={cn('bg-card rounded-lg border shadow-sm overflow-hidden h-[calc(100vh-7rem)] flex flex-col', className)}>
+      <div className={cn('bg-card rounded-xl border shadow-sm overflow-hidden flex flex-col', className)}>
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b bg-secondary/30">
-          <div className="flex items-center gap-1.5">
-            <CalendarDays className="h-4 w-4 text-primary" />
-            <h3 className="font-display font-semibold text-sm">Weekly Plan</h3>
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-card">
+          {/* Left: Title */}
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold text-base">Meal Plan</h3>
           </div>
-          <div className="flex items-center gap-0.5">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6"
-              onClick={goToPreviousWeek}
-            >
-              <ChevronLeft className="h-3 w-3" />
+
+          {/* Center: Week Navigation */}
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToPreviousWeek}>
+              <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-xs text-muted-foreground px-2 min-w-[80px] text-center">
+            <span className="text-sm font-medium px-3 min-w-[90px] text-center">
               {getWeekLabel()}
             </span>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6"
-              onClick={goToNextWeek}
-            >
-              <ChevronRight className="h-3 w-3" />
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToNextWeek}>
+              <ChevronRight className="h-4 w-4" />
             </Button>
+          </div>
+
+          {/* Right: Strategy + Macro Summary */}
+          <div className="flex items-center gap-3">
+            <Select value={weeklyTargets.strategy} onValueChange={handleStrategyChange}>
+              <SelectTrigger className="h-8 w-[110px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {strategies.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="hidden md:flex items-center gap-1">
+              <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-semibold text-white bg-macro-calories">
+                {weeklyTargets.dailyCalories}K
+              </span>
+              <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-semibold text-white bg-macro-protein">
+                {weeklyTargets.protein}P
+              </span>
+              <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-semibold text-white bg-macro-carbs">
+                {weeklyTargets.carbs}C
+              </span>
+              <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-semibold text-white bg-macro-fat">
+                {weeklyTargets.fat}F
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Calendar Grid */}
-        <div className="overflow-x-auto flex-1 flex flex-col">
-          <div className="min-w-[600px] flex flex-col flex-1">
-            {/* Day Headers */}
-            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b">
-              <div className="px-1 py-1.5 bg-muted/30" />
-              {DAYS_OF_WEEK.map((day) => (
-                <div key={day} className="px-0.5 py-1.5 text-center border-l bg-muted/20">
-                  <div className="font-medium text-foreground text-[11px]">{DAY_LABELS[day]}</div>
-                </div>
-              ))}
-            </div>
+        {/* Day Columns */}
+        <div className="flex-1 overflow-x-auto">
+          <div className="grid grid-cols-7 min-w-[700px] h-full">
+            {DAYS_OF_WEEK.map((day) => {
+              const dayMacros = getDailyMacros(day);
+              const dayMeals = MEAL_SLOTS.map((slot) => ({ slot, meal: weeklyPlan[day][slot] }));
 
-            {/* Meal Rows */}
-            {MEAL_SLOTS.map((slot) => (
-              <div key={slot} className="grid grid-cols-[60px_repeat(7,1fr)] border-b last:border-b-0 flex-1">
-                <div className="px-1 py-0.5 bg-muted/30 flex items-center">
-                  <span className="text-[11px] font-medium text-foreground leading-tight">
-                    {MEAL_SLOT_LABELS[slot]}
-                  </span>
-                </div>
-                {DAYS_OF_WEEK.map((day) => (
-                  <div key={`${day}-${slot}`} className="border-l">
-                    <MealSlotCell
-                      day={day}
-                      slot={slot}
-                      meal={weeklyPlan[day][slot]}
-                      isDragOver={isSlotDraggedOver(day, slot)}
-                      onDragOver={(e) => handleDragOver(e, day, slot)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, day, slot)}
-                      onEditClick={() => handleEditClick(day, slot)}
-                      onMealDragStart={(e) => handleMealDragStart(e, day, slot)}
-                    />
+              return (
+                <div
+                  key={day}
+                  className="flex flex-col border-r last:border-r-0 min-h-0"
+                >
+                  {/* Day Header */}
+                  <div className="text-center py-2 border-b bg-muted/30">
+                    <span className="text-xs font-semibold text-foreground uppercase tracking-wide">
+                      {DAY_LABELS[day]}
+                    </span>
                   </div>
-                ))}
-              </div>
-            ))}
 
-            {/* Daily Totals Row */}
-            <div className="grid grid-cols-[60px_repeat(7,1fr)] border-t border-primary/20 bg-secondary/20">
-              <div className="px-1 py-1 bg-muted/30">
-                <span className="text-[11px] font-medium text-foreground">Total</span>
-              </div>
-              {DAYS_OF_WEEK.map((day) => {
-                const macros = getDailyMacros(day);
-                return (
-                  <div key={`total-${day}`} className="px-0.5 py-1 border-l flex flex-col items-center">
-                    <div className={cn('text-[10px] font-semibold', getAdherenceColor(macros.calories, weeklyTargets.dailyCalories))}>
-                      {macros.calories}
-                    </div>
-                    <div className="text-[8px] text-muted-foreground">
-                      {macros.protein}P {macros.carbs}C {macros.fat}F
-                    </div>
+                  {/* Macro Progress Bars */}
+                  <DayMacroBars macros={dayMacros} targets={weeklyTargets} />
+
+                  {/* Meal Cards */}
+                  <div className="flex-1 p-1.5 space-y-1.5 overflow-y-auto">
+                    {dayMeals.map(({ slot, meal }) => (
+                      <MealSlotCell
+                        key={slot}
+                        day={day}
+                        slot={slot}
+                        meal={meal}
+                        isDragOver={isSlotDraggedOver(day, slot)}
+                        onDragOver={(e) => handleDragOver(e, day, slot)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, day, slot)}
+                        onEditClick={() => handleEditClick(day, slot)}
+                        onMealDragStart={(e) => handleMealDragStart(e, day, slot)}
+                      />
+                    ))}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
