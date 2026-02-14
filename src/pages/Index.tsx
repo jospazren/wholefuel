@@ -26,7 +26,7 @@ const Index = () => {
         {/* Left Sidebar - Recipe Library */}
         <div className={cn(
           "transition-all duration-300 shrink-0 border-r border-white/30 overflow-hidden",
-          sidebarOpen ? "w-[228px] opacity-100" : "w-0 opacity-0 border-r-0"
+          sidebarOpen ? "w-[240px] opacity-100" : "w-0 opacity-0 border-r-0"
         )}>
           <RecipeLibrary
             onDragStart={handleDragStart}
