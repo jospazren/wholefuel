@@ -6,7 +6,7 @@ import { MealEditSheet } from '@/components/MealEditSheet';
 import { DayMacroBars } from '@/components/DayMacroBars';
 import { MacroBadgeRow } from '@/components/MacroBadge';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, CalendarDays, SlidersHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, SlidersHorizontal, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -18,6 +18,8 @@ import {
 
 interface WeeklyCalendarProps {
   className?: string;
+  sidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 const strategies = [
@@ -28,7 +30,7 @@ const strategies = [
   { value: 'bulk20', label: 'Bulk 20%' },
 ] as const;
 
-export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
+export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: WeeklyCalendarProps) {
   const { 
     weeklyPlan, 
     weeklyTargets, 
@@ -124,8 +126,13 @@ export function WeeklyCalendar({ className }: WeeklyCalendarProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/30">
-          {/* Left: Title */}
+          {/* Left: Toggle + Title */}
           <div className="flex items-center gap-2">
+            {onToggleSidebar && (
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={onToggleSidebar}>
+                {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+              </Button>
+            )}
             <CalendarDays className="h-5 w-5 text-primary" />
             <h3 className="font-semibold text-base">Meal Plan</h3>
           </div>
