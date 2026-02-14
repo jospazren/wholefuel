@@ -43,8 +43,18 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
 
   return (
     <>
-      <div className={cn('flex flex-col h-full bg-card rounded-xl border shadow-sm', className)}>
-        <div className="p-3 border-b space-y-3">
+      <div
+        className={cn(
+          'flex flex-col h-full rounded-3xl overflow-hidden',
+          className
+        )}
+        style={{
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(236,253,245,0.2) 100%)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        }}
+      >
+        <div className="p-3 space-y-3">
           <div className="flex items-center gap-2">
             <UtensilsCrossed className="h-4 w-4 text-primary" />
             <h3 className="font-semibold text-sm">Menu</h3>
@@ -53,23 +63,27 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search..."
+              placeholder="Search recipes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 text-sm"
+              className="pl-8 h-8 text-sm rounded-2xl glass-subtle border-0 shadow-sm"
             />
           </div>
 
-          {/* Category Filters with All button */}
+          {/* Category Filters */}
           <div className="flex flex-wrap gap-1.5">
             <button
               onClick={clearCategories}
               className={cn(
-                'text-[10px] px-2 py-0.5 rounded-full border transition-colors',
+                'text-[10px] px-2.5 py-1 rounded-full font-medium transition-all',
                 selectedCategories.size === 0
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                  ? 'text-white shadow-md'
+                  : 'glass-subtle text-muted-foreground hover:bg-white/70'
               )}
+              style={selectedCategories.size === 0 ? {
+                background: 'linear-gradient(135deg, rgba(0,188,125,1), rgba(0,187,167,1))',
+                boxShadow: '0 4px 12px rgba(0,188,125,0.3)',
+              } : undefined}
             >
               All
             </button>
@@ -78,11 +92,15 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
                 key={cat}
                 onClick={() => toggleCategory(cat)}
                 className={cn(
-                  'text-[10px] px-2 py-0.5 rounded-full border transition-colors',
+                  'text-[10px] px-2.5 py-1 rounded-full font-medium transition-all',
                   selectedCategories.has(cat)
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                    ? 'text-white shadow-md'
+                    : 'glass-subtle text-muted-foreground hover:bg-white/70'
                 )}
+                style={selectedCategories.has(cat) ? {
+                  background: 'linear-gradient(135deg, rgba(0,188,125,1), rgba(0,187,167,1))',
+                  boxShadow: '0 4px 12px rgba(0,188,125,0.3)',
+                } : undefined}
               >
                 {CATEGORY_LABELS[cat]}
               </button>
@@ -90,7 +108,7 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
           </div>
         </div>
 
-        <ScrollArea className="flex-1 p-2">
+        <ScrollArea className="flex-1 px-2 pb-2">
           <div className="space-y-1.5">
             {filteredRecipes.map((recipe) => (
               <RecipeCard
