@@ -1,9 +1,12 @@
-import { MealInstance, DayOfWeek, MealSlot } from '@/types/meal';
+import { useState } from 'react';
+import { MealInstance, DayOfWeek, MealSlot, Recipe } from '@/types/meal';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MacroBand } from '@/components/MacroBadge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
 interface MealSlotCellProps {
   day: DayOfWeek;
@@ -28,7 +31,8 @@ export function MealSlotCell({
   onEditClick,
   onMealDragStart,
 }: MealSlotCellProps) {
-  const { removeMealFromSlot } = useMealPlan();
+  const { removeMealFromSlot, recipes, addMealToSlot } = useMealPlan();
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -38,6 +42,11 @@ export function MealSlotCell({
   const handleDragStart = (e: React.DragEvent) => {
     e.stopPropagation();
     onMealDragStart?.(e);
+  };
+
+  const handleSelectRecipe = (recipe: Recipe) => {
+    addMealToSlot(day, slot, recipe);
+    setPopoverOpen(false);
   };
 
   if (!meal) {
@@ -53,12 +62,38 @@ export function MealSlotCell({
         onDragLeave={onDragLeave}
         onDrop={onDrop}
       >
-        <span className={cn(
-          'text-[13px] font-medium',
-          isDragOver ? 'text-primary' : 'text-[#99A1AF] hover:text-[#4a5565]'
-        )}>
-          + Add meal
-        </span>
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger asChild>
+            <button
+              className={cn(
+                'text-[13px] font-medium',
+                isDragOver ? 'text-primary' : 'text-[#99A1AF] hover:text-[#4a5565]'
+              )}
+              type="button"
+            >
+              + Add meal
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[220px] p-0 z-50 bg-popover" align="start">
+            <Command>
+              <CommandInput placeholder="Search recipes..." />
+              <CommandList>
+                <CommandEmpty>No recipes found.</CommandEmpty>
+                <CommandGroup>
+                  {recipes.map((recipe) => (
+                    <CommandItem
+                      key={recipe.id}
+                      value={recipe.name}
+                      onSelect={() => handleSelectRecipe(recipe)}
+                    >
+                      <span className="truncate">{recipe.name}</span>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
     );
   }
