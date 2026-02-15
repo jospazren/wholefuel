@@ -242,9 +242,9 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
                   return (
                     <div key={idx} className="flex items-start justify-between gap-3 px-4 py-3 rounded-xl border border-border/40 bg-muted/30">
                       <span className="text-sm font-medium text-foreground flex-1 min-w-0">{ing.name}</span>
-                      <span className="text-sm text-muted-foreground shrink-0 text-right">
-                        ×{Math.round(ing.servingMultiplier * 100) / 100}{' '}
-                        <span className="font-semibold text-emerald-600">{servingDesc}</span>
+                      <span className="text-sm shrink-0 text-right">
+                        <span className="font-semibold text-emerald-600">×{Math.round(ing.servingMultiplier * 100) / 100}</span>{' '}
+                        <span className="text-muted-foreground">{servingDesc}</span>
                       </span>
                     </div>
                   );
