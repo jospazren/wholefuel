@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Recipe, RECIPE_CATEGORIES, CATEGORY_LABELS, RecipeCategory } from '@/types/meal';
 import { RecipeCard } from '@/components/RecipeCard';
-import { RecipeDetailSheet } from '@/components/RecipeDetailSheet';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, UtensilsCrossed } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMealPlan } from '@/contexts/MealPlanContext';
+import { RecipeEditorDialog, RecipeEditorMode } from '@/components/RecipeEditorDialog';
 
 interface RecipeLibraryProps {
   onDragStart: (recipe: Recipe) => void;
@@ -15,18 +15,17 @@ interface RecipeLibraryProps {
 }
 
 export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibraryProps) {
-  const { recipes } = useMealPlan();
+  const { recipes, updateRecipe, calculateMacrosFromIngredients } = useMealPlan();
   const [search, setSearch] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<Set<RecipeCategory>>(new Set());
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [editorMode, setEditorMode] = useState<RecipeEditorMode | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
 
   const toggleCategory = (category: RecipeCategory) => {
     const newSet = new Set(selectedCategories);
-    if (newSet.has(category)) {
-      newSet.delete(category);
-    } else {
-      newSet.add(category);
-    }
+    if (newSet.has(category)) newSet.delete(category);
+    else newSet.add(category);
     setSelectedCategories(newSet);
   };
 
@@ -40,6 +39,31 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
     const matchesCategory = selectedCategories.size === 0 || selectedCategories.has(recipe.category);
     return matchesSearch && matchesCategory;
   });
+
+  const handleRecipeClick = (recipe: Recipe) => {
+    setEditorMode({ type: 'editRecipe', recipe });
+    setEditingRecipeId(recipe.id);
+    setEditorOpen(true);
+  };
+
+  const handleEditorSave = (data: { name: string; category: RecipeCategory; ingredients: any[]; instructions?: string; link?: string }) => {
+    if (!editingRecipeId) return;
+    const macros = calculateMacrosFromIngredients(data.ingredients.map(i => ({
+      ingredientId: i.ingredientId,
+      servingMultiplier: i.servingMultiplier,
+    })));
+    updateRecipe(editingRecipeId, {
+      name: data.name,
+      category: data.category,
+      ingredients: data.ingredients,
+      totalMacros: macros,
+      instructions: data.instructions,
+      link: data.link,
+    });
+    setEditorOpen(false);
+    setEditorMode(null);
+    setEditingRecipeId(null);
+  };
 
   return (
     <>
@@ -55,8 +79,6 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
         }}
       >
         <div className="p-3 space-y-3">
-
-          
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
@@ -117,7 +139,7 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
                   onDragStart(recipe);
                 }}
                 onDragEnd={onDragEnd}
-                onClick={() => setSelectedRecipe(recipe)}
+                onClick={() => handleRecipeClick(recipe)}
               />
             ))}
             {filteredRecipes.length === 0 && (
@@ -130,10 +152,12 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
         </ScrollArea>
       </div>
 
-      <RecipeDetailSheet 
-        recipe={selectedRecipe} 
-        open={!!selectedRecipe} 
-        onClose={() => setSelectedRecipe(null)} 
+      {/* Unified Editor Dialog */}
+      <RecipeEditorDialog
+        mode={editorMode}
+        open={editorOpen}
+        onClose={() => { setEditorOpen(false); setEditorMode(null); setEditingRecipeId(null); }}
+        onSave={handleEditorSave}
       />
     </>
   );
