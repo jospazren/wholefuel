@@ -203,6 +203,13 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
               </SelectContent>
             </Select>
 
+            <Input
+              value={formLink}
+              onChange={(e) => setFormLink(e.target.value)}
+              placeholder="Recipe link (optional)"
+              className="h-8 text-sm flex-1 min-w-[180px] max-w-[300px]"
+            />
+
             <a
               href={formLink || undefined}
               target="_blank"
@@ -211,13 +218,6 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
             >
               <ExternalLink className="h-4 w-4" />
             </a>
-
-            <Input
-              value={formLink}
-              onChange={(e) => setFormLink(e.target.value)}
-              placeholder="Recipe link (optional)"
-              className="h-8 text-sm flex-1 min-w-[140px] max-w-[220px]"
-            />
 
             <div className="flex-1" />
 
