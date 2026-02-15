@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Plus, ExternalLink, Check, Flame, Beef, Wheat, Droplet, X, Trash2 } from 'lucide-react';
+import { Plus, ExternalLink, Check, Flame, Beef, Wheat, Droplet, X, Trash2, Pencil } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableIngredientRow } from '@/components/SortableIngredientRow';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Select,
   SelectContent,
@@ -38,6 +40,7 @@ interface RecipeEditorDialogProps {
 
 export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditorDialogProps) {
   const { ingredients: ingredientDb, calculateMacrosFromIngredients } = useMealPlan();
+  const isMobile = useIsMobile();
   
   const [formName, setFormName] = useState('');
   const [formCategory, setFormCategory] = useState<RecipeCategory>('main');
@@ -46,6 +49,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
   const [formLink, setFormLink] = useState('');
   const [openIngredientPopover, setOpenIngredientPopover] = useState<number | null>(null);
   const [addIngredientOpen, setAddIngredientOpen] = useState(false);
+  const [mobileEditing, setMobileEditing] = useState(false);
 
   useEffect(() => {
     if (open && mode) {
@@ -55,6 +59,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
         setFormIngredients([]);
         setFormInstructionSteps([]);
         setFormLink('');
+        setMobileEditing(true); // go straight to edit for new recipes
       } else {
         const recipe = mode.recipe;
         setFormName(recipe.name);
@@ -63,6 +68,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
         const instructions = recipe.instructions || '';
         setFormInstructionSteps(instructions ? instructions.split('\n').filter(s => s.trim()) : []);
         setFormLink(recipe.link || '');
+        setMobileEditing(false);
       }
     }
   }, [open, mode]);
@@ -169,15 +175,262 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
   );
 
   const macroBadges = [
-    { icon: <Flame className="h-3.5 w-3.5" />, value: currentMacros.calories, suffix: '', bg: 'bg-slate-500/10', text: 'text-slate-600' },
-    { icon: <Beef className="h-3.5 w-3.5" />, value: currentMacros.protein, suffix: 'g', bg: 'bg-emerald-600/10', text: 'text-emerald-600' },
-    { icon: <Wheat className="h-3.5 w-3.5" />, value: currentMacros.carbs, suffix: 'g', bg: 'bg-cyan-600/10', text: 'text-cyan-600' },
-    { icon: <Droplet className="h-3.5 w-3.5" />, value: currentMacros.fat, suffix: 'g', bg: 'bg-orange-500/10', text: 'text-orange-500' },
+    { label: 'Calories', icon: <Flame className="h-3.5 w-3.5" />, value: currentMacros.calories, suffix: '', bg: 'bg-slate-500/10', text: 'text-slate-600', ringBg: 'bg-muted/60' },
+    { label: 'Protein', icon: <Beef className="h-3.5 w-3.5" />, value: currentMacros.protein, suffix: 'g', bg: 'bg-emerald-600/10', text: 'text-emerald-600', ringBg: 'bg-emerald-50' },
+    { label: 'Carbs', icon: <Wheat className="h-3.5 w-3.5" />, value: currentMacros.carbs, suffix: 'g', bg: 'bg-cyan-600/10', text: 'text-cyan-600', ringBg: 'bg-cyan-50' },
+    { label: 'Fat', icon: <Droplet className="h-3.5 w-3.5" />, value: currentMacros.fat, suffix: 'g', bg: 'bg-orange-500/10', text: 'text-orange-500', ringBg: 'bg-orange-50' },
   ];
 
   const canDelete = mode?.type === 'editMeal' && mode.onDelete;
   const saveLabel = mode?.type === 'add' ? 'Add Recipe' : 'Save Recipe';
 
+  // ─── Mobile view mode (read-only with tabs) ─────────────────────
+  if (isMobile && !mobileEditing) {
+    return (
+      <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+        <DialogContent className="w-full h-full max-w-full max-h-full rounded-none p-0 flex flex-col [&>button]:hidden">
+          {/* Header */}
+          <div className="px-5 pt-5 pb-0 flex items-center justify-between shrink-0">
+            <h2 className="text-xl font-bold text-foreground truncate flex-1">{formName}</h2>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setMobileEditing(true)}
+                className="text-emerald-600 p-1.5"
+              >
+                <Pencil className="h-5 w-5" />
+              </button>
+              <button onClick={onClose} className="text-muted-foreground p-1.5">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <Tabs defaultValue="macros" className="flex-1 flex flex-col min-h-0">
+            <TabsList className="mx-5 mt-3 mb-0 bg-transparent border-b border-border rounded-none h-auto p-0 gap-4 justify-start">
+              <TabsTrigger value="macros" className="rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-emerald-600 px-1 pb-2 text-sm font-medium">
+                Macros
+              </TabsTrigger>
+              <TabsTrigger value="ingredients" className="rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-emerald-600 px-1 pb-2 text-sm font-medium">
+                Ingredients
+              </TabsTrigger>
+              <TabsTrigger value="instructions" className="rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-emerald-600 px-1 pb-2 text-sm font-medium">
+                Instructions
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="macros" className="flex-1 overflow-y-auto px-5 py-4 mt-0">
+              <div className="space-y-3">
+                {macroBadges.map((m, i) => (
+                  <div key={i} className={`flex items-center gap-3 px-4 py-4 rounded-xl border border-border/40 ${m.ringBg}`}>
+                    <div className={`w-10 h-10 rounded-full ${m.bg} flex items-center justify-center ${m.text}`}>
+                      {m.icon}
+                    </div>
+                    <span className={`text-sm font-medium ${m.text}`}>{m.label}</span>
+                    <span className={`ml-auto text-lg font-bold ${m.text}`}>{m.value}{m.suffix}</span>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="ingredients" className="flex-1 overflow-y-auto px-5 py-4 mt-0">
+              <div className="space-y-2">
+                {formIngredients.map((ing, idx) => {
+                  const info = getIngredientInfo(ing.ingredientId, ing.servingMultiplier);
+                  const dbIng = ingredientDb.find(i => i.id === ing.ingredientId);
+                  const servingDesc = dbIng?.servingDescription || '100g';
+                  return (
+                    <div key={idx} className="flex items-center justify-between px-4 py-3 rounded-xl border border-border/40 bg-muted/30">
+                      <span className="text-sm font-medium text-foreground">{ing.name}</span>
+                      <span className="text-sm text-muted-foreground">
+                        ×{Math.round(ing.servingMultiplier * 100) / 100} {servingDesc}
+                      </span>
+                    </div>
+                  );
+                })}
+                {formIngredients.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-8">No ingredients</p>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="instructions" className="flex-1 overflow-y-auto px-5 py-4 mt-0">
+              <div className="space-y-3">
+                {formInstructionSteps.map((step, idx) => (
+                  <div key={idx} className="flex items-start gap-3 px-4 py-4 rounded-xl border border-border/40 bg-muted/30">
+                    <div className="shrink-0 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">
+                      {idx + 1}
+                    </div>
+                    <p className="text-sm text-foreground leading-relaxed">{step}</p>
+                  </div>
+                ))}
+                {formInstructionSteps.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-8">No instructions</p>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // ─── Mobile edit mode (single scrollable form) ──────────────────
+  if (isMobile && mobileEditing) {
+    return (
+      <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+        <DialogContent className="w-full h-full max-w-full max-h-full rounded-none p-0 flex flex-col [&>button]:hidden">
+          {/* Header */}
+          <div className="px-5 pt-5 pb-3 flex items-center justify-between shrink-0 border-b border-border/40">
+            <h2 className="text-xl font-bold text-foreground truncate flex-1">{formName || 'New Recipe'}</h2>
+            <button onClick={onClose} className="text-muted-foreground p-1.5 shrink-0">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Scrollable form */}
+          <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0">
+            <div className="space-y-6">
+              {/* Recipe name */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Recipe Name</label>
+                <Input
+                  value={formName}
+                  onChange={(e) => setFormName(e.target.value)}
+                  placeholder="Recipe name..."
+                  className="text-base font-semibold"
+                />
+              </div>
+
+              {/* Ingredients */}
+              <div>
+                <h3 className="text-sm font-medium text-emerald-600 mb-3">Ingredients</h3>
+                <div className="space-y-2">
+                  {formIngredients.map((ing, idx) => {
+                    const multiplierStr = String(Math.round(ing.servingMultiplier * 100) / 100);
+                    return (
+                      <div key={idx} className="flex items-center gap-2 px-4 py-3 rounded-xl border border-border/40 bg-muted/30">
+                        <span className="flex-1 text-sm font-medium text-foreground truncate">{ing.name}</span>
+                        <Input
+                          type="text"
+                          inputMode="decimal"
+                          defaultValue={multiplierStr}
+                          onChange={(e) => handleIngredientMultiplierChange(idx, e.target.value)}
+                          className="w-16 h-8 text-center text-sm shrink-0"
+                        />
+                        <button
+                          onClick={() => handleRemoveIngredient(idx)}
+                          className="text-destructive/60 hover:text-destructive shrink-0 p-1"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {availableIngredients.length > 0 && (
+                  <Popover open={addIngredientOpen} onOpenChange={setAddIngredientOpen}>
+                    <PopoverTrigger asChild>
+                      <button className="w-full mt-2 py-2.5 rounded-2xl border-2 border-dashed border-emerald-300/50 text-emerald-600 text-sm font-medium hover:border-emerald-400/70 hover:bg-emerald-50/30 transition-colors flex items-center justify-center gap-1.5">
+                        <Plus className="h-4 w-4" />
+                        Add Ingredient
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[280px] p-0" align="center">
+                      <Command>
+                        <CommandInput placeholder="Search ingredients..." />
+                        <CommandList>
+                          <CommandEmpty>No ingredient found.</CommandEmpty>
+                          <CommandGroup>
+                            {availableIngredients.map(ing => (
+                              <CommandItem
+                                key={ing.id}
+                                value={`${ing.name} ${ing.brand || ''}`}
+                                onSelect={() => {
+                                  handleAddIngredient(ing.id);
+                                  setAddIngredientOpen(false);
+                                }}
+                              >
+                                {ing.name}
+                                {ing.brand && <span className="text-muted-foreground"> [{ing.brand}]</span>}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+
+              {/* Instructions */}
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">Instructions</h3>
+                <div className="space-y-2">
+                  {formInstructionSteps.map((step, idx) => (
+                    <div key={idx} className="flex items-start gap-3 px-4 py-3 rounded-xl border border-border/40 bg-muted/30">
+                      <div className="shrink-0 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">
+                        {idx + 1}
+                      </div>
+                      <input
+                        value={step}
+                        onChange={(e) => handleStepChange(idx, e.target.value)}
+                        placeholder={`Step ${idx + 1}...`}
+                        className="flex-1 bg-transparent border-0 outline-none text-sm text-foreground placeholder:text-muted-foreground min-w-0"
+                      />
+                      <button
+                        onClick={() => handleRemoveStep(idx)}
+                        className="text-destructive/60 hover:text-destructive shrink-0 p-1"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={handleAddStep}
+                    className="w-full py-2.5 rounded-2xl border-2 border-dashed border-emerald-300/50 text-emerald-600 text-sm font-medium hover:border-emerald-400/70 hover:bg-emerald-50/30 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Step
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="px-5 py-4 flex items-center gap-3 border-t shrink-0">
+            {canDelete && (
+              <Button variant="destructive" size="sm" onClick={mode.type === 'editMeal' ? mode.onDelete : undefined} className="gap-2">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            <div className="flex-1" />
+            <Button variant="outline" onClick={() => {
+              if (mode?.type === 'add') { onClose(); } else { setMobileEditing(false); }
+            }} className="rounded-xl px-6">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={!formName || formIngredients.length === 0}
+              className="rounded-xl px-6 gap-2 text-white font-semibold"
+              style={{
+                background: 'linear-gradient(135deg, rgba(0,188,125,1), rgba(0,187,167,1))',
+                boxShadow: '0 4px 12px rgba(0,188,125,0.3)',
+              }}
+            >
+              <Check className="h-4 w-4" />
+              Save
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // ─── Desktop layout (unchanged) ─────────────────────────────────
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
