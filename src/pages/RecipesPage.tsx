@@ -7,18 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { UtensilsCrossed, Plus, Search, Pencil, Trash2, Flame, Beef, Wheat, Droplet, X, ArrowUp, ArrowDown, RefreshCw, ChevronsUpDown } from 'lucide-react';
+import { UtensilsCrossed, Plus, Search, Pencil, Trash2, Flame, Beef, Wheat, Droplet, X, ExternalLink, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableIngredientRow } from '@/components/SortableIngredientRow';
+
 const RecipesPage = () => {
   const {
     recipes,
@@ -39,105 +39,87 @@ const RecipesPage = () => {
   const [formName, setFormName] = useState('');
   const [formCategory, setFormCategory] = useState<RecipeCategory>('main');
   const [formIngredients, setFormIngredients] = useState<RecipeIngredient[]>([]);
-  const [formInstructions, setFormInstructions] = useState('');
+  const [formInstructionSteps, setFormInstructionSteps] = useState<string[]>([]);
   const [formLink, setFormLink] = useState('');
   const [swappingIndex, setSwappingIndex] = useState<number | null>(null);
-  const [isAtBottom, setIsAtBottom] = useState(true);
   const [openIngredientPopover, setOpenIngredientPopover] = useState<number | null>(null);
   const [addIngredientOpen, setAddIngredientOpen] = useState(false);
-  const ingredientsRef = useRef<HTMLDivElement>(null);
 
-  // Track scroll position for "Add ingredient" visibility
-  useEffect(() => {
-    const el = ingredientsRef.current;
-    if (!el) return;
-    const checkScroll = () => {
-      const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 10;
-      setIsAtBottom(atBottom);
-    };
-    checkScroll();
-    el.addEventListener('scroll', checkScroll);
-    return () => el.removeEventListener('scroll', checkScroll);
-  }, [formIngredients.length]);
   const resetForm = () => {
     setFormName('');
     setFormCategory('main');
     setFormIngredients([]);
-    setFormInstructions('');
+    setFormInstructionSteps([]);
     setFormLink('');
   };
+
   const toggleCategory = (cat: RecipeCategory) => {
     const newSet = new Set(selectedCategories);
-    if (newSet.has(cat)) {
-      newSet.delete(cat);
-    } else {
-      newSet.add(cat);
-    }
+    if (newSet.has(cat)) newSet.delete(cat);
+    else newSet.add(cat);
     setSelectedCategories(newSet);
   };
+
   const filteredRecipes = recipes.filter(recipe => {
     const matchesSearch = recipe.name.toLowerCase().includes(search.toLowerCase());
     const matchesCategory = selectedCategories.size === 0 || selectedCategories.has(recipe.category);
     return matchesSearch && matchesCategory;
   });
+
   const handleAddClick = () => {
     resetForm();
     setIsAddOpen(true);
   };
+
   const handleEditClick = (recipe: Recipe) => {
     setFormName(recipe.name);
     setFormCategory(recipe.category);
     setFormIngredients([...recipe.ingredients]);
-    setFormInstructions(recipe.instructions || '');
+    const instructions = recipe.instructions || '';
+    setFormInstructionSteps(instructions ? instructions.split('\n').filter(s => s.trim()) : []);
     setFormLink(recipe.link || '');
     setEditingRecipe(recipe);
   };
+
   const currentMacros = calculateMacrosFromIngredients(formIngredients.map(i => ({
     ingredientId: i.ingredientId,
     servingMultiplier: i.servingMultiplier
   })));
 
-  // Get ingredient info including serving and macros
   const getIngredientInfo = (ingredientId: string, servingMultiplier: number) => {
     const ing = ingredientDb.find(i => i.id === ingredientId);
-    if (!ing) return {
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      serving: ''
-    };
+    if (!ing) return { calories: 0, protein: 0, carbs: 0, fat: 0, serving: '' };
     return {
       calories: Math.round(ing.caloriesPerServing * servingMultiplier),
       protein: Math.round(ing.proteinPerServing * servingMultiplier),
       carbs: Math.round(ing.carbsPerServing * servingMultiplier),
       fat: Math.round(ing.fatPerServing * servingMultiplier),
       serving: ing.servingDescription || `${ing.servingGrams}g`,
-      servingGrams: ing.servingGrams
     };
   };
+
   const handleAddIngredient = (ingredientId: string) => {
     const ing = ingredientDb.find(i => i.id === ingredientId);
     if (ing) {
       setFormIngredients([...formIngredients, {
         ingredientId: ing.id,
         name: ing.name,
-        servingMultiplier: 1, // Default to 1 serving
+        servingMultiplier: 1,
       }]);
     }
   };
+
   const handleRemoveIngredient = (index: number) => {
     setFormIngredients(formIngredients.filter((_, i) => i !== index));
     setSwappingIndex(null);
   };
+
   const handleIngredientMultiplierChange = (index: number, servingMultiplier: number) => {
     const updated = [...formIngredients];
-    updated[index] = {
-      ...updated[index],
-      servingMultiplier
-    };
+    updated[index] = { ...updated[index], servingMultiplier };
     setFormIngredients(updated);
   };
+
   const handleSwapIngredient = (index: number, newIngredientId: string) => {
     const ing = ingredientDb.find(i => i.id === newIngredientId);
     if (ing) {
@@ -145,31 +127,41 @@ const RecipesPage = () => {
       updated[index] = {
         ingredientId: ing.id,
         name: ing.name,
-        servingMultiplier: updated[index].servingMultiplier, // Keep the same multiplier
+        servingMultiplier: updated[index].servingMultiplier,
       };
       setFormIngredients(updated);
     }
     setSwappingIndex(null);
   };
-  // Drag and drop sensors
+
   const sensors = useSensors(
     useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    
     if (over && active.id !== over.id) {
       const oldIndex = formIngredients.findIndex((ing, idx) => ing.ingredientId + '-' + idx === active.id);
       const newIndex = formIngredients.findIndex((ing, idx) => ing.ingredientId + '-' + idx === over.id);
-      
       if (oldIndex !== -1 && newIndex !== -1) {
         setFormIngredients(arrayMove(formIngredients, oldIndex, newIndex));
       }
     }
+  };
+
+  const handleAddStep = () => {
+    setFormInstructionSteps([...formInstructionSteps, '']);
+  };
+
+  const handleStepChange = (index: number, value: string) => {
+    const updated = [...formInstructionSteps];
+    updated[index] = value;
+    setFormInstructionSteps(updated);
+  };
+
+  const handleRemoveStep = (index: number) => {
+    setFormInstructionSteps(formInstructionSteps.filter((_, i) => i !== index));
   };
 
   const handleSaveNew = () => {
@@ -181,13 +173,14 @@ const RecipesPage = () => {
       servings: 1,
       ingredients: formIngredients,
       totalMacros: currentMacros,
-      instructions: formInstructions || undefined,
+      instructions: formInstructionSteps.filter(s => s.trim()).join('\n') || undefined,
       link: formLink || undefined
     };
     addRecipe(newRecipe);
     setIsAddOpen(false);
     resetForm();
   };
+
   const handleSaveEdit = () => {
     if (!editingRecipe) return;
     updateRecipe(editingRecipe.id, {
@@ -195,12 +188,13 @@ const RecipesPage = () => {
       category: formCategory,
       ingredients: formIngredients,
       totalMacros: currentMacros,
-      instructions: formInstructions || undefined,
+      instructions: formInstructionSteps.filter(s => s.trim()).join('\n') || undefined,
       link: formLink || undefined
     });
     setEditingRecipe(null);
     resetForm();
   };
+
   const handleDeleteConfirm = () => {
     if (deleteConfirm) {
       deleteRecipe(deleteConfirm.id);
@@ -208,17 +202,17 @@ const RecipesPage = () => {
     }
   };
 
-  // Check if recipe is used in current week plan
   const isRecipeUsedThisWeek = (id: string) => {
     return Object.values(weeklyPlan).some(day => Object.values(day).some(meal => (meal as any)?.recipeId === id));
   };
-  // Sort ingredients alphabetically
-  const sortedIngredientDb = useMemo(() => 
-    [...ingredientDb].sort((a, b) => a.name.localeCompare(b.name)), 
+
+  const sortedIngredientDb = useMemo(() =>
+    [...ingredientDb].sort((a, b) => a.name.localeCompare(b.name)),
     [ingredientDb]
   );
-  
+
   const availableIngredients = sortedIngredientDb.filter(ing => !formIngredients.some(fi => fi.ingredientId === ing.id));
+
   const categoryColors: Record<RecipeCategory, string> = {
     breakfast: 'bg-category-breakfast/10 text-category-breakfast',
     main: 'bg-category-lunch/10 text-category-lunch',
@@ -227,150 +221,173 @@ const RecipesPage = () => {
     side: 'bg-muted text-muted-foreground',
     dessert: 'bg-category-dinner/10 text-category-dinner'
   };
+
+  const macroBadges = [
+    { icon: <Flame className="h-3.5 w-3.5" />, value: currentMacros.calories, suffix: '', bg: 'bg-slate-500/10', text: 'text-slate-600' },
+    { icon: <Beef className="h-3.5 w-3.5" />, value: currentMacros.protein, suffix: 'g', bg: 'bg-emerald-600/10', text: 'text-emerald-600' },
+    { icon: <Wheat className="h-3.5 w-3.5" />, value: currentMacros.carbs, suffix: 'g', bg: 'bg-cyan-600/10', text: 'text-cyan-600' },
+    { icon: <Droplet className="h-3.5 w-3.5" />, value: currentMacros.fat, suffix: 'g', bg: 'bg-orange-500/10', text: 'text-orange-500' },
+  ];
+
   return <AppLayout>
-      <div className="p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <UtensilsCrossed className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="font-display font-bold text-2xl text-foreground">Menu</h1>
-              <p className="text-sm text-muted-foreground">Create and manage your dishes</p>
-            </div>
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <UtensilsCrossed className="h-6 w-6 text-primary" />
           </div>
-          <Button onClick={handleAddClick} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add Recipe
-          </Button>
-        </div>
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search recipes..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {RECIPE_CATEGORIES.map(cat => <div key={cat} className="flex items-center gap-2">
-                <Checkbox id={`filter-${cat}`} checked={selectedCategories.has(cat)} onCheckedChange={() => toggleCategory(cat)} />
-                <Label htmlFor={`filter-${cat}`} className="text-sm cursor-pointer capitalize">
-                  {CATEGORY_LABELS[cat]}
-                </Label>
-              </div>)}
+          <div>
+            <h1 className="font-display font-bold text-2xl text-foreground">Menu</h1>
+            <p className="text-sm text-muted-foreground">Create and manage your dishes</p>
           </div>
         </div>
+        <Button onClick={handleAddClick} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add Recipe
+        </Button>
+      </div>
 
-        {/* Recipe Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredRecipes.map(recipe => <Card key={recipe.id} className="group hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-foreground">{recipe.name}</h3>
-                  <Badge className={cn('shrink-0', categoryColors[recipe.category])}>
-                    {CATEGORY_LABELS[recipe.category]}
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center gap-3 text-sm mb-3">
-                  <span className="text-macro-calories font-medium">{recipe.totalMacros.calories} kcal</span>
-                  <span className="text-muted-foreground">|</span>
-                  <span className="text-macro-protein">{recipe.totalMacros.protein}P</span>
-                  <span className="text-macro-carbs">{recipe.totalMacros.carbs}C</span>
-                  <span className="text-macro-fat">{recipe.totalMacros.fat}F</span>
-                </div>
-
-                <div className="text-xs text-muted-foreground mb-3">
-                  {recipe.ingredients.length} ingredients
-                </div>
-
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => handleEditClick(recipe)}>
-                    <Pencil className="h-3 w-3" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(recipe)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>)}
-          {filteredRecipes.length === 0 && <div className="col-span-full text-center py-12 text-muted-foreground">
-              <UtensilsCrossed className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No recipes found</p>
-            </div>}
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search recipes..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {RECIPE_CATEGORIES.map(cat => <div key={cat} className="flex items-center gap-2">
+            <Checkbox id={`filter-${cat}`} checked={selectedCategories.has(cat)} onCheckedChange={() => toggleCategory(cat)} />
+            <Label htmlFor={`filter-${cat}`} className="text-sm cursor-pointer capitalize">
+              {CATEGORY_LABELS[cat]}
+            </Label>
+          </div>)}
         </div>
       </div>
 
-      {/* Add/Edit Dialog */}
-      <Dialog open={isAddOpen || !!editingRecipe} onOpenChange={open => {
-      if (!open) {
-        setIsAddOpen(false);
-        setEditingRecipe(null);
-      }
+      {/* Recipe Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredRecipes.map(recipe => <Card key={recipe.id} className="group hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="font-semibold text-foreground">{recipe.name}</h3>
+              <Badge className={cn('shrink-0', categoryColors[recipe.category])}>
+                {CATEGORY_LABELS[recipe.category]}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-3 text-sm mb-3">
+              <span className="text-macro-calories font-medium">{recipe.totalMacros.calories} kcal</span>
+              <span className="text-muted-foreground">|</span>
+              <span className="text-macro-protein">{recipe.totalMacros.protein}P</span>
+              <span className="text-macro-carbs">{recipe.totalMacros.carbs}C</span>
+              <span className="text-macro-fat">{recipe.totalMacros.fat}F</span>
+            </div>
+            <div className="text-xs text-muted-foreground mb-3">
+              {recipe.ingredients.length} ingredients
+            </div>
+            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => handleEditClick(recipe)}>
+                <Pencil className="h-3 w-3" />
+                Edit
+              </Button>
+              <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(recipe)}>
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>)}
+        {filteredRecipes.length === 0 && <div className="col-span-full text-center py-12 text-muted-foreground">
+          <UtensilsCrossed className="h-12 w-12 mx-auto mb-3 opacity-50" />
+          <p>No recipes found</p>
+        </div>}
+      </div>
+    </div>
+
+    {/* Add/Edit Dialog - New Design */}
+    <Dialog open={isAddOpen || !!editingRecipe} onOpenChange={open => {
+      if (!open) { setIsAddOpen(false); setEditingRecipe(null); }
     }}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          {/* Compact header: Name + Category left, Macros right - aligned with ingredient grid */}
-          <div className="flex items-center gap-2 pb-4 border-b shrink-0">
-            {/* Spacer for drag handle */}
-            <div className="shrink-0 w-4" />
-            
-            {/* Recipe name - aligned with ingredient dropdown */}
-            <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Recipe name..." className="text-base font-semibold h-9 flex-1 min-w-0" />
-            
-            {/* Category - aligned with qty */}
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4 space-y-3 shrink-0">
+          <Input
+            value={formName}
+            onChange={e => setFormName(e.target.value)}
+            placeholder="Recipe name..."
+            className="text-2xl font-bold h-auto py-1 px-0 border-0 bg-transparent focus-visible:ring-0 shadow-none"
+          />
+
+          {/* Category + Link + Macros row */}
+          <div className="flex items-center gap-2 flex-wrap">
             <Select value={formCategory} onValueChange={v => setFormCategory(v as RecipeCategory)}>
-              <SelectTrigger className="w-20 h-9 shrink-0">
+              <SelectTrigger className="w-[100px] h-8 text-sm rounded-lg">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {RECIPE_CATEGORIES.map(cat => <SelectItem key={cat} value={cat}>{CATEGORY_LABELS[cat]}</SelectItem>)}
+                {RECIPE_CATEGORIES.map(cat => (
+                  <SelectItem key={cat} value={cat}>{CATEGORY_LABELS[cat]}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            
-            {/* Spacer for serving column */}
-            <div className="w-24 shrink-0" />
-            
-            {/* Macro totals - aligned with macro columns */}
-            <span className="w-12 text-center shrink-0 text-macro-calories font-bold text-sm">{currentMacros.calories}</span>
-            <span className="w-10 text-center shrink-0 text-macro-protein font-bold text-sm">{currentMacros.protein}</span>
-            <span className="w-10 text-center shrink-0 text-macro-carbs font-bold text-sm">{currentMacros.carbs}</span>
-            <span className="w-10 text-center shrink-0 text-macro-fat font-bold text-sm">{currentMacros.fat}</span>
-            
-            {/* Spacer for remove button */}
-            <div className="w-7 shrink-0" />
+
+            <a
+              href={formLink || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`text-muted-foreground ${formLink ? 'hover:text-primary cursor-pointer' : 'opacity-40 pointer-events-none'}`}
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+
+            <Input
+              value={formLink}
+              onChange={e => setFormLink(e.target.value)}
+              placeholder="Recipe link (optional)"
+              className="h-8 text-sm flex-1 min-w-[140px] max-w-[220px]"
+            />
+
+            <div className="flex-1" />
+
+            {/* Macro badges */}
+            <div className="flex items-center gap-1.5">
+              {macroBadges.map((m, i) => (
+                <span
+                  key={i}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${m.bg} ${m.text}`}
+                >
+                  {m.icon}
+                  {m.value}{m.suffix}
+                </span>
+              ))}
+            </div>
           </div>
+        </div>
 
-          <div className="flex-1 overflow-y-auto -mx-6 px-6 min-h-0">
-            <div className="space-y-4 py-4">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-6 min-h-0">
+          <div className="space-y-6 pb-6">
+            {/* Ingredients */}
+            <div>
+              <h3 className="text-base font-bold mb-3">Ingredients</h3>
 
-
-              {/* Ingredients */}
-              <div className="space-y-2">
-                <Label>Ingredients</Label>
+              <div className="glass-subtle rounded-2xl p-3">
                 {/* Column headers */}
-                <div className="flex items-center gap-2 text-sm text-muted-foreground px-2">
+                <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground tracking-wider uppercase pb-2 border-b border-border/30">
                   <span className="shrink-0 w-4" />
-                  <span className="flex-1 min-w-0">Name</span>
-                  <span className="w-20 text-left shrink-0">Qty</span>
-                  <span className="w-24 text-left shrink-0">Serving</span>
-                  <span className="w-12 text-left shrink-0">Cal</span>
-                  <span className="w-10 text-left shrink-0">P</span>
-                  <span className="w-10 text-left shrink-0">C</span>
-                  <span className="w-10 text-left shrink-0">F</span>
+                  <span className="flex-1 min-w-0">Ingredient</span>
+                  <span className="w-16 text-center shrink-0">Qty</span>
+                  <span className="w-14 text-center shrink-0">Cal</span>
+                  <span className="w-11 text-center shrink-0 text-emerald-600">P</span>
+                  <span className="w-11 text-center shrink-0 text-cyan-600">C</span>
+                  <span className="w-11 text-center shrink-0 text-orange-500">F</span>
                   <span className="w-7 shrink-0" />
                 </div>
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
+
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext
                     items={formIngredients.map((ing, idx) => ing.ingredientId + '-' + idx)}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div className="space-y-2">
+                    <div>
                       {formIngredients.map((ing, idx) => {
                         const info = getIngredientInfo(ing.ingredientId, ing.servingMultiplier);
                         const handleMultiplierChange = (value: string) => {
@@ -397,110 +414,124 @@ const RecipesPage = () => {
                     </div>
                   </SortableContext>
                 </DndContext>
-
-                {availableIngredients.length > 0 && <div>
-                    <Popover open={addIngredientOpen} onOpenChange={setAddIngredientOpen}>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" role="combobox" className="w-full justify-start gap-2 font-normal">
-                          <Plus className="h-4 w-4" />
-                          Add ingredient...
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[300px] p-0" align="start">
-                        <Command>
-                          <CommandInput placeholder="Search ingredients..." />
-                          <CommandList>
-                            <CommandEmpty>No ingredient found.</CommandEmpty>
-                            <CommandGroup>
-                              {availableIngredients.map(ing => (
-                                <CommandItem
-                                  key={ing.id}
-                                  value={ing.name}
-                                  onSelect={() => {
-                                    handleAddIngredient(ing.id);
-                                    setAddIngredientOpen(false);
-                                  }}
-                                >
-                                  {ing.name}
-                                </CommandItem>
-                              ))}
-                            </CommandGroup>
-                          </CommandList>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                  </div>}
               </div>
 
-              {/* Instructions */}
+              {/* Add ingredient button */}
+              {availableIngredients.length > 0 && (
+                <Popover open={addIngredientOpen} onOpenChange={setAddIngredientOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      className="w-full mt-2 py-2.5 rounded-2xl border-2 border-dashed border-emerald-300/50 text-emerald-600 text-sm font-medium hover:border-emerald-400/70 hover:bg-emerald-50/30 transition-colors flex items-center justify-center gap-1.5"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Ingredient
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search ingredients..." />
+                      <CommandList>
+                        <CommandEmpty>No ingredient found.</CommandEmpty>
+                        <CommandGroup>
+                          {availableIngredients.map(ing => (
+                            <CommandItem
+                              key={ing.id}
+                              value={`${ing.name} ${ing.brand || ''}`}
+                              onSelect={() => {
+                                handleAddIngredient(ing.id);
+                                setAddIngredientOpen(false);
+                              }}
+                            >
+                              {ing.name}
+                              {ing.brand && <span className="text-muted-foreground"> [{ing.brand}]</span>}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+
+            {/* Instructions - Step-based */}
+            <div>
+              <h3 className="text-base font-bold mb-3">Instructions</h3>
               <div className="space-y-2">
-                <Label>Instructions</Label>
-                <textarea 
-                  value={formInstructions} 
-                  onChange={e => setFormInstructions(e.target.value)}
-                  placeholder="Step-by-step preparation instructions..." 
-                  className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 resize-none"
-                  style={{ fieldSizing: 'content' } as React.CSSProperties}
-                />
+                {formInstructionSteps.map((step, idx) => (
+                  <div key={idx} className="flex items-start gap-3 glass-subtle rounded-xl px-4 py-3">
+                    <div className="shrink-0 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">
+                      {idx + 1}
+                    </div>
+                    <input
+                      value={step}
+                      onChange={(e) => handleStepChange(idx, e.target.value)}
+                      placeholder={`Step ${idx + 1}...`}
+                      className="flex-1 bg-transparent border-0 outline-none text-sm text-foreground placeholder:text-muted-foreground"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0 text-muted-foreground/40 hover:text-destructive"
+                      onClick={() => handleRemoveStep(idx)}
+                      type="button"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+                <button
+                  onClick={handleAddStep}
+                  className="w-full py-2.5 rounded-2xl border-2 border-dashed border-emerald-300/50 text-emerald-600 text-sm font-medium hover:border-emerald-400/70 hover:bg-emerald-50/30 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Step
+                </button>
               </div>
-
-              {/* Link */}
-              <div className="space-y-2">
-                <Label>Recipe Link</Label>
-                <Input value={formLink} onChange={e => setFormLink(e.target.value)} placeholder="https://..." type="url" />
-              </div>
-
             </div>
           </div>
+        </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-            setIsAddOpen(false);
-            setEditingRecipe(null);
-          }}>Cancel</Button>
-            <Button onClick={editingRecipe ? handleSaveEdit : handleSaveNew} disabled={!formName || formIngredients.length === 0}>
-              {editingRecipe ? 'Save Changes' : 'Add Recipe'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Footer */}
+        <div className="px-6 py-4 flex items-center gap-3 border-t shrink-0">
+          <div className="flex-1" />
+          <Button variant="outline" onClick={() => { setIsAddOpen(false); setEditingRecipe(null); }} className="rounded-xl px-6">
+            Cancel
+          </Button>
+          <Button
+            onClick={editingRecipe ? handleSaveEdit : handleSaveNew}
+            disabled={!formName || formIngredients.length === 0}
+            className="rounded-xl px-6 gap-2 text-white font-semibold"
+            style={{
+              background: 'linear-gradient(135deg, rgba(0,188,125,1), rgba(0,187,167,1))',
+              boxShadow: '0 4px 12px rgba(0,188,125,0.3)',
+            }}
+          >
+            <Check className="h-4 w-4" />
+            Save Recipe
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteConfirm} onOpenChange={open => !open && setDeleteConfirm(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Recipe?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteConfirm && isRecipeUsedThisWeek(deleteConfirm.id) ? `"${deleteConfirm.name}" is used in your current week's meal plan. Deleting it won't remove existing meals but the base recipe will be gone.` : `Are you sure you want to delete "${deleteConfirm?.name}"?`}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </AppLayout>;
+    {/* Delete Confirmation */}
+    <AlertDialog open={!!deleteConfirm} onOpenChange={open => !open && setDeleteConfirm(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Recipe?</AlertDialogTitle>
+          <AlertDialogDescription>
+            {deleteConfirm && isRecipeUsedThisWeek(deleteConfirm.id) ? `"${deleteConfirm.name}" is used in your current week's meal plan. Deleting it won't remove existing meals but the base recipe will be gone.` : `Are you sure you want to delete "${deleteConfirm?.name}"?`}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </AppLayout>;
 };
-function MacroCard({
-  icon,
-  label,
-  value,
-  colorClass
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  colorClass: string;
-}) {
-  return <div className="text-center space-y-1">
-      <div className={cn('inline-flex p-2 rounded-lg', colorClass)}>
-        {icon}
-      </div>
-      <div className="text-base font-bold text-foreground">{value}</div>
-      <div className="text-[10px] text-muted-foreground">{label}</div>
-    </div>;
-}
+
 export default RecipesPage;
