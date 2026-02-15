@@ -1,7 +1,16 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-
+import { Menu, X } from 'lucide-react';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+  DrawerClose,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -19,6 +28,8 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -28,6 +39,11 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isActive = (url: string) => {
     if (url === '/') return location.pathname === '/';
     return location.pathname.startsWith(url);
+  };
+
+  const handleNavClick = (url: string) => {
+    navigate(url);
+    setDrawerOpen(false);
   };
 
   return (
@@ -53,42 +69,117 @@ export function AppLayout({ children }: AppLayoutProps) {
             <span className="font-semibold text-base bg-gradient-to-r from-[hsl(160,100%,37%)] to-[hsl(174,100%,37%)] bg-clip-text text-transparent">WholeFuel</span>
           </button>
 
-          {/* Nav Tabs - text only */}
-          <nav className="flex items-center gap-0.5">
-            {navItems.map((item) => (
-              <button
-                key={item.title}
-                onClick={() => navigate(item.url)}
-                className={cn(
-                  'px-3 py-1.5 rounded-full text-[13px] font-medium transition-all font-sans',
-                  isActive(item.url)
-                    ? 'text-white shadow-md'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-white/40'
-                )}
-                style={isActive(item.url) ? {
-                  background: 'linear-gradient(135deg, rgba(0,188,125,1), rgba(0,187,167,1))',
-                  boxShadow: '0 4px 12px rgba(0,188,125,0.3)',
-                } : undefined}
-              >
-                {item.title}
-              </button>
-            ))}
-          </nav>
+          {/* Desktop Nav Tabs */}
+          {!isMobile && (
+            <nav className="flex items-center gap-0.5">
+              {navItems.map((item) => (
+                <button
+                  key={item.title}
+                  onClick={() => navigate(item.url)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full text-[13px] font-medium transition-all font-sans',
+                    isActive(item.url)
+                      ? 'text-white shadow-md'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-white/40'
+                  )}
+                  style={isActive(item.url) ? {
+                    background: 'linear-gradient(135deg, rgba(0,188,125,1), rgba(0,187,167,1))',
+                    boxShadow: '0 4px 12px rgba(0,188,125,0.3)',
+                  } : undefined}
+                >
+                  {item.title}
+                </button>
+              ))}
+            </nav>
+          )}
 
           {/* Right side */}
           <div className="ml-auto flex items-center gap-3">
-            <button
-              onClick={() => navigate('/settings')}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Settings
-            </button>
-            <button
-              onClick={handleSignOut}
-              className="text-sm text-muted-foreground hover:text-destructive transition-colors"
-            >
-              Sign Out
-            </button>
+            {!isMobile && (
+              <>
+                <button
+                  onClick={() => navigate('/settings')}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Settings
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="text-sm text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  Sign Out
+                </button>
+              </>
+            )}
+
+            {/* Mobile Hamburger */}
+            {isMobile && (
+              <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="left">
+                <DrawerTrigger asChild>
+                  <button className="p-1.5 rounded-lg hover:bg-white/40 transition-colors">
+                    <Menu className="h-5 w-5 text-foreground" />
+                  </button>
+                </DrawerTrigger>
+                <DrawerContent
+                  className="fixed inset-y-0 left-0 right-auto w-[260px] rounded-none rounded-r-2xl h-full"
+                  style={{
+                    background: 'rgba(255,255,255,0.85)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                  }}
+                >
+                  <DrawerTitle className="sr-only">Navigation</DrawerTitle>
+                  <div className="flex flex-col h-full p-4">
+                    {/* Close button */}
+                    <div className="flex justify-end mb-4">
+                      <DrawerClose asChild>
+                        <button className="p-1.5 rounded-lg hover:bg-white/40 transition-colors">
+                          <X className="h-5 w-5 text-muted-foreground" />
+                        </button>
+                      </DrawerClose>
+                    </div>
+
+                    {/* Nav Items */}
+                    <nav className="flex flex-col gap-1 flex-1">
+                      {navItems.map((item) => (
+                        <button
+                          key={item.title}
+                          onClick={() => handleNavClick(item.url)}
+                          className={cn(
+                            'px-4 py-2.5 rounded-xl text-sm font-medium text-left transition-all',
+                            isActive(item.url)
+                              ? 'text-white shadow-md'
+                              : 'text-muted-foreground hover:text-foreground hover:bg-white/40'
+                          )}
+                          style={isActive(item.url) ? {
+                            background: 'linear-gradient(135deg, rgba(0,188,125,1), rgba(0,187,167,1))',
+                            boxShadow: '0 4px 12px rgba(0,188,125,0.3)',
+                          } : undefined}
+                        >
+                          {item.title}
+                        </button>
+                      ))}
+                    </nav>
+
+                    {/* Bottom actions */}
+                    <div className="border-t border-white/30 pt-3 space-y-1">
+                      <button
+                        onClick={() => handleNavClick('/settings')}
+                        className="w-full px-4 py-2.5 rounded-xl text-sm text-left text-muted-foreground hover:text-foreground hover:bg-white/40 transition-colors"
+                      >
+                        Settings
+                      </button>
+                      <button
+                        onClick={() => { setDrawerOpen(false); handleSignOut(); }}
+                        className="w-full px-4 py-2.5 rounded-xl text-sm text-left text-muted-foreground hover:text-destructive hover:bg-white/40 transition-colors"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                </DrawerContent>
+              </Drawer>
+            )}
           </div>
         </div>
       </header>

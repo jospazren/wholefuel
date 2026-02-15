@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useMealPlan } from '@/contexts/MealPlanContext';
-import { Recipe, DayOfWeek, MealSlot, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, MealInstance, WeeklyTargets } from '@/types/meal';
+import { Recipe, DayOfWeek, MealSlot, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, DAY_FULL_LABELS, MealInstance, WeeklyTargets } from '@/types/meal';
 import { ViewSettingsDialog, getMacroVisibility, MacroVisibility } from '@/components/ViewSettingsDialog';
 import { MealSlotCell } from '@/components/MealSlotCell';
 import { MealEditSheet } from '@/components/MealEditSheet';
 import { DayMacroBars } from '@/components/DayMacroBars';
 import { MacroBadgeRow } from '@/components/MacroBadge';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, CalendarDays, SlidersHorizontal, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,12 @@ const strategies = [
   { value: 'bulk20', label: 'Bulk 20%' },
 ] as const;
 
+function getCurrentDayOfWeek(): DayOfWeek {
+  const jsDay = new Date().getDay();
+  const map: DayOfWeek[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  return map[jsDay];
+}
+
 export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: WeeklyCalendarProps) {
   const { 
     weeklyPlan, 
@@ -44,11 +51,23 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
     goToNextWeek,
     getWeekLabel,
   } = useMealPlan();
+  const isMobile = useIsMobile();
   const [dragOverSlot, setDragOverSlot] = useState<{ day: DayOfWeek; slot: MealSlot } | null>(null);
   const [editingMeal, setEditingMeal] = useState<{ meal: MealInstance; day: DayOfWeek; slot: MealSlot } | null>(null);
   const [draggingMeal, setDraggingMeal] = useState<{ day: DayOfWeek; slot: MealSlot } | null>(null);
   const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const [macroVisibility, setMacroVisibility] = useState<MacroVisibility>(getMacroVisibility);
+  const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getCurrentDayOfWeek);
+
+  const handlePrevDay = () => {
+    const idx = DAYS_OF_WEEK.indexOf(selectedDay);
+    setSelectedDay(DAYS_OF_WEEK[(idx - 1 + 7) % 7]);
+  };
+
+  const handleNextDay = () => {
+    const idx = DAYS_OF_WEEK.indexOf(selectedDay);
+    setSelectedDay(DAYS_OF_WEEK[(idx + 1) % 7]);
+  };
 
   const handleDragOver = (e: React.DragEvent, day: DayOfWeek, slot: MealSlot) => {
     e.preventDefault();
@@ -116,6 +135,51 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
     });
   };
 
+  const renderDayColumn = (day: DayOfWeek) => {
+    const dayMacros = getDailyMacros(day);
+    const dayMeals = MEAL_SLOTS.map((slot) => ({ slot, meal: weeklyPlan[day][slot] }));
+
+    return (
+      <div key={day} className="flex flex-col min-h-0">
+        {/* Day Header + Macros in a card container */}
+        <div
+          className={cn("rounded-2xl p-[13px] space-y-3", isMobile ? "mx-0" : "mx-1.5 mt-1.5")}
+          style={{
+            backgroundImage: 'linear-gradient(137deg, rgba(255,255,255,0.6), rgba(249,250,251,0.3))',
+            border: '1px solid rgba(255,255,255,0.5)',
+          }}
+        >
+          {!isMobile && (
+            <div className="text-center">
+              <span className="text-[11px] font-bold text-[#6a7282] uppercase" style={{ letterSpacing: '0.34px' }}>
+                {DAY_LABELS[day]}
+              </span>
+            </div>
+          )}
+          <DayMacroBars macros={dayMacros} targets={weeklyTargets} visibility={macroVisibility} />
+        </div>
+
+        {/* Meal Cards */}
+        <div className={cn("flex-1 overflow-y-auto pb-1.5 pt-1.5 space-y-1", isMobile ? "px-0" : "px-1.5")}>
+          {dayMeals.map(({ slot, meal }) => (
+            <MealSlotCell
+              key={slot}
+              day={day}
+              slot={slot}
+              meal={meal}
+              isDragOver={isSlotDraggedOver(day, slot)}
+              onDragOver={(e) => handleDragOver(e, day, slot)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, day, slot)}
+              onEditClick={() => handleEditClick(day, slot)}
+              onMealDragStart={(e) => handleMealDragStart(e, day, slot)}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div
@@ -128,119 +192,145 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/30">
-          {/* Left: Toggle + Title */}
-          <div className="flex items-center gap-2">
-            {onToggleSidebar && (
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={onToggleSidebar}>
-                {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
-              </Button>
-            )}
-            <CalendarDays className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-base">Meal Plan</h3>
-          </div>
+        <div className={cn(
+          "border-b border-white/30",
+          isMobile ? "px-3 py-2 space-y-2" : "flex items-center justify-between px-4 py-3"
+        )}>
+          {isMobile ? (
+            <>
+              {/* Mobile Row 1: Week nav + settings */}
+              <div className="flex items-center justify-between">
+                <div
+                  className="flex items-center gap-0 rounded-full px-1"
+                  style={{
+                    background: 'rgba(255,255,255,0.55)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.5)',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                  }}
+                >
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={goToPreviousWeek}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-semibold px-3 min-w-[80px] text-center">
+                    {getWeekLabel()}
+                  </span>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={goToNextWeek}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
 
-          {/* Center: Week Navigation */}
-          <div
-            className="flex items-center gap-0 rounded-full px-1"
-            style={{
-              background: 'rgba(255,255,255,0.55)',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.5)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-            }}
-          >
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={goToPreviousWeek}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm font-semibold px-4 min-w-[90px] text-center">
-              {getWeekLabel()}
-            </span>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={goToNextWeek}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+                <div className="flex items-center gap-2">
+                  <Select value={weeklyTargets.strategy} onValueChange={handleStrategyChange}>
+                    <SelectTrigger className="h-8 w-[100px] text-xs glass-subtle border-0 rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {strategies.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setViewSettingsOpen(true)}>
+                    <SlidersHorizontal className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
 
-          {/* Right: Strategy + Macro Summary + Filter */}
-          <div className="flex items-center gap-3">
-            <Select value={weeklyTargets.strategy} onValueChange={handleStrategyChange}>
-              <SelectTrigger className="h-8 w-[110px] text-xs glass-subtle border-0 rounded-xl">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {strategies.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {/* Mobile Row 2: Day selector */}
+              <div className="flex items-center justify-center gap-2">
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={handlePrevDay}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-bold min-w-[90px] text-center">
+                  {DAY_FULL_LABELS[selectedDay]}
+                </span>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={handleNextDay}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Desktop header - unchanged */}
+              {/* Left: Toggle + Title */}
+              <div className="flex items-center gap-2">
+                {onToggleSidebar && (
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={onToggleSidebar}>
+                    {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+                  </Button>
+                )}
+                <CalendarDays className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-base">Meal Plan</h3>
+              </div>
 
-            <div className="hidden md:block">
-              <MacroBadgeRow
-                calories={weeklyTargets.dailyCalories}
-                protein={weeklyTargets.protein}
-                carbs={weeklyTargets.carbs}
-                fat={weeklyTargets.fat}
-                size="md"
-              />
-            </div>
+              {/* Center: Week Navigation */}
+              <div
+                className="flex items-center gap-0 rounded-full px-1"
+                style={{
+                  background: 'rgba(255,255,255,0.55)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255,255,255,0.5)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                }}
+              >
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={goToPreviousWeek}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm font-semibold px-4 min-w-[90px] text-center">
+                  {getWeekLabel()}
+                </span>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={goToNextWeek}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
 
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setViewSettingsOpen(true)}>
-              <SlidersHorizontal className="h-4 w-4" />
-            </Button>
-          </div>
+              {/* Right: Strategy + Macro Summary + Filter */}
+              <div className="flex items-center gap-3">
+                <Select value={weeklyTargets.strategy} onValueChange={handleStrategyChange}>
+                  <SelectTrigger className="h-8 w-[110px] text-xs glass-subtle border-0 rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {strategies.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <div className="hidden md:block">
+                  <MacroBadgeRow
+                    calories={weeklyTargets.dailyCalories}
+                    protein={weeklyTargets.protein}
+                    carbs={weeklyTargets.carbs}
+                    fat={weeklyTargets.fat}
+                    size="md"
+                  />
+                </div>
+
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setViewSettingsOpen(true)}>
+                  <SlidersHorizontal className="h-4 w-4" />
+                </Button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Day Columns */}
         <div className="flex-1 overflow-x-auto">
-          <div className="grid grid-cols-7 min-w-[700px] h-full">
-            {DAYS_OF_WEEK.map((day) => {
-              const dayMacros = getDailyMacros(day);
-              const dayMeals = MEAL_SLOTS.map((slot) => ({ slot, meal: weeklyPlan[day][slot] }));
-
-              return (
-              <div
-                  key={day}
-                  className="flex flex-col min-h-0"
-                >
-                    {/* Day Header + Macros in a card container */}
-                    <div
-                      className="mx-1.5 mt-1.5 rounded-2xl p-[13px] space-y-3"
-                      style={{
-                        backgroundImage: 'linear-gradient(137deg, rgba(255,255,255,0.6), rgba(249,250,251,0.3))',
-                        border: '1px solid rgba(255,255,255,0.5)',
-                      }}
-                    >
-                      <div className="text-center">
-                        <span className="text-[11px] font-bold text-[#6a7282] uppercase" style={{ letterSpacing: '0.34px' }}>
-                          {DAY_LABELS[day]}
-                        </span>
-                      </div>
-                      <DayMacroBars macros={dayMacros} targets={weeklyTargets} visibility={macroVisibility} />
-                    </div>
-
-                    {/* Meal Cards */}
-                    <div className="flex-1 overflow-y-auto px-1.5 pb-1.5 pt-1.5 space-y-1">
-                      {dayMeals.map(({ slot, meal }) => (
-                        <MealSlotCell
-                          key={slot}
-                          day={day}
-                          slot={slot}
-                          meal={meal}
-                          isDragOver={isSlotDraggedOver(day, slot)}
-                          onDragOver={(e) => handleDragOver(e, day, slot)}
-                          onDragLeave={handleDragLeave}
-                          onDrop={(e) => handleDrop(e, day, slot)}
-                          onEditClick={() => handleEditClick(day, slot)}
-                          onMealDragStart={(e) => handleMealDragStart(e, day, slot)}
-                        />
-                      ))}
-                    </div>
-                </div>
-              );
-            })}
-          </div>
+          {isMobile ? (
+            <div className="p-2">
+              {renderDayColumn(selectedDay)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-7 min-w-[700px] h-full">
+              {DAYS_OF_WEEK.map((day) => renderDayColumn(day))}
+            </div>
+          )}
         </div>
       </div>
 
