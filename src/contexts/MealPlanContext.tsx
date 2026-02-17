@@ -260,6 +260,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
               carbs: Number(rec.total_carbs),
             },
             instructions: (rec as any).instructions || undefined,
+            notes: (rec as any).notes || undefined,
             link: (rec as any).link || undefined,
           };
         });
@@ -827,6 +828,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       total_fat: recipe.totalMacros.fat,
       total_carbs: recipe.totalMacros.carbs,
       instructions: recipe.instructions,
+      notes: recipe.notes,
       link: recipe.link,
     } as any).select().single();
 
@@ -864,6 +866,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     if (updates.servings !== undefined) dbUpdates.servings = updates.servings;
     if (updates.category !== undefined) dbUpdates.category = updates.category;
     if (updates.instructions !== undefined) dbUpdates.instructions = updates.instructions;
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
     if (updates.link !== undefined) dbUpdates.link = updates.link;
     if (updates.totalMacros !== undefined) {
       dbUpdates.total_calories = updates.totalMacros.calories;

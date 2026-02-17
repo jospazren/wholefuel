@@ -34,6 +34,7 @@ interface RecipeEditorDialogProps {
     category: RecipeCategory;
     ingredients: RecipeIngredient[];
     instructions?: string;
+    notes?: string;
     link?: string;
   }) => void;
 }
@@ -46,6 +47,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
   const [formCategory, setFormCategory] = useState<RecipeCategory>('main');
   const [formIngredients, setFormIngredients] = useState<RecipeIngredient[]>([]);
   const [formInstructionSteps, setFormInstructionSteps] = useState<string[]>([]);
+  const [formNotes, setFormNotes] = useState('');
   const [formLink, setFormLink] = useState('');
   const [openIngredientPopover, setOpenIngredientPopover] = useState<number | null>(null);
   const [addIngredientOpen, setAddIngredientOpen] = useState(false);
@@ -58,8 +60,9 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
         setFormCategory('main');
         setFormIngredients([]);
         setFormInstructionSteps([]);
+        setFormNotes('');
         setFormLink('');
-        setMobileEditing(true); // go straight to edit for new recipes
+        setMobileEditing(true);
       } else {
         const recipe = mode.recipe;
         setFormName(recipe.name);
@@ -67,6 +70,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
         setFormIngredients([...recipe.ingredients]);
         const instructions = recipe.instructions || '';
         setFormInstructionSteps(instructions ? instructions.split('\n').filter(s => s.trim()) : []);
+        setFormNotes(recipe.notes || '');
         setFormLink(recipe.link || '');
         setMobileEditing(false);
       }
@@ -166,6 +170,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
       category: formCategory,
       ingredients: formIngredients,
       instructions: formInstructionSteps.filter(s => s.trim()).join('\n') || undefined,
+      notes: formNotes || undefined,
       link: formLink || undefined,
     });
   };
@@ -216,6 +221,9 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
               </TabsTrigger>
               <TabsTrigger value="instructions" className="rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-emerald-600 px-1 pb-2 text-sm font-medium">
                 Instructions
+              </TabsTrigger>
+              <TabsTrigger value="notes" className="rounded-none border-b-2 border-transparent data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-emerald-600 px-1 pb-2 text-sm font-medium">
+                Notes
               </TabsTrigger>
             </TabsList>
 
@@ -269,6 +277,14 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
                   <p className="text-sm text-muted-foreground text-center py-8">No instructions</p>
                 )}
               </div>
+            </TabsContent>
+
+            <TabsContent value="notes" className="flex-1 overflow-y-auto px-5 py-4 mt-0">
+              {formNotes ? (
+                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{formNotes}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">No notes</p>
+              )}
             </TabsContent>
           </Tabs>
         </DialogContent>
@@ -399,6 +415,17 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
                     Add Step
                   </button>
                 </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">Notes</h3>
+                <textarea
+                  value={formNotes}
+                  onChange={(e) => setFormNotes(e.target.value)}
+                  placeholder="Add notes about this recipe..."
+                  className="w-full min-h-[100px] rounded-xl border border-border/40 bg-muted/30 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground resize-y outline-none focus:ring-2 focus:ring-ring"
+                />
               </div>
             </div>
           </div>
@@ -616,6 +643,17 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
                   Add Step
                 </button>
               </div>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <h3 className="text-base font-bold mb-3">Notes</h3>
+              <textarea
+                value={formNotes}
+                onChange={(e) => setFormNotes(e.target.value)}
+                placeholder="Add notes about this recipe..."
+                className="w-full min-h-[100px] rounded-2xl glass-subtle px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground resize-y outline-none focus:ring-2 focus:ring-ring"
+              />
             </div>
           </div>
         </div>

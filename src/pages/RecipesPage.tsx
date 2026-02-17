@@ -54,7 +54,7 @@ const RecipesPage = () => {
     setEditorOpen(true);
   };
 
-  const handleEditorSave = (data: { name: string; category: RecipeCategory; ingredients: any[]; instructions?: string; link?: string }) => {
+  const handleEditorSave = (data: { name: string; category: RecipeCategory; ingredients: any[]; instructions?: string; notes?: string; link?: string }) => {
     const macros = calculateMacrosFromIngredients(data.ingredients.map(i => ({
       ingredientId: i.ingredientId,
       servingMultiplier: i.servingMultiplier,
@@ -67,6 +67,7 @@ const RecipesPage = () => {
         ingredients: data.ingredients,
         totalMacros: macros,
         instructions: data.instructions,
+        notes: data.notes,
         link: data.link,
       });
     } else {
@@ -79,6 +80,7 @@ const RecipesPage = () => {
         ingredients: data.ingredients,
         totalMacros: macros,
         instructions: data.instructions,
+        notes: data.notes,
         link: data.link,
       });
     }
