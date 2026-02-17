@@ -254,6 +254,7 @@ export type Database = {
           instructions: string | null
           link: string | null
           name: string
+          notes: string | null
           servings: number
           total_calories: number
           total_carbs: number
@@ -271,6 +272,7 @@ export type Database = {
           instructions?: string | null
           link?: string | null
           name: string
+          notes?: string | null
           servings?: number
           total_calories?: number
           total_carbs?: number
@@ -288,6 +290,7 @@ export type Database = {
           instructions?: string | null
           link?: string | null
           name?: string
+          notes?: string | null
           servings?: number
           total_calories?: number
           total_carbs?: number

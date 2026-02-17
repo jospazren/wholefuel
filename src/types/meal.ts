@@ -38,6 +38,7 @@ export interface Recipe {
   totalMacros: Macros;
   category: RecipeCategory;
   instructions?: string;
+  notes?: string;
   link?: string;
 }
 

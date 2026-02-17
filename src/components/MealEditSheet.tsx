@@ -31,6 +31,7 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
     })),
     totalMacros: meal.customMacros,
     instructions: linkedRecipe?.instructions,
+    notes: linkedRecipe?.notes,
     link: linkedRecipe?.link,
   };
 
