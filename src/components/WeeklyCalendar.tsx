@@ -155,30 +155,63 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
     }
   };
 
-  const renderDayColumn = (day: DayOfWeek) => {
+  const renderDayHeader = (day: DayOfWeek) => {
+    const dayMacros = getDailyMacros(day);
+    return (
+      <div
+        key={`header-${day}`}
+        className="rounded-2xl p-[13px] space-y-3 mx-1.5 mt-1.5"
+        style={{
+          backgroundImage: 'linear-gradient(137deg, rgba(255,255,255,0.6), rgba(249,250,251,0.3))',
+          border: '1px solid rgba(255,255,255,0.5)',
+        }}
+      >
+        <div className="text-center">
+          <span className="text-[11px] font-bold text-[#6a7282] uppercase" style={{ letterSpacing: '0.34px' }}>
+            {DAY_LABELS[day]}
+          </span>
+        </div>
+        <DayMacroBars macros={dayMacros} targets={weeklyTargets} visibility={macroVisibility} />
+      </div>
+    );
+  };
+
+  const renderMealCell = (day: DayOfWeek, slot: MealSlot) => {
+    const meal = weeklyPlan[day][slot];
+    return (
+      <div key={`${day}-${slot}`} className="px-1.5">
+        <MealSlotCell
+          day={day}
+          slot={slot}
+          meal={meal}
+          isDragOver={isSlotDraggedOver(day, slot)}
+          onDragOver={(e) => handleDragOver(e, day, slot)}
+          onDragLeave={handleDragLeave}
+          onDrop={(e) => handleDrop(e, day, slot)}
+          onEditClick={() => handleEditClick(day, slot)}
+          onMealDragStart={(e) => handleMealDragStart(e, day, slot)}
+        />
+      </div>
+    );
+  };
+
+  // Mobile: keep the single-day column rendering
+  const renderMobileDayColumn = (day: DayOfWeek) => {
     const dayMacros = getDailyMacros(day);
     const dayMeals = MEAL_SLOTS.map((slot) => ({ slot, meal: weeklyPlan[day][slot] }));
 
     return (
       <div key={day} className="flex flex-col min-h-0">
-        <div
-          className={cn("rounded-2xl p-[13px] space-y-3", isMobile ? "mx-0" : "mx-1.5 mt-1.5")}
+        <div className="rounded-2xl p-[13px] space-y-3"
           style={{
             backgroundImage: 'linear-gradient(137deg, rgba(255,255,255,0.6), rgba(249,250,251,0.3))',
             border: '1px solid rgba(255,255,255,0.5)',
           }}
         >
-          {!isMobile && (
-            <div className="text-center">
-              <span className="text-[11px] font-bold text-[#6a7282] uppercase" style={{ letterSpacing: '0.34px' }}>
-                {DAY_LABELS[day]}
-              </span>
-            </div>
-          )}
           <DayMacroBars macros={dayMacros} targets={weeklyTargets} visibility={macroVisibility} />
         </div>
 
-        <div className={cn("flex-1 overflow-y-auto pb-1.5 pt-1.5 space-y-1", isMobile ? "px-0" : "px-1.5")}>
+        <div className="flex-1 overflow-y-auto pb-1.5 pt-1.5 space-y-1">
           {dayMeals.map(({ slot, meal }) => (
             <MealSlotCell
               key={slot}
@@ -366,11 +399,30 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
         <div className="flex-1 overflow-x-auto">
           {isMobile ? (
             <div className="p-2">
-              {renderDayColumn(selectedDay)}
+              {renderMobileDayColumn(selectedDay)}
             </div>
           ) : (
-            <div className="grid grid-cols-7 min-w-[700px] h-full">
-              {DAYS_OF_WEEK.map((day) => renderDayColumn(day))}
+            <div className="grid grid-cols-7 min-w-[700px] pb-1.5" style={{ alignItems: 'start' }}>
+              {/* Row 1: Day headers */}
+              {DAYS_OF_WEEK.map((day) => renderDayHeader(day))}
+              {/* Rows 2+: Meal slots - each row spans all 7 days for equal height */}
+              {MEAL_SLOTS.map((slot) => (
+                DAYS_OF_WEEK.map((day) => (
+                  <div key={`${day}-${slot}`} className="py-0.5 px-1.5">
+                    <MealSlotCell
+                      day={day}
+                      slot={slot}
+                      meal={weeklyPlan[day][slot]}
+                      isDragOver={isSlotDraggedOver(day, slot)}
+                      onDragOver={(e) => handleDragOver(e, day, slot)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, day, slot)}
+                      onEditClick={() => handleEditClick(day, slot)}
+                      onMealDragStart={(e) => handleMealDragStart(e, day, slot)}
+                    />
+                  </div>
+                ))
+              ))}
             </div>
           )}
         </div>
