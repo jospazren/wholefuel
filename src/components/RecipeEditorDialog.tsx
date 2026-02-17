@@ -317,8 +317,11 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
                           inputMode="decimal"
                           defaultValue={multiplierStr}
                           onChange={(e) => handleIngredientMultiplierChange(idx, e.target.value)}
-                          className="w-16 h-8 text-center text-sm shrink-0"
+                          className="w-14 h-8 text-center text-sm shrink-0"
                         />
+                        <span className="text-[11px] text-muted-foreground shrink-0 max-w-[60px] truncate">
+                          {ingredientDb.find(i => i.id === ing.ingredientId)?.servingDescription || '100g'}
+                        </span>
                         <button
                           onClick={() => handleRemoveIngredient(idx)}
                           className="text-destructive/60 hover:text-destructive shrink-0 p-1"
@@ -502,7 +505,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
                 <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground tracking-wider uppercase pb-2 border-b border-border/30">
                   <span className="shrink-0 w-4" />
                   <span className="flex-1 min-w-0">Ingredient</span>
-                  <span className="w-16 text-center shrink-0">Qty</span>
+                  <span className="w-28 text-center shrink-0">Qty</span>
                   <span className="w-14 text-center shrink-0">Cal</span>
                   <span className="w-11 text-center shrink-0 text-emerald-600">P</span>
                   <span className="w-11 text-center shrink-0 text-cyan-600">C</span>
