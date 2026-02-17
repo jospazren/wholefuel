@@ -141,16 +141,19 @@ export function SortableIngredientRow({
         </PopoverContent>
       </Popover>
       
-      {/* Serving multiplier input */}
-      <div className="shrink-0 w-16">
+      {/* Serving multiplier input + description */}
+      <div className="shrink-0 w-28 flex items-center gap-1">
         <Input
           type="text"
           inputMode="decimal"
           value={localValue}
           onChange={e => handleInputChange(e.target.value)}
           onBlur={handleBlur}
-          className="w-16 h-8 text-center text-sm px-1 border-0 bg-transparent"
+          className="w-14 h-8 text-center text-sm px-1 border-0 bg-transparent"
         />
+        <span className="text-[11px] text-muted-foreground truncate" title={ingredientInfo.serving}>
+          {ingredientInfo.serving}
+        </span>
       </div>
       
       {/* Per-ingredient macros - centered with colored backgrounds */}
