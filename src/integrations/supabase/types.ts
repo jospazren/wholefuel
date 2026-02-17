@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      diet_presets: {
+        Row: {
+          carbs_per_kg: number | null
+          created_at: string
+          fat_per_kg: number | null
+          id: string
+          name: string
+          protein_per_kg: number | null
+          tdee_multiplier: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          carbs_per_kg?: number | null
+          created_at?: string
+          fat_per_kg?: number | null
+          id?: string
+          name: string
+          protein_per_kg?: number | null
+          tdee_multiplier?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          carbs_per_kg?: number | null
+          created_at?: string
+          fat_per_kg?: number | null
+          id?: string
+          name?: string
+          protein_per_kg?: number | null
+          tdee_multiplier?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ingredients: {
         Row: {
           brand: string | null
@@ -269,12 +305,14 @@ export type Database = {
           daily_calories: number
           fat: number
           id: string
+          preset_id: string | null
           protein: number
           strategy: string
           tdee: number
           updated_at: string
           user_id: string
           week_start_date: string
+          weight_kg: number
         }
         Insert: {
           carbs?: number
@@ -282,12 +320,14 @@ export type Database = {
           daily_calories?: number
           fat?: number
           id?: string
+          preset_id?: string | null
           protein?: number
           strategy?: string
           tdee?: number
           updated_at?: string
           user_id: string
           week_start_date?: string
+          weight_kg?: number
         }
         Update: {
           carbs?: number
@@ -295,14 +335,24 @@ export type Database = {
           daily_calories?: number
           fat?: number
           id?: string
+          preset_id?: string | null
           protein?: number
           strategy?: string
           tdee?: number
           updated_at?: string
           user_id?: string
           week_start_date?: string
+          weight_kg?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "weekly_targets_preset_id_fkey"
+            columns: ["preset_id"]
+            isOneToOne: false
+            referencedRelation: "diet_presets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

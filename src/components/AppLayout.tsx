@@ -18,10 +18,10 @@ interface AppLayoutProps {
 
 const navItems = [
   { title: 'Meal Planner', url: '/' },
+  { title: 'Shopping List', url: '/shopping' },
+  { title: 'Targets', url: '/targets' },
   { title: 'Recipes', url: '/recipes' },
   { title: 'Ingredients', url: '/ingredients' },
-  { title: 'Shopping List', url: '/shopping' },
-  { title: 'Targets', url: '/settings' },
 ];
 
 export function AppLayout({ children }: AppLayoutProps) {

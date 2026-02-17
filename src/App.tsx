@@ -10,6 +10,7 @@ import RecipesPage from "./pages/RecipesPage";
 import IngredientsPage from "./pages/IngredientsPage";
 import ShoppingPage from "./pages/ShoppingPage";
 import SettingsPage from "./pages/SettingsPage";
+import TargetsPage from "./pages/TargetsPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -60,6 +61,7 @@ function AppRoutes() {
       <Route path="/recipes" element={<ProtectedRoute><RecipesPage /></ProtectedRoute>} />
       <Route path="/ingredients" element={<ProtectedRoute><IngredientsPage /></ProtectedRoute>} />
       <Route path="/shopping" element={<ProtectedRoute><ShoppingPage /></ProtectedRoute>} />
+      <Route path="/targets" element={<ProtectedRoute><TargetsPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>

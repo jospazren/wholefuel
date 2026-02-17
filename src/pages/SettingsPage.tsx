@@ -1,5 +1,4 @@
 import { AppLayout } from '@/components/AppLayout';
-import { WeeklyTargetsForm } from '@/components/WeeklyTargetsForm';
 import { ApiKeyManager } from '@/components/ApiKeyManager';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Settings } from 'lucide-react';
@@ -18,9 +17,6 @@ const SettingsPage = () => {
             <p className="text-sm text-muted-foreground">Configure your meal planning preferences</p>
           </div>
         </div>
-
-        {/* Weekly Targets */}
-        <WeeklyTargetsForm />
 
         {/* Claude Desktop / MCP API Keys */}
         <ApiKeyManager />

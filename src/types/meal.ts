@@ -91,6 +91,15 @@ export interface WeeklyPlan {
 export type DayOfWeek = keyof WeeklyPlan;
 export type MealSlot = keyof DayPlan;
 
+export interface DietPreset {
+  id: string;
+  name: string;
+  tdeeMultiplier: number; // e.g. 1.0 = 100%, 0.85 = 85%
+  proteinPerKg: number | null; // g/kg, null = "auto"
+  carbsPerKg: number | null;
+  fatPerKg: number | null;
+}
+
 export interface WeeklyTargets {
   tdee: number;
   strategy: 'maintain' | 'cut10' | 'cut20' | 'bulk10' | 'bulk20';
@@ -98,6 +107,8 @@ export interface WeeklyTargets {
   protein: number;
   fat: number;
   carbs: number;
+  presetId: string | null;
+  weightKg: number;
 }
 
 export const STRATEGY_MULTIPLIERS = {
@@ -107,6 +118,32 @@ export const STRATEGY_MULTIPLIERS = {
   bulk10: 1.1,
   bulk20: 1.2,
 } as const;
+
+export function computeTargetsFromPreset(
+  preset: DietPreset,
+  weightKg: number,
+  tdee: number
+): { dailyCalories: number; protein: number; carbs: number; fat: number } {
+  const dailyCalories = Math.round(tdee * preset.tdeeMultiplier);
+
+  const proteinG = preset.proteinPerKg != null ? Math.round(preset.proteinPerKg * weightKg) : null;
+  const carbsG = preset.carbsPerKg != null ? Math.round(preset.carbsPerKg * weightKg) : null;
+  const fatG = preset.fatPerKg != null ? Math.round(preset.fatPerKg * weightKg) : null;
+
+  // Calculate the auto macro from remaining calories
+  const usedCalories =
+    (proteinG != null ? proteinG * 4 : 0) +
+    (carbsG != null ? carbsG * 4 : 0) +
+    (fatG != null ? fatG * 9 : 0);
+  const remainingCalories = Math.max(0, dailyCalories - usedCalories);
+
+  return {
+    dailyCalories,
+    protein: proteinG ?? Math.round(remainingCalories / 4),
+    carbs: carbsG ?? Math.round(remainingCalories / 4),
+    fat: fatG ?? Math.round(remainingCalories / 9),
+  };
+}
 
 export const MEAL_SLOTS: MealSlot[] = ['m1', 'm3', 'm4', 'm5', 'm6', 'm7'];
 export const DAYS_OF_WEEK: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];

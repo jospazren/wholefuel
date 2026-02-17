@@ -59,6 +59,8 @@ export function WeeklyTargetsForm({ onComplete }: WeeklyTargetsFormProps) {
       protein: inputMode === 'calculated' ? calculatedTargets.protein : parseInt(manualProtein) || 0,
       fat: inputMode === 'calculated' ? calculatedTargets.fat : parseInt(manualFat) || 0,
       carbs: inputMode === 'calculated' ? calculatedTargets.carbs : parseInt(manualCarbs) || 0,
+      presetId: weeklyTargets.presetId,
+      weightKg: weeklyTargets.weightKg,
     };
     setWeeklyTargets(finalTargets);
     onComplete?.();
