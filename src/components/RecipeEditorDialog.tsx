@@ -504,8 +504,8 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
                 {/* Column headers */}
                 <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground tracking-wider uppercase pb-2 border-b border-border/30">
                   <span className="shrink-0 w-4" />
-                  <span className="flex-1 min-w-0 font-semibold text-emerald-600">Ingredient</span>
-                  <span className="w-14 text-center shrink-0 font-semibold text-emerald-600">Qty</span>
+                  <span className="flex-1 min-w-0">Ingredient</span>
+                  <span className="w-14 text-center shrink-0">Qty</span>
                   <span className="w-20 shrink-0 text-left">Serving</span>
                   <span className="w-14 text-center shrink-0">Cal</span>
                   <span className="w-11 text-center shrink-0 text-emerald-600">P</span>
