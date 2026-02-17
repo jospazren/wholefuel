@@ -141,8 +141,8 @@ export function SortableIngredientRow({
         </PopoverContent>
       </Popover>
       
-      {/* Serving multiplier input + description */}
-      <div className="shrink-0 w-28 flex items-center gap-1">
+      {/* Serving multiplier input */}
+      <div className="shrink-0 w-14">
         <Input
           type="text"
           inputMode="decimal"
@@ -151,10 +151,11 @@ export function SortableIngredientRow({
           onBlur={handleBlur}
           className="w-14 h-8 text-center text-sm px-1 border-0 bg-transparent"
         />
-        <span className="text-[11px] text-muted-foreground truncate" title={ingredientInfo.serving}>
-          {ingredientInfo.serving}
-        </span>
       </div>
+      {/* Serving description */}
+      <span className="w-[52px] shrink-0 text-[11px] text-muted-foreground truncate text-left" title={ingredientInfo.serving}>
+        {ingredientInfo.serving}
+      </span>
       
       {/* Per-ingredient macros - centered with colored backgrounds */}
       <span className="w-14 text-center shrink-0 text-sm py-1 rounded-md bg-slate-500/5 text-slate-600">{ingredientInfo.calories}</span>
