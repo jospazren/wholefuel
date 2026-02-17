@@ -307,7 +307,10 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         .eq('week_start_date', currentWeekStart);
 
       if (dbMealPlans && dbMealPlans.length > 0) {
-        const loadedPlan: WeeklyPlan = { ...defaultWeeklyPlan };
+        const loadedPlan: WeeklyPlan = {
+          monday: {}, tuesday: {}, wednesday: {}, thursday: {},
+          friday: {}, saturday: {}, sunday: {},
+        };
         dbMealPlans.forEach(mp => {
           const day = mp.day_of_week as DayOfWeek;
           const slot = mp.meal_slot as MealSlot;
@@ -327,7 +330,10 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         });
         setWeeklyPlan(loadedPlan);
       } else {
-        setWeeklyPlan(defaultWeeklyPlan);
+        setWeeklyPlan({
+          monday: {}, tuesday: {}, wednesday: {}, thursday: {},
+          friday: {}, saturday: {}, sunday: {},
+        });
       }
     } catch (error) {
       console.error('Error loading user data:', error);
