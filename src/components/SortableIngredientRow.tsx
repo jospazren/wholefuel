@@ -109,7 +109,7 @@ export function SortableIngredientRow({
             aria-expanded={openPopover}
             className="flex-1 min-w-0 h-8 justify-start font-normal px-0 hover:bg-transparent"
           >
-            <span className="truncate text-sm font-medium text-emerald-700 dark:text-emerald-400">
+            <span className="truncate text-sm font-medium">
               {ingredient.name}
               {brand && <span className="text-muted-foreground font-normal"> [{brand}]</span>}
             </span>
@@ -149,7 +149,7 @@ export function SortableIngredientRow({
           value={localValue}
           onChange={e => handleInputChange(e.target.value)}
           onBlur={handleBlur}
-          className="w-14 h-8 text-center text-sm px-1 border-0 bg-transparent font-semibold text-emerald-700 dark:text-emerald-400"
+          className="w-14 h-8 text-center text-sm px-1 border-0 bg-transparent font-semibold"
         />
       </div>
       {/* Serving description */}
