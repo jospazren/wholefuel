@@ -1,55 +1,71 @@
-
-# Mobile UI for WholeFuel
+# Diet Presets & Weekly Targets Redesign
 
 ## Overview
+Replace the current fixed strategy system (Maintain/Cut/Bulk percentages) with user-defined **Diet Presets** that calculate macros based on body weight (g/kg) and TDEE multipliers. Each week in the meal planner, the user selects a preset + enters their weight and TDEE to compute daily targets.
 
-Add responsive mobile support across the app: a hamburger menu for navigation, and a single-day swipeable view for the meal planner (no recipe sidebar on mobile).
+---
 
-## Changes
+## Data Model
 
-### 1. AppLayout -- Hamburger Menu (Mobile Nav)
+### New table: `diet_presets`
+| Column | Type | Description |
+|---|---|---|
+| id | UUID PK | |
+| user_id | UUID | Owner |
+| name | TEXT | e.g. "Maintenance", "Cut" |
+| tdee_multiplier | NUMERIC | e.g. 1.0 = 100%, 0.85 = 85% |
+| protein_per_kg | NUMERIC nullable | g/kg, null = "auto" |
+| carbs_per_kg | NUMERIC nullable | g/kg, null = "auto" |
+| fat_per_kg | NUMERIC nullable | g/kg, null = "auto" |
+| created_at / updated_at | TIMESTAMPTZ | |
 
-On screens below 768px (`useIsMobile`):
-- Hide the horizontal nav tabs and the right-side Settings/Sign Out links
-- Show a hamburger icon (Menu) to the right of the WholeFuel brand
-- Tapping it opens a full-height Drawer (from the left) containing:
-  - The nav items as a vertical list (Meal Planner, Recipes, Ingredients, Shopping List, Targets)
-  - A divider, then Settings and Sign Out at the bottom
-  - Active route highlighted with the same green gradient pill style
-  - Drawer closes on nav item click
+**Rule**: At most one macro can be "auto" (null). The auto macro fills remaining calories.
 
-### 2. Index Page -- Hide Recipe Sidebar on Mobile
+### Modify `weekly_targets`
+- Add `preset_id` (UUID FK → diet_presets, nullable)
+- Add `weight_kg` (NUMERIC, default 80)
+- Keep existing columns (tdee, daily_calories, protein, fat, carbs) as cached computed values
+- `strategy` column kept for backward compat but unused in UI
 
-- On mobile, force `sidebarOpen = false` and hide the sidebar toggle button
-- The meal planner takes full width with no sidebar
+---
 
-### 3. WeeklyCalendar -- Single Day View on Mobile
+## Computation Logic
 
-On mobile, replace the 7-column grid with a single-day view:
-- Show one day at a time with the day name prominent
-- Left/right day navigation arrows (or horizontal swipe between days using state)
-- Day header shows the day label (e.g., "Monday") with macro summary bars beneath
-- Below that, the vertical stack of 6 meal slots -- same as desktop but full width
-- The top header simplifies: hide the sidebar toggle, show week nav and strategy selector in a compact layout
-- Week navigation pill stays centered; strategy selector moves below or into a compact row
+Given: preset, weight_kg, tdee
+1. `calories = round(tdee × preset.tdee_multiplier)`
+2. For each macro with a g/kg value: `macro_g = round(g_per_kg × weight_kg)`
+3. Remaining calories = `calories - (protein_g × 4) - (carbs_g × 4) - (fat_g × 9)`
+4. Auto macro: protein → /4, carbs → /4, fat → /9
 
-### 4. Header Simplification on Mobile
+---
 
-The WeeklyCalendar header on mobile:
-- Row 1: Week navigation pill (centered) with view settings icon
-- Row 2: Day selector -- day name with left/right chevrons to switch days
-- Strategy selector accessible via the existing settings/filter button or shown inline if space permits
-- Hide MacroBadgeRow (already hidden via `hidden md:block`)
+## UI Changes
 
-## Technical Details
+### 1. New Targets page (`/targets`)
+- Header: "Diet Presets" + "+ Add Preset" button
+- Preset cards (glassmorphic) showing: name, TDEE multiplier %, 3 macro cards (g/kg or "auto" + computed grams), delete button
+- Add/Edit preset dialog: name, TDEE multiplier, each macro g/kg with auto toggle
 
-**Files to modify:**
-- `src/components/AppLayout.tsx` -- Add mobile hamburger menu using Drawer component, conditionally render desktop vs mobile nav
-- `src/pages/Index.tsx` -- Use `useIsMobile()` to disable sidebar on mobile
-- `src/components/WeeklyCalendar.tsx` -- Add `useIsMobile()`, track `selectedDay` state, render single-day view on mobile with day navigation
+### 2. Meal Plan header update
+Replace strategy dropdown with:
+- Preset dropdown (user's presets + "No Preset")
+- Weight input: `[80] kg`
+- TDEE input: `[2500] tdee`
+- Macro badges show computed targets
+- All saved per-week in weekly_targets
 
-**New state in WeeklyCalendar:**
-- `selectedDay: DayOfWeek` (default: current day of week or 'monday')
-- Navigation functions to go to previous/next day, wrapping around the week
+### 3. Navigation
+- "Targets" nav item → `/targets` (currently points to `/settings`)
 
-**Dependencies:** No new dependencies needed. Uses existing `useIsMobile`, `Drawer`, and UI components.
+### 4. Settings cleanup
+- Remove WeeklyTargetsForm from Settings page
+
+---
+
+## Implementation Steps
+
+1. **DB migration**: Create `diet_presets` table + add columns to `weekly_targets`
+2. **Types & context**: Add DietPreset type, update WeeklyTargets, add preset CRUD + computation
+3. **Targets page**: New route + PresetCard + PresetEditorDialog
+4. **Meal plan header**: Preset selector + weight/TDEE inputs
+5. **Cleanup**: Remove old strategy UI, update nav URLs
