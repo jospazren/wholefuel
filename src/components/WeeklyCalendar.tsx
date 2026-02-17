@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMealPlan } from '@/contexts/MealPlanContext';
-import { Recipe, DayOfWeek, MealSlot, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, DAY_FULL_LABELS, MealInstance, WeeklyTargets } from '@/types/meal';
+import { Recipe, DayOfWeek, MealSlot, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, DAY_FULL_LABELS, MealInstance, WeeklyTargets, DietPreset, computeTargetsFromPreset } from '@/types/meal';
 import { ViewSettingsDialog, getMacroVisibility, MacroVisibility } from '@/components/ViewSettingsDialog';
 import { MealSlotCell } from '@/components/MealSlotCell';
 import { MealEditSheet } from '@/components/MealEditSheet';
@@ -10,6 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, CalendarDays, SlidersHorizontal, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -24,14 +25,6 @@ interface WeeklyCalendarProps {
   onToggleSidebar?: () => void;
 }
 
-const strategies = [
-  { value: 'cut20', label: 'Cut 20%' },
-  { value: 'cut10', label: 'Cut 10%' },
-  { value: 'maintain', label: 'Maintain' },
-  { value: 'bulk10', label: 'Bulk 10%' },
-  { value: 'bulk20', label: 'Bulk 20%' },
-] as const;
-
 function getCurrentDayOfWeek(): DayOfWeek {
   const jsDay = new Date().getDay();
   const map: DayOfWeek[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -43,7 +36,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
     weeklyPlan, 
     weeklyTargets, 
     setWeeklyTargets,
-    calculateTargets,
+    dietPresets,
     addMealToSlot, 
     moveMealToSlot, 
     getDailyMacros,
@@ -122,17 +115,44 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
     return dragOverSlot?.day === day && dragOverSlot?.slot === slot;
   };
 
-  const handleStrategyChange = (value: string) => {
-    const newStrategy = value as WeeklyTargets['strategy'];
-    const targets = calculateTargets(weeklyTargets.tdee, newStrategy);
+  const handlePresetChange = (presetId: string) => {
+    if (presetId === 'none') {
+      setWeeklyTargets({ ...weeklyTargets, presetId: null });
+      return;
+    }
+    const preset = dietPresets.find(p => p.id === presetId);
+    if (!preset) return;
+    const computed = computeTargetsFromPreset(preset, weeklyTargets.weightKg, weeklyTargets.tdee);
     setWeeklyTargets({
       ...weeklyTargets,
-      strategy: newStrategy,
-      dailyCalories: targets.calories,
-      protein: targets.protein,
-      fat: targets.fat,
-      carbs: targets.carbs,
+      presetId: preset.id,
+      dailyCalories: computed.dailyCalories,
+      protein: computed.protein,
+      carbs: computed.carbs,
+      fat: computed.fat,
     });
+  };
+
+  const handleWeightChange = (value: string) => {
+    const weightKg = parseFloat(value) || 0;
+    const preset = dietPresets.find(p => p.id === weeklyTargets.presetId);
+    if (preset) {
+      const computed = computeTargetsFromPreset(preset, weightKg, weeklyTargets.tdee);
+      setWeeklyTargets({ ...weeklyTargets, weightKg, dailyCalories: computed.dailyCalories, protein: computed.protein, carbs: computed.carbs, fat: computed.fat });
+    } else {
+      setWeeklyTargets({ ...weeklyTargets, weightKg });
+    }
+  };
+
+  const handleTdeeChange = (value: string) => {
+    const tdee = parseFloat(value) || 0;
+    const preset = dietPresets.find(p => p.id === weeklyTargets.presetId);
+    if (preset) {
+      const computed = computeTargetsFromPreset(preset, weeklyTargets.weightKg, tdee);
+      setWeeklyTargets({ ...weeklyTargets, tdee, dailyCalories: computed.dailyCalories, protein: computed.protein, carbs: computed.carbs, fat: computed.fat });
+    } else {
+      setWeeklyTargets({ ...weeklyTargets, tdee });
+    }
   };
 
   const renderDayColumn = (day: DayOfWeek) => {
@@ -141,7 +161,6 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
 
     return (
       <div key={day} className="flex flex-col min-h-0">
-        {/* Day Header + Macros in a card container */}
         <div
           className={cn("rounded-2xl p-[13px] space-y-3", isMobile ? "mx-0" : "mx-1.5 mt-1.5")}
           style={{
@@ -159,7 +178,6 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
           <DayMacroBars macros={dayMacros} targets={weeklyTargets} visibility={macroVisibility} />
         </div>
 
-        {/* Meal Cards */}
         <div className={cn("flex-1 overflow-y-auto pb-1.5 pt-1.5 space-y-1", isMobile ? "px-0" : "px-1.5")}>
           {dayMeals.map(({ slot, meal }) => (
             <MealSlotCell
@@ -179,6 +197,10 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
       </div>
     );
   };
+
+  const selectedPresetName = weeklyTargets.presetId
+    ? dietPresets.find(p => p.id === weeklyTargets.presetId)?.name || 'No Preset'
+    : 'No Preset';
 
   return (
     <>
@@ -221,15 +243,14 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Select value={weeklyTargets.strategy} onValueChange={handleStrategyChange}>
+                  <Select value={weeklyTargets.presetId || 'none'} onValueChange={handlePresetChange}>
                     <SelectTrigger className="h-8 w-[100px] text-xs glass-subtle border-0 rounded-xl">
-                      <SelectValue />
+                      <SelectValue placeholder="No Preset" />
                     </SelectTrigger>
                     <SelectContent>
-                      {strategies.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
+                      <SelectItem value="none">No Preset</SelectItem>
+                      {dietPresets.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -254,7 +275,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
             </>
           ) : (
             <>
-              {/* Desktop header - unchanged */}
+              {/* Desktop header */}
               {/* Left: Toggle + Title */}
               <div className="flex items-center gap-2">
                 {onToggleSidebar && (
@@ -287,20 +308,41 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                 </Button>
               </div>
 
-              {/* Right: Strategy + Macro Summary + Filter */}
+              {/* Right: Preset + Weight + TDEE + Macro Summary + Filter */}
               <div className="flex items-center gap-3">
-                <Select value={weeklyTargets.strategy} onValueChange={handleStrategyChange}>
-                  <SelectTrigger className="h-8 w-[110px] text-xs glass-subtle border-0 rounded-xl">
-                    <SelectValue />
+                <Select value={weeklyTargets.presetId || 'none'} onValueChange={handlePresetChange}>
+                  <SelectTrigger className="h-8 w-[120px] text-xs glass-subtle border-0 rounded-xl">
+                    <SelectValue placeholder="No Preset" />
                   </SelectTrigger>
                   <SelectContent>
-                    {strategies.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
+                    <SelectItem value="none">No Preset</SelectItem>
+                    {dietPresets.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    value={weeklyTargets.weightKg || ''}
+                    onChange={(e) => handleWeightChange(e.target.value)}
+                    className="h-8 w-[60px] text-xs text-center border-0 glass-subtle rounded-xl px-1"
+                    placeholder="80"
+                  />
+                  <span className="text-[11px] text-muted-foreground">kg</span>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="number"
+                    value={weeklyTargets.tdee || ''}
+                    onChange={(e) => handleTdeeChange(e.target.value)}
+                    className="h-8 w-[65px] text-xs text-center border-0 glass-subtle rounded-xl px-1"
+                    placeholder="2500"
+                  />
+                  <span className="text-[11px] text-muted-foreground">tdee</span>
+                </div>
 
                 <div className="hidden md:block">
                   <MacroBadgeRow

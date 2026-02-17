@@ -15,6 +15,7 @@ import {
   Macros,
   BaseIngredient,
   ShoppingItem,
+  DietPreset,
   STRATEGY_MULTIPLIERS,
   DAYS_OF_WEEK,
   MEAL_SLOTS,
@@ -45,7 +46,7 @@ const saveWeekStart = (weekStart: string) => {
 
 interface MealPlanContextType {
   // Week navigation
-  currentWeekStart: string; // ISO date string (Monday)
+  currentWeekStart: string;
   goToPreviousWeek: () => void;
   goToNextWeek: () => void;
   goToWeek: (date: Date) => void;
@@ -62,6 +63,12 @@ interface MealPlanContextType {
   getDailyMacros: (day: DayOfWeek) => Macros;
   getWeeklyTotals: () => Macros;
   calculateTargets: (tdee: number, strategy: WeeklyTargets['strategy']) => { calories: number; protein: number; fat: number; carbs: number };
+  
+  // Diet Presets
+  dietPresets: DietPreset[];
+  addDietPreset: (preset: DietPreset) => void;
+  updateDietPreset: (id: string, preset: DietPreset) => void;
+  deleteDietPreset: (id: string) => void;
   
   // Ingredients
   ingredients: BaseIngredient[];
@@ -96,12 +103,14 @@ const defaultWeeklyPlan: WeeklyPlan = {
 };
 
 const defaultTargets: WeeklyTargets = {
-  tdee: 2000,
+  tdee: 2500,
   strategy: 'maintain',
-  dailyCalories: 2000,
+  dailyCalories: 2500,
   protein: 150,
   fat: 67,
   carbs: 200,
+  presetId: null,
+  weightKg: 80,
 };
 
 const MealPlanContext = createContext<MealPlanContextType | undefined>(undefined);
@@ -114,6 +123,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
   const [weeklyTargets, setWeeklyTargetsState] = useState<WeeklyTargets>(defaultTargets);
   const [ingredients, setIngredients] = useState<BaseIngredient[]>(defaultIngredients);
   const [recipes, setRecipes] = useState<Recipe[]>(defaultRecipes);
+  const [dietPresets, setDietPresets] = useState<DietPreset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dbIngredientMap, setDbIngredientMap] = useState<Map<string, string>>(new Map());
   const [dbRecipeMap, setDbRecipeMap] = useState<Map<string, string>>(new Map());
@@ -174,11 +184,11 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     if (user && !isAuthPage) {
       loadUserData();
     } else if (!user) {
-      // Reset to defaults when logged out
       setIngredients(defaultIngredients);
       setRecipes(defaultRecipes);
       setWeeklyPlan(defaultWeeklyPlan);
       setWeeklyTargetsState(defaultTargets);
+      setDietPresets([]);
       setDbIngredientMap(new Map());
       setDbRecipeMap(new Map());
       setIsLoading(false);
@@ -218,7 +228,6 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         setIngredients(loadedIngredients);
         setDbIngredientMap(ingredientMap);
       } else {
-        // First time user - seed with default ingredients
         await seedDefaultIngredients();
       }
 
@@ -258,6 +267,24 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         setDbRecipeMap(recipeMap);
       }
 
+      // Load diet presets (not week-specific)
+      const { data: dbPresets } = await supabase
+        .from('diet_presets')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (dbPresets) {
+        setDietPresets(dbPresets.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          tdeeMultiplier: Number(p.tdee_multiplier),
+          proteinPerKg: p.protein_per_kg != null ? Number(p.protein_per_kg) : null,
+          carbsPerKg: p.carbs_per_kg != null ? Number(p.carbs_per_kg) : null,
+          fatPerKg: p.fat_per_kg != null ? Number(p.fat_per_kg) : null,
+        })));
+      }
+
       // Load weekly targets for the current week
       const { data: dbTargets } = await supabase
         .from('weekly_targets')
@@ -274,6 +301,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           protein: Number(dbTargets.protein),
           fat: Number(dbTargets.fat),
           carbs: Number(dbTargets.carbs),
+          presetId: (dbTargets as any).preset_id || null,
+          weightKg: Number((dbTargets as any).weight_kg) || 80,
         });
       } else {
         // No targets for this week - try to get the most recent targets as a template
@@ -293,6 +322,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
             protein: Number(latestTargets.protein),
             fat: Number(latestTargets.fat),
             carbs: Number(latestTargets.carbs),
+            presetId: (latestTargets as any).preset_id || null,
+            weightKg: Number((latestTargets as any).weight_kg) || 80,
           });
         } else {
           setWeeklyTargetsState(defaultTargets);
@@ -406,7 +437,6 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     return recipeIngredients.reduce((totals, ing) => {
       const baseIng = ingredients.find(i => i.id === ing.ingredientId);
       if (baseIng) {
-        // servingMultiplier is the multiplier directly (e.g., 1.0 = one serving)
         totals.calories += Math.round(baseIng.caloriesPerServing * ing.servingMultiplier);
         totals.protein += Math.round(baseIng.proteinPerServing * ing.servingMultiplier);
         totals.fat += Math.round(baseIng.fatPerServing * ing.servingMultiplier);
@@ -432,12 +462,71 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         protein: targets.protein,
         fat: targets.fat,
         carbs: targets.carbs,
+        preset_id: targets.presetId,
+        weight_kg: targets.weightKg,
       } as any, { onConflict: 'user_id,week_start_date' });
 
     if (error) {
       console.error('Error saving targets:', error);
       toast.error('Failed to save targets');
     }
+  };
+
+  // Diet Preset CRUD
+  const addDietPreset = async (preset: DietPreset) => {
+    setDietPresets(prev => [...prev, preset]);
+
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('diet_presets')
+      .insert({
+        user_id: user.id,
+        name: preset.name,
+        tdee_multiplier: preset.tdeeMultiplier,
+        protein_per_kg: preset.proteinPerKg,
+        carbs_per_kg: preset.carbsPerKg,
+        fat_per_kg: preset.fatPerKg,
+      } as any)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding preset:', error);
+      toast.error('Failed to save preset');
+    } else if (data) {
+      setDietPresets(prev => prev.map(p => p.id === preset.id ? { ...p, id: data.id } : p));
+    }
+  };
+
+  const updateDietPreset = async (id: string, preset: DietPreset) => {
+    setDietPresets(prev => prev.map(p => p.id === id ? preset : p));
+
+    if (!user) return;
+
+    await supabase
+      .from('diet_presets')
+      .update({
+        name: preset.name,
+        tdee_multiplier: preset.tdeeMultiplier,
+        protein_per_kg: preset.proteinPerKg,
+        carbs_per_kg: preset.carbsPerKg,
+        fat_per_kg: preset.fatPerKg,
+      } as any)
+      .eq('id', id)
+      .eq('user_id', user.id);
+  };
+
+  const deleteDietPreset = async (id: string) => {
+    setDietPresets(prev => prev.filter(p => p.id !== id));
+
+    if (!user) return;
+
+    await supabase
+      .from('diet_presets')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
   };
 
   const addMealToSlot = async (day: DayOfWeek, slot: MealSlot, recipe: Recipe) => {
@@ -487,7 +576,6 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       console.error('Error adding meal:', error);
       toast.error('Failed to save meal');
     } else if (data) {
-      // Update the meal instance with the database ID
       setWeeklyPlan((prev) => ({
         ...prev,
         [day]: {
@@ -538,7 +626,6 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
 
     if (!user) return;
 
-    // Delete source, upsert to target, optionally upsert swap
     await supabase.from('meal_plans').delete()
       .eq('user_id', user.id)
       .eq('week_start_date', currentWeekStart)
@@ -687,7 +774,6 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       console.error('Error adding ingredient:', error);
       toast.error('Failed to save ingredient');
     } else if (data) {
-      // Replace temp ID with database ID
       setIngredients(prev => prev.map(ing => 
         ing.id === ingredient.id ? { ...ing, id: data.id } : ing
       ));
@@ -750,7 +836,6 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Insert recipe ingredients
     if (recipe.ingredients.length > 0) {
       await supabase.from('recipe_ingredients').insert(
         recipe.ingredients.map(ing => ({
@@ -762,7 +847,6 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       );
     }
 
-    // Update local state with database ID
     setRecipes(prev => prev.map(r => 
       r.id === recipe.id ? { ...r, id: recipeData.id } : r
     ));
@@ -790,7 +874,6 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
 
     await supabase.from('recipes').update(dbUpdates).eq('id', id).eq('user_id', user.id);
 
-    // Update recipe ingredients if provided
     if (updates.ingredients) {
       await supabase.from('recipe_ingredients').delete().eq('recipe_id', id);
       if (updates.ingredients.length > 0) {
@@ -814,7 +897,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     await supabase.from('recipes').delete().eq('id', id).eq('user_id', user.id);
   };
 
-  // Shopping list - sums serving multipliers for each ingredient
+  // Shopping list
   const generateShoppingList = (): ShoppingItem[] => {
     const itemMap = new Map<string, ShoppingItem>();
 
@@ -823,10 +906,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         const meal = weeklyPlan[day][slot];
         if (meal) {
           meal.ingredients.forEach(ing => {
-            // Find the ingredient to get its serving description
             const ingData = ingredients.find(i => i.id === ing.ingredientId);
             const servingDescription = ingData?.servingDescription || '100g';
-            // Sum serving multipliers: ingredient servingMultiplier × meal servingMultiplier
             const servingsNeeded = ing.servingMultiplier * meal.servingMultiplier;
             
             const existing = itemMap.get(ing.ingredientId);
@@ -867,6 +948,10 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         getDailyMacros,
         getWeeklyTotals,
         calculateTargets,
+        dietPresets,
+        addDietPreset,
+        updateDietPreset,
+        deleteDietPreset,
         ingredients,
         addIngredient,
         updateIngredient,
