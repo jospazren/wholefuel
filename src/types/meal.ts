@@ -36,17 +36,22 @@ export interface Recipe {
   servings: number;
   ingredients: RecipeIngredient[];
   totalMacros: Macros;
-  category: RecipeCategory;
+  /** @deprecated Use tags instead */
+  category: string;
+  tags: string[];
   instructions?: string;
   notes?: string;
   link?: string;
 }
 
-export type RecipeCategory = 'breakfast' | 'main' | 'shake' | 'snack' | 'side' | 'dessert';
+/** @deprecated Use tags system instead */
+export type RecipeCategory = string;
 
-export const RECIPE_CATEGORIES: RecipeCategory[] = ['breakfast', 'main', 'shake', 'snack', 'side', 'dessert'];
+/** @deprecated Use tags system instead */
+export const RECIPE_CATEGORIES: string[] = ['breakfast', 'main', 'shake', 'snack', 'side', 'dessert'];
 
-export const CATEGORY_LABELS: Record<RecipeCategory, string> = {
+/** @deprecated Use tags system instead */
+export const CATEGORY_LABELS: Record<string, string> = {
   breakfast: 'Breakfast',
   main: 'Main',
   shake: 'Shake',

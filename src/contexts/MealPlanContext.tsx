@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -81,6 +81,11 @@ interface MealPlanContextType {
   addRecipe: (recipe: Recipe) => void;
   updateRecipe: (id: string, updates: Partial<Recipe>) => void;
   deleteRecipe: (id: string) => void;
+  
+  // Tags
+  allTags: string[];
+  renameTag: (oldName: string, newName: string) => Promise<void>;
+  deleteTag: (tagName: string) => Promise<void>;
   
   // Shopping list
   generateShoppingList: () => ShoppingItem[];
@@ -231,13 +236,28 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         await seedDefaultIngredients();
       }
 
-      // Load recipes (not week-specific)
+      // Load recipes with tags (not week-specific)
       const { data: dbRecipes } = await supabase
         .from('recipes')
         .select('*, recipe_ingredients(*)')
         .eq('user_id', user.id);
 
       if (dbRecipes && dbRecipes.length > 0) {
+        // Load all tags for user's recipes
+        const { data: dbTags } = await supabase
+          .from('recipe_tags')
+          .select('*')
+          .eq('user_id', user.id);
+        
+        const tagsByRecipe = new Map<string, string[]>();
+        if (dbTags) {
+          dbTags.forEach((t: any) => {
+            const existing = tagsByRecipe.get(t.recipe_id) || [];
+            existing.push(t.tag_name);
+            tagsByRecipe.set(t.recipe_id, existing);
+          });
+        }
+
         const recipeMap = new Map<string, string>();
         const loadedRecipes: Recipe[] = dbRecipes.map(rec => {
           recipeMap.set(rec.id, rec.id);
@@ -247,7 +267,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
             description: rec.description || '',
             image: rec.image || undefined,
             servings: rec.servings,
-            category: rec.category as Recipe['category'],
+            category: rec.category as string,
+            tags: tagsByRecipe.get(rec.id) || [],
             ingredients: (rec.recipe_ingredients || []).map((ri: any) => ({
               ingredientId: ri.ingredient_id,
               name: ri.name,
@@ -849,6 +870,17 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       );
     }
 
+    // Save tags
+    if (recipe.tags && recipe.tags.length > 0) {
+      await supabase.from('recipe_tags').insert(
+        recipe.tags.map(tag => ({
+          recipe_id: recipeData.id,
+          tag_name: tag,
+          user_id: user.id,
+        })) as any
+      );
+    }
+
     setRecipes(prev => prev.map(r => 
       r.id === recipe.id ? { ...r, id: recipeData.id } : r
     ));
@@ -890,6 +922,20 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         );
       }
     }
+
+    // Save tags if provided
+    if (updates.tags !== undefined && user) {
+      await supabase.from('recipe_tags').delete().eq('recipe_id', id);
+      if (updates.tags.length > 0) {
+        await supabase.from('recipe_tags').insert(
+          updates.tags.map(tag => ({
+            recipe_id: id,
+            tag_name: tag,
+            user_id: user.id,
+          })) as any
+        );
+      }
+    }
   };
 
   const deleteRecipe = async (id: string) => {
@@ -898,6 +944,44 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     await supabase.from('recipes').delete().eq('id', id).eq('user_id', user.id);
+  };
+
+  // Tag operations
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    recipes.forEach(r => r.tags?.forEach(t => tagSet.add(t)));
+    return Array.from(tagSet).sort();
+  }, [recipes]);
+
+  const renameTag = async (oldName: string, newName: string) => {
+    // Update local state
+    setRecipes(prev => prev.map(r => ({
+      ...r,
+      tags: r.tags.map(t => t === oldName ? newName : t),
+    })));
+
+    if (!user) return;
+
+    await supabase
+      .from('recipe_tags')
+      .update({ tag_name: newName } as any)
+      .eq('tag_name', oldName)
+      .eq('user_id', user.id);
+  };
+
+  const deleteTag = async (tagName: string) => {
+    setRecipes(prev => prev.map(r => ({
+      ...r,
+      tags: r.tags.filter(t => t !== tagName),
+    })));
+
+    if (!user) return;
+
+    await supabase
+      .from('recipe_tags')
+      .delete()
+      .eq('tag_name', tagName)
+      .eq('user_id', user.id);
   };
 
   // Shopping list
@@ -963,6 +1047,9 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         addRecipe,
         updateRecipe,
         deleteRecipe,
+        allTags,
+        renameTag,
+        deleteTag,
         generateShoppingList,
         calculateMacrosFromIngredients,
         isLoading,

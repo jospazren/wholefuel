@@ -1,17 +1,16 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { useMealPlan } from '@/contexts/MealPlanContext';
-import { Recipe, RecipeCategory, RECIPE_CATEGORIES, CATEGORY_LABELS } from '@/types/meal';
+import { Recipe } from '@/types/meal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Card, CardContent } from '@/components/ui/card';
-import { UtensilsCrossed, Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import { UtensilsCrossed, Plus, Search, Pencil, Trash2, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RecipeEditorDialog, RecipeEditorMode } from '@/components/RecipeEditorDialog';
+import { ManageTagsDialog } from '@/components/ManageTagsDialog';
 
 const RecipesPage = () => {
   const {
@@ -20,26 +19,28 @@ const RecipesPage = () => {
     updateRecipe,
     deleteRecipe,
     calculateMacrosFromIngredients,
-    weeklyPlan
+    weeklyPlan,
+    allTags,
   } = useMealPlan();
   const [search, setSearch] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<Set<RecipeCategory>>(new Set());
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [editorMode, setEditorMode] = useState<RecipeEditorMode | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<Recipe | null>(null);
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
+  const [manageTagsOpen, setManageTagsOpen] = useState(false);
 
-  const toggleCategory = (cat: RecipeCategory) => {
-    const newSet = new Set(selectedCategories);
-    if (newSet.has(cat)) newSet.delete(cat);
-    else newSet.add(cat);
-    setSelectedCategories(newSet);
+  const toggleTag = (tag: string) => {
+    const newSet = new Set(selectedTags);
+    if (newSet.has(tag)) newSet.delete(tag);
+    else newSet.add(tag);
+    setSelectedTags(newSet);
   };
 
   const filteredRecipes = recipes.filter(recipe => {
     const matchesSearch = recipe.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategories.size === 0 || selectedCategories.has(recipe.category);
-    return matchesSearch && matchesCategory;
+    const matchesTags = selectedTags.size === 0 || recipe.tags.some(t => selectedTags.has(t));
+    return matchesSearch && matchesTags;
   });
 
   const handleAddClick = () => {
@@ -54,7 +55,7 @@ const RecipesPage = () => {
     setEditorOpen(true);
   };
 
-  const handleEditorSave = (data: { name: string; category: RecipeCategory; ingredients: any[]; instructions?: string; notes?: string; link?: string }) => {
+  const handleEditorSave = (data: { name: string; tags: string[]; ingredients: any[]; instructions?: string; notes?: string; link?: string }) => {
     const macros = calculateMacrosFromIngredients(data.ingredients.map(i => ({
       ingredientId: i.ingredientId,
       servingMultiplier: i.servingMultiplier,
@@ -63,7 +64,8 @@ const RecipesPage = () => {
     if (editingRecipeId) {
       updateRecipe(editingRecipeId, {
         name: data.name,
-        category: data.category,
+        category: data.tags[0] || 'main',
+        tags: data.tags,
         ingredients: data.ingredients,
         totalMacros: macros,
         instructions: data.instructions,
@@ -75,7 +77,8 @@ const RecipesPage = () => {
         id: `recipe-${Date.now()}`,
         name: data.name,
         description: '',
-        category: data.category,
+        category: data.tags[0] || 'main',
+        tags: data.tags,
         servings: 1,
         ingredients: data.ingredients,
         totalMacros: macros,
@@ -100,15 +103,6 @@ const RecipesPage = () => {
     return Object.values(weeklyPlan).some(day => Object.values(day).some(meal => (meal as any)?.recipeId === id));
   };
 
-  const categoryColors: Record<RecipeCategory, string> = {
-    breakfast: 'bg-category-breakfast/10 text-category-breakfast',
-    main: 'bg-category-lunch/10 text-category-lunch',
-    shake: 'bg-macro-protein/10 text-macro-protein',
-    snack: 'bg-category-snack/10 text-category-snack',
-    side: 'bg-muted text-muted-foreground',
-    dessert: 'bg-category-dinner/10 text-category-dinner'
-  };
-
   return <AppLayout>
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -122,10 +116,16 @@ const RecipesPage = () => {
             <p className="text-sm text-muted-foreground">Create and manage your dishes</p>
           </div>
         </div>
-        <Button onClick={handleAddClick} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Recipe
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setManageTagsOpen(true)} className="gap-2">
+            <Settings className="h-4 w-4" />
+            Manage Tags
+          </Button>
+          <Button onClick={handleAddClick} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Add Recipe
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -135,12 +135,31 @@ const RecipesPage = () => {
           <Input placeholder="Search recipes..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
         <div className="flex flex-wrap gap-2">
-          {RECIPE_CATEGORIES.map(cat => <div key={cat} className="flex items-center gap-2">
-            <Checkbox id={`filter-${cat}`} checked={selectedCategories.has(cat)} onCheckedChange={() => toggleCategory(cat)} />
-            <Label htmlFor={`filter-${cat}`} className="text-sm cursor-pointer capitalize">
-              {CATEGORY_LABELS[cat]}
-            </Label>
-          </div>)}
+          <button
+            onClick={() => setSelectedTags(new Set())}
+            className={cn(
+              'px-3 py-1 rounded-full text-sm font-medium transition-all',
+              selectedTags.size === 0
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'bg-muted text-muted-foreground hover:bg-accent'
+            )}
+          >
+            All
+          </button>
+          {allTags.map(tag => (
+            <button
+              key={tag}
+              onClick={() => toggleTag(tag)}
+              className={cn(
+                'px-3 py-1 rounded-full text-sm font-medium transition-all',
+                selectedTags.has(tag)
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-muted text-muted-foreground hover:bg-accent'
+              )}
+            >
+              {tag}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -150,17 +169,23 @@ const RecipesPage = () => {
           <CardContent className="p-4">
             <div className="flex items-start justify-between mb-2">
               <h3 className="font-semibold text-foreground">{recipe.name}</h3>
-              <Badge className={cn('shrink-0', categoryColors[recipe.category])}>
-                {CATEGORY_LABELS[recipe.category]}
-              </Badge>
             </div>
-            <div className="flex items-center gap-3 text-sm mb-3">
+            <div className="flex items-center gap-3 text-sm mb-2">
               <span className="text-macro-calories font-medium">{recipe.totalMacros.calories} kcal</span>
               <span className="text-muted-foreground">|</span>
               <span className="text-macro-protein">{recipe.totalMacros.protein}P</span>
               <span className="text-macro-carbs">{recipe.totalMacros.carbs}C</span>
               <span className="text-macro-fat">{recipe.totalMacros.fat}F</span>
             </div>
+            {recipe.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-2">
+                {recipe.tags.map(tag => (
+                  <Badge key={tag} variant="secondary" className="text-[10px] px-1.5 py-0">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
             <div className="text-xs text-muted-foreground mb-3">
               {recipe.ingredients.length} ingredients
             </div>
@@ -189,6 +214,9 @@ const RecipesPage = () => {
       onClose={() => { setEditorOpen(false); setEditorMode(null); setEditingRecipeId(null); }}
       onSave={handleEditorSave}
     />
+
+    {/* Manage Tags Dialog */}
+    <ManageTagsDialog open={manageTagsOpen} onClose={() => setManageTagsOpen(false)} />
 
     {/* Delete Confirmation */}
     <AlertDialog open={!!deleteConfirm} onOpenChange={open => !open && setDeleteConfirm(null)}>
