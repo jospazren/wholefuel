@@ -244,6 +244,35 @@ export type Database = {
           },
         ]
       }
+      recipe_tags: {
+        Row: {
+          id: string
+          recipe_id: string
+          tag_name: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          recipe_id: string
+          tag_name: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          recipe_id?: string
+          tag_name?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_tags_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipes: {
         Row: {
           category: string

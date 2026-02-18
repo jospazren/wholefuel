@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Recipe, RECIPE_CATEGORIES, CATEGORY_LABELS, RecipeCategory } from '@/types/meal';
+import { Recipe } from '@/types/meal';
 import { RecipeCard } from '@/components/RecipeCard';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,29 +15,29 @@ interface RecipeLibraryProps {
 }
 
 export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibraryProps) {
-  const { recipes, updateRecipe, calculateMacrosFromIngredients } = useMealPlan();
+  const { recipes, allTags, updateRecipe, calculateMacrosFromIngredients } = useMealPlan();
   const [search, setSearch] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<Set<RecipeCategory>>(new Set());
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [editorMode, setEditorMode] = useState<RecipeEditorMode | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
 
-  const toggleCategory = (category: RecipeCategory) => {
-    const newSet = new Set(selectedCategories);
-    if (newSet.has(category)) newSet.delete(category);
-    else newSet.add(category);
-    setSelectedCategories(newSet);
+  const toggleTag = (tag: string) => {
+    const newSet = new Set(selectedTags);
+    if (newSet.has(tag)) newSet.delete(tag);
+    else newSet.add(tag);
+    setSelectedTags(newSet);
   };
 
-  const clearCategories = () => {
-    setSelectedCategories(new Set());
+  const clearTags = () => {
+    setSelectedTags(new Set());
   };
 
   const filteredRecipes = recipes.filter((recipe) => {
     const matchesSearch = recipe.name.toLowerCase().includes(search.toLowerCase()) ||
       recipe.description.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = selectedCategories.size === 0 || selectedCategories.has(recipe.category);
-    return matchesSearch && matchesCategory;
+    const matchesTags = selectedTags.size === 0 || recipe.tags.some(t => selectedTags.has(t));
+    return matchesSearch && matchesTags;
   });
 
   const handleRecipeClick = (recipe: Recipe) => {
@@ -46,7 +46,7 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
     setEditorOpen(true);
   };
 
-  const handleEditorSave = (data: { name: string; category: RecipeCategory; ingredients: any[]; instructions?: string; notes?: string; link?: string }) => {
+  const handleEditorSave = (data: { name: string; tags: string[]; ingredients: any[]; instructions?: string; notes?: string; link?: string }) => {
     if (!editingRecipeId) return;
     const macros = calculateMacrosFromIngredients(data.ingredients.map(i => ({
       ingredientId: i.ingredientId,
@@ -54,7 +54,8 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
     })));
     updateRecipe(editingRecipeId, {
       name: data.name,
-      category: data.category,
+      category: data.tags[0] || 'main',
+      tags: data.tags,
       ingredients: data.ingredients,
       totalMacros: macros,
       instructions: data.instructions,
@@ -90,39 +91,31 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
             />
           </div>
 
-          {/* Category Filters */}
+          {/* Tag Filters */}
           <div className="flex flex-wrap gap-1.5">
             <button
-              onClick={clearCategories}
+              onClick={clearTags}
               className={cn(
                 'text-[10px] px-2.5 py-1 rounded-full font-medium transition-all',
-                selectedCategories.size === 0
-                  ? 'text-white shadow-md'
+                selectedTags.size === 0
+                  ? 'text-primary-foreground shadow-md bg-primary'
                   : 'glass-subtle text-muted-foreground hover:bg-white/70'
               )}
-              style={selectedCategories.size === 0 ? {
-                background: 'linear-gradient(135deg, rgba(0,188,125,1), rgba(0,187,167,1))',
-                boxShadow: '0 4px 12px rgba(0,188,125,0.3)',
-              } : undefined}
             >
               All
             </button>
-            {RECIPE_CATEGORIES.map((cat) => (
+            {allTags.map((tag) => (
               <button
-                key={cat}
-                onClick={() => toggleCategory(cat)}
+                key={tag}
+                onClick={() => toggleTag(tag)}
                 className={cn(
                   'text-[10px] px-2.5 py-1 rounded-full font-medium transition-all',
-                  selectedCategories.has(cat)
-                    ? 'text-white shadow-md'
+                  selectedTags.has(tag)
+                    ? 'text-primary-foreground shadow-md bg-primary'
                     : 'glass-subtle text-muted-foreground hover:bg-white/70'
                 )}
-                style={selectedCategories.has(cat) ? {
-                  background: 'linear-gradient(135deg, rgba(0,188,125,1), rgba(0,187,167,1))',
-                  boxShadow: '0 4px 12px rgba(0,188,125,0.3)',
-                } : undefined}
               >
-                {CATEGORY_LABELS[cat]}
+                {tag}
               </button>
             ))}
           </div>

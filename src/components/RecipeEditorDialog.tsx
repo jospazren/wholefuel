@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Recipe, RecipeCategory, RECIPE_CATEGORIES, CATEGORY_LABELS, RecipeIngredient } from '@/types/meal';
+import { Recipe, RecipeIngredient } from '@/types/meal';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -12,13 +12,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { SortableIngredientRow } from '@/components/SortableIngredientRow';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 export type RecipeEditorMode = 
   | { type: 'add' }
@@ -31,7 +25,7 @@ interface RecipeEditorDialogProps {
   onClose: () => void;
   onSave: (data: {
     name: string;
-    category: RecipeCategory;
+    tags: string[];
     ingredients: RecipeIngredient[];
     instructions?: string;
     notes?: string;
@@ -40,11 +34,11 @@ interface RecipeEditorDialogProps {
 }
 
 export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditorDialogProps) {
-  const { ingredients: ingredientDb, calculateMacrosFromIngredients } = useMealPlan();
+  const { ingredients: ingredientDb, calculateMacrosFromIngredients, allTags } = useMealPlan();
   const isMobile = useIsMobile();
   
   const [formName, setFormName] = useState('');
-  const [formCategory, setFormCategory] = useState<RecipeCategory>('main');
+  const [formTags, setFormTags] = useState<string[]>([]);
   const [formIngredients, setFormIngredients] = useState<RecipeIngredient[]>([]);
   const [formInstructionSteps, setFormInstructionSteps] = useState<string[]>([]);
   const [formNotes, setFormNotes] = useState('');
@@ -57,7 +51,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
     if (open && mode) {
       if (mode.type === 'add') {
         setFormName('');
-        setFormCategory('main');
+        setFormTags([]);
         setFormIngredients([]);
         setFormInstructionSteps([]);
         setFormNotes('');
@@ -66,7 +60,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
       } else {
         const recipe = mode.recipe;
         setFormName(recipe.name);
-        setFormCategory(recipe.category);
+        setFormTags(recipe.tags || []);
         setFormIngredients([...recipe.ingredients]);
         const instructions = recipe.instructions || '';
         setFormInstructionSteps(instructions ? instructions.split('\n').filter(s => s.trim()) : []);
@@ -167,7 +161,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
   const handleSave = () => {
     onSave({
       name: formName,
-      category: formCategory,
+      tags: formTags,
       ingredients: formIngredients,
       instructions: formInstructionSteps.filter(s => s.trim()).join('\n') || undefined,
       notes: formNotes || undefined,
@@ -474,18 +468,29 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
             className="text-2xl font-bold h-auto py-1 px-0 border-0 bg-transparent focus-visible:ring-0 shadow-none"
           />
 
-          {/* Category + Link + Macros row */}
+          {/* Tags + Link + Macros row */}
           <div className="flex items-center gap-2 flex-wrap">
-            <Select value={formCategory} onValueChange={(v) => setFormCategory(v as RecipeCategory)}>
-              <SelectTrigger className="w-[100px] h-8 text-sm rounded-lg">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {RECIPE_CATEGORIES.map(cat => (
-                  <SelectItem key={cat} value={cat}>{CATEGORY_LABELS[cat]}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Tag chips */}
+            <div className="flex flex-wrap gap-1.5">
+              {allTags.map(tag => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => setFormTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])}
+                  className={cn(
+                    'px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+                    formTags.includes(tag)
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-muted text-muted-foreground hover:bg-accent'
+                  )}
+                >
+                  {tag}
+                </button>
+              ))}
+              <NewTagInput onAdd={(tag) => {
+                if (!formTags.includes(tag)) setFormTags(prev => [...prev, tag]);
+              }} />
+            </div>
 
             <Input
               value={formLink}
@@ -685,5 +690,50 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function NewTagInput({ onAdd }: { onAdd: (tag: string) => void }) {
+  const [value, setValue] = useState('');
+  const [open, setOpen] = useState(false);
+
+  const handleAdd = () => {
+    const trimmed = value.trim();
+    if (trimmed) {
+      onAdd(trimmed);
+      setValue('');
+      setOpen(false);
+    }
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="px-2.5 py-1 rounded-full text-xs font-medium border-2 border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary transition-all"
+      >
+        + Tag
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setOpen(false); }}
+        placeholder="New tag..."
+        className="w-20 h-6 px-2 text-xs rounded-full border border-input bg-background outline-none focus:ring-1 focus:ring-ring"
+      />
+      <button type="button" onClick={handleAdd} className="text-primary p-0.5">
+        <Check className="h-3 w-3" />
+      </button>
+      <button type="button" onClick={() => setOpen(false)} className="text-muted-foreground p-0.5">
+        <X className="h-3 w-3" />
+      </button>
+    </div>
   );
 }

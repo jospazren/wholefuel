@@ -23,7 +23,8 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
     name: meal.recipeName,
     description: '',
     servings: 1,
-    category: (linkedRecipe?.category as Recipe['category']) || 'main',
+    category: (linkedRecipe?.category as string) || 'main',
+    tags: linkedRecipe?.tags || [],
     ingredients: meal.ingredients.map(i => ({
       ingredientId: i.ingredientId,
       name: i.name,
