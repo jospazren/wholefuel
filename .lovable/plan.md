@@ -1,71 +1,80 @@
-# Diet Presets & Weekly Targets Redesign
 
-## Overview
-Replace the current fixed strategy system (Maintain/Cut/Bulk percentages) with user-defined **Diet Presets** that calculate macros based on body weight (g/kg) and TDEE multipliers. Each week in the meal planner, the user selects a preset + enters their weight and TDEE to compute daily targets.
 
----
+## Unified Tag System and Global Tag Management
 
-## Data Model
+### Overview
+Replace the single `category` field on recipes with a flexible `tags` array, and add a "Manage Tags" modal for global tag CRUD. Tags are user-defined strings (e.g. "Breakfast", "Main", "High Protein", "Quick") that can be assigned to multiple recipes.
 
-### New table: `diet_presets`
-| Column | Type | Description |
-|---|---|---|
-| id | UUID PK | |
-| user_id | UUID | Owner |
-| name | TEXT | e.g. "Maintenance", "Cut" |
-| tdee_multiplier | NUMERIC | e.g. 1.0 = 100%, 0.85 = 85% |
-| protein_per_kg | NUMERIC nullable | g/kg, null = "auto" |
-| carbs_per_kg | NUMERIC nullable | g/kg, null = "auto" |
-| fat_per_kg | NUMERIC nullable | g/kg, null = "auto" |
-| created_at / updated_at | TIMESTAMPTZ | |
+### Database Changes
 
-**Rule**: At most one macro can be "auto" (null). The auto macro fills remaining calories.
+1. **New `recipe_tags` table** (many-to-many between recipes and tags):
+   - `id` (uuid, PK)
+   - `recipe_id` (uuid, FK to recipes)
+   - `tag_name` (text) -- stores the tag string directly on the join row
+   - `user_id` (uuid) -- for RLS
+   - Unique constraint on `(recipe_id, tag_name)`
+   - RLS policies mirroring recipe_ingredients (check recipe ownership via recipes table)
 
-### Modify `weekly_targets`
-- Add `preset_id` (UUID FK → diet_presets, nullable)
-- Add `weight_kg` (NUMERIC, default 80)
-- Keep existing columns (tdee, daily_calories, protein, fat, carbs) as cached computed values
-- `strategy` column kept for backward compat but unused in UI
+2. **No separate `tags` table needed** -- tags are derived as `SELECT DISTINCT tag_name FROM recipe_tags WHERE user_id = ...`. This keeps things simple; the "Manage Tags" modal queries distinct tags and their counts.
 
----
+3. The `category` column on `recipes` stays in the DB for now (no destructive migration) but is **ignored in code**. Existing categories will be migrated into `recipe_tags` rows via a one-time migration SQL.
 
-## Computation Logic
+### Data Migration (in the same migration file)
+```text
+For each existing recipe, insert a row into recipe_tags
+with tag_name = recipes.category and the same user_id.
+```
 
-Given: preset, weight_kg, tdee
-1. `calories = round(tdee × preset.tdee_multiplier)`
-2. For each macro with a g/kg value: `macro_g = round(g_per_kg × weight_kg)`
-3. Remaining calories = `calories - (protein_g × 4) - (carbs_g × 4) - (fat_g × 9)`
-4. Auto macro: protein → /4, carbs → /4, fat → /9
+### Type Changes (`src/types/meal.ts`)
+- Add `tags: string[]` to `Recipe` interface
+- Keep `category` as optional/deprecated for backward compat
+- Remove `RECIPE_CATEGORIES`, `CATEGORY_LABELS`, `RecipeCategory` exports (or mark deprecated)
 
----
+### Context Changes (`src/contexts/MealPlanContext.tsx`)
+- Load tags per recipe: join `recipe_tags` when loading recipes, populate `tags[]`
+- On recipe save: delete old `recipe_tags` for that recipe, insert new ones
+- Expose helpers: `getAllTags(): string[]` (distinct), `renameTag(old, new)`, `deleteTag(name)` -- these do bulk updates on `recipe_tags`
 
-## UI Changes
+### Recipes Page (`src/pages/RecipesPage.tsx`)
+- Filter bar: replace category checkboxes with tag-based toggle buttons (like screenshot: "All", "Breakfast", "Main", "Shake", etc.)
+- "Manage Tags" button in header (settings icon)
 
-### 1. New Targets page (`/targets`)
-- Header: "Diet Presets" + "+ Add Preset" button
-- Preset cards (glassmorphic) showing: name, TDEE multiplier %, 3 macro cards (g/kg or "auto" + computed grams), delete button
-- Add/Edit preset dialog: name, TDEE multiplier, each macro g/kg with auto toggle
+### Manage Tags Modal (new component `src/components/ManageTagsDialog.tsx`)
+- Input + "Add" button to create a new tag
+- List of existing tags, each showing:
+  - Tag name with colored badge
+  - Recipe count (e.g. "6 recipes")
+  - Edit (pencil) icon -- inline rename
+  - Delete (trash) icon -- removes tag from all recipes
+- Rename propagates: updates all `recipe_tags` rows with old name to new name
+- Delete propagates: deletes all `recipe_tags` rows with that name
 
-### 2. Meal Plan header update
-Replace strategy dropdown with:
-- Preset dropdown (user's presets + "No Preset")
-- Weight input: `[80] kg`
-- TDEE input: `[2500] tdee`
-- Macro badges show computed targets
-- All saved per-week in weekly_targets
+### Recipe Editor Changes (`src/components/RecipeEditorDialog.tsx`)
+- Replace category dropdown with a tags section (as shown in screenshot 3):
+  - Display all available tags as toggle chips (colored when selected)
+  - "Create new tag..." input + "Add Tag" button inline
+  - Selected tags are saved to `recipe_tags`
+- The `onSave` callback changes: `category` replaced by `tags: string[]`
+- Remove the `formCategory` state, add `formTags: string[]`
 
-### 3. Navigation
-- "Targets" nav item → `/targets` (currently points to `/settings`)
+### Recipe Card Changes (`src/pages/RecipesPage.tsx`)
+- Show tags as small badges below macros instead of single category badge
+- Filter logic: if any selected filter tag is in the recipe's tags array, show it
 
-### 4. Settings cleanup
-- Remove WeeklyTargetsForm from Settings page
+### Meal Plan Integration
+- `MealSlotCell` and `MealEditSheet` currently reference `category` -- update to use tags or remove category dependency
+- The `RecipeLibrary` sidebar (used in planner) filter also switches to tags
 
----
+### Files to Create
+- `src/components/ManageTagsDialog.tsx`
 
-## Implementation Steps
+### Files to Modify
+- `supabase/migrations/` (new migration)
+- `src/types/meal.ts`
+- `src/contexts/MealPlanContext.tsx`
+- `src/pages/RecipesPage.tsx`
+- `src/components/RecipeEditorDialog.tsx`
+- `src/components/RecipeLibrary.tsx`
+- `src/components/MealSlotCell.tsx` (if it uses category)
+- `src/components/MealEditSheet.tsx` (if it uses category)
 
-1. **DB migration**: Create `diet_presets` table + add columns to `weekly_targets`
-2. **Types & context**: Add DietPreset type, update WeeklyTargets, add preset CRUD + computation
-3. **Targets page**: New route + PresetCard + PresetEditorDialog
-4. **Meal plan header**: Preset selector + weight/TDEE inputs
-5. **Cleanup**: Remove old strategy UI, update nav URLs
