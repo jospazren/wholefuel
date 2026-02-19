@@ -189,8 +189,21 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
       <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
         <DialogContent className="w-full h-full max-w-full max-h-full rounded-none p-0 flex flex-col [&>button]:hidden">
           {/* Header */}
-          <div className="px-5 pt-5 pb-0 flex items-center justify-between shrink-0">
-            <h2 className="text-xl font-bold text-foreground truncate flex-1">{formName}</h2>
+          <div className="px-5 pt-5 pb-0 flex items-start justify-between shrink-0">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-bold text-foreground truncate">{formName}</h2>
+              {formLink && (
+                <a
+                  href={formLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-1 max-w-full"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{formLink.replace(/^https?:\/\/(www\.)?/, '')}</span>
+                </a>
+              )}
+            </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => setMobileEditing(true)}
