@@ -21,6 +21,7 @@ const RecipesPage = () => {
     calculateMacrosFromIngredients,
     weeklyPlan,
     allTags,
+    isLoading,
   } = useMealPlan();
   const [search, setSearch] = useState('');
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
@@ -165,6 +166,25 @@ const RecipesPage = () => {
 
       {/* Recipe Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <Card key={`skeleton-${i}`} className="animate-pulse">
+              <CardContent className="p-4 space-y-3">
+                <div className="h-5 w-3/4 rounded bg-muted" />
+                <div className="flex items-center gap-3">
+                  <div className="h-4 w-16 rounded bg-muted" />
+                  <div className="h-4 w-20 rounded bg-muted" />
+                </div>
+                <div className="flex gap-1">
+                  <div className="h-5 w-14 rounded-full bg-muted" />
+                  <div className="h-5 w-12 rounded-full bg-muted" />
+                </div>
+                <div className="h-3 w-24 rounded bg-muted" />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+        <>
         {filteredRecipes.map(recipe => <Card key={recipe.id} className="group hover:shadow-md transition-shadow">
           <CardContent className="p-4">
             <div className="flex items-start justify-between mb-2">
@@ -204,6 +224,8 @@ const RecipesPage = () => {
           <UtensilsCrossed className="h-12 w-12 mx-auto mb-3 opacity-50" />
           <p>No recipes found</p>
         </div>}
+        </>
+        )}
       </div>
     </div>
 

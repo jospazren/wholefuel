@@ -38,7 +38,7 @@ type SortField = 'name' | 'caloriesPerServing' | 'proteinPerServing' | 'fatPerSe
 type SortDirection = 'asc' | 'desc';
 
 const IngredientsPage = () => {
-  const { ingredients, addIngredient, updateIngredient, deleteIngredient, recipes } = useMealPlan();
+  const { ingredients, addIngredient, updateIngredient, deleteIngredient, recipes, isLoading } = useMealPlan();
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
@@ -219,6 +219,23 @@ const IngredientsPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
+              {isLoading ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <TableRow key={`skeleton-${i}`} className="animate-pulse">
+                    <TableCell><div className="h-4 w-32 rounded bg-muted" /></TableCell>
+                    <TableCell><div className="h-4 w-12 rounded bg-muted" /></TableCell>
+                    <TableCell><div className="h-4 w-10 rounded bg-muted" /></TableCell>
+                    <TableCell><div className="h-4 w-10 rounded bg-muted" /></TableCell>
+                    <TableCell><div className="h-4 w-10 rounded bg-muted" /></TableCell>
+                    <TableCell><div className="h-4 w-10 rounded bg-muted" /></TableCell>
+                    <TableCell><div className="h-4 w-10 rounded bg-muted" /></TableCell>
+                    <TableCell><div className="h-4 w-10 rounded bg-muted" /></TableCell>
+                    <TableCell><div className="h-4 w-16 rounded bg-muted" /></TableCell>
+                    <TableCell><div className="h-4 w-12 rounded bg-muted" /></TableCell>
+                  </TableRow>
+                ))
+              ) : (
+              <>
               {filteredIngredients.map((ing) => (
                 <TableRow key={ing.id}>
                   <TableCell className="font-medium">{ing.name}</TableCell>
@@ -248,6 +265,8 @@ const IngredientsPage = () => {
                     No ingredients found
                   </TableCell>
                 </TableRow>
+              )}
+              </>
               )}
             </TableBody>
           </Table>
