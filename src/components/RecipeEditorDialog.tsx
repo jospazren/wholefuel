@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Recipe, RecipeIngredient } from '@/types/meal';
-import { useMealPlan } from '@/contexts/MealPlanContext';
+import { useIngredients } from '@/contexts/IngredientsContext';
+import { useRecipes } from '@/contexts/RecipesContext';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,7 +35,8 @@ interface RecipeEditorDialogProps {
 }
 
 export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditorDialogProps) {
-  const { ingredients: ingredientDb, calculateMacrosFromIngredients, allTags } = useMealPlan();
+  const { ingredients: ingredientDb } = useIngredients();
+  const { calculateMacrosFromIngredients, allTags } = useRecipes();
   const isMobile = useIsMobile();
   
   const [formName, setFormName] = useState('');

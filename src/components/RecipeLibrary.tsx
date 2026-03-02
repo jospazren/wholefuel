@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, UtensilsCrossed } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useMealPlan } from '@/contexts/MealPlanContext';
+import { useRecipes } from '@/contexts/RecipesContext';
 import { RecipeEditorDialog, RecipeEditorMode } from '@/components/RecipeEditorDialog';
 
 interface RecipeLibraryProps {
@@ -15,7 +15,7 @@ interface RecipeLibraryProps {
 }
 
 export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibraryProps) {
-  const { recipes, allTags, updateRecipe, calculateMacrosFromIngredients } = useMealPlan();
+  const { recipes, allTags, updateRecipe, calculateMacrosFromIngredients } = useRecipes();
   const [search, setSearch] = useState('');
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [editorMode, setEditorMode] = useState<RecipeEditorMode | null>(null);
