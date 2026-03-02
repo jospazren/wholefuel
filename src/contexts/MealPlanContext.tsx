@@ -205,12 +205,53 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
 
     try {
-      // Load ingredients (not week-specific)
-      const { data: dbIngredients } = await supabase
-        .from('ingredients')
-        .select('*')
-        .eq('user_id', user.id);
+      // Fire all independent queries in parallel
+      const [
+        ingredientsResult,
+        recipesResult,
+        tagsResult,
+        presetsResult,
+        targetsResult,
+        mealPlansResult,
+      ] = await Promise.all([
+        // 1. Ingredients
+        supabase
+          .from('ingredients')
+          .select('*')
+          .eq('user_id', user.id),
+        // 2. Recipes with ingredients (joined)
+        supabase
+          .from('recipes')
+          .select('*, recipe_ingredients(*)')
+          .eq('user_id', user.id),
+        // 3. Recipe tags
+        supabase
+          .from('recipe_tags')
+          .select('*')
+          .eq('user_id', user.id),
+        // 4. Diet presets
+        supabase
+          .from('diet_presets')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true }),
+        // 5. Weekly targets for current week
+        supabase
+          .from('weekly_targets')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('week_start_date', currentWeekStart)
+          .single(),
+        // 6. Meal plans for current week
+        supabase
+          .from('meal_plans')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('week_start_date', currentWeekStart),
+      ]);
 
+      // --- Process ingredients ---
+      const dbIngredients = ingredientsResult.data;
       if (dbIngredients && dbIngredients.length > 0) {
         const ingredientMap = new Map<string, string>();
         const loadedIngredients: BaseIngredient[] = dbIngredients.map(ing => {
@@ -236,19 +277,11 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         await seedDefaultIngredients();
       }
 
-      // Load recipes with tags (not week-specific)
-      const { data: dbRecipes } = await supabase
-        .from('recipes')
-        .select('*, recipe_ingredients(*)')
-        .eq('user_id', user.id);
+      // --- Process recipes + tags ---
+      const dbRecipes = recipesResult.data;
+      const dbTags = tagsResult.data;
 
       if (dbRecipes && dbRecipes.length > 0) {
-        // Load all tags for user's recipes
-        const { data: dbTags } = await supabase
-          .from('recipe_tags')
-          .select('*')
-          .eq('user_id', user.id);
-        
         const tagsByRecipe = new Map<string, string[]>();
         if (dbTags) {
           dbTags.forEach((t: any) => {
@@ -289,13 +322,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         setDbRecipeMap(recipeMap);
       }
 
-      // Load diet presets (not week-specific)
-      const { data: dbPresets } = await supabase
-        .from('diet_presets')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
-
+      // --- Process diet presets ---
+      const dbPresets = presetsResult.data;
       if (dbPresets) {
         setDietPresets(dbPresets.map((p: any) => ({
           id: p.id,
@@ -307,14 +335,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         })));
       }
 
-      // Load weekly targets for the current week
-      const { data: dbTargets } = await supabase
-        .from('weekly_targets')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('week_start_date', currentWeekStart)
-        .single();
-
+      // --- Process weekly targets (with fallback) ---
+      const dbTargets = targetsResult.data;
       if (dbTargets) {
         setWeeklyTargetsState({
           tdee: Number(dbTargets.tdee),
@@ -327,7 +349,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           weightKg: Number((dbTargets as any).weight_kg) || 80,
         });
       } else {
-        // No targets for this week - try to get the most recent targets as a template
+        // No targets for this week - fetch the most recent as a template
         const { data: latestTargets } = await supabase
           .from('weekly_targets')
           .select('*')
@@ -352,13 +374,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Load meal plans for the current week
-      const { data: dbMealPlans } = await supabase
-        .from('meal_plans')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('week_start_date', currentWeekStart);
-
+      // --- Process meal plans ---
+      const dbMealPlans = mealPlansResult.data;
       if (dbMealPlans && dbMealPlans.length > 0) {
         const loadedPlan: WeeklyPlan = {
           monday: {}, tuesday: {}, wednesday: {}, thursday: {},
