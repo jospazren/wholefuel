@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { useMealPlan } from '@/contexts/MealPlanContext';
+import { useRecipes } from '@/contexts/RecipesContext';
 import { Recipe } from '@/types/meal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,10 +20,10 @@ const RecipesPage = () => {
     updateRecipe,
     deleteRecipe,
     calculateMacrosFromIngredients,
-    weeklyPlan,
     allTags,
     isLoading,
-  } = useMealPlan();
+  } = useRecipes();
+  const { weeklyPlan } = useMealPlan();
   const [search, setSearch] = useState('');
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [editorMode, setEditorMode] = useState<RecipeEditorMode | null>(null);

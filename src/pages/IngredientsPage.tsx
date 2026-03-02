@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AppLayout } from '@/components/AppLayout';
-import { useMealPlan } from '@/contexts/MealPlanContext';
+import { useIngredients } from '@/contexts/IngredientsContext';
+import { useRecipes } from '@/contexts/RecipesContext';
 import { BaseIngredient } from '@/types/meal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +39,8 @@ type SortField = 'name' | 'caloriesPerServing' | 'proteinPerServing' | 'fatPerSe
 type SortDirection = 'asc' | 'desc';
 
 const IngredientsPage = () => {
-  const { ingredients, addIngredient, updateIngredient, deleteIngredient, recipes, isLoading } = useMealPlan();
+  const { ingredients, addIngredient, updateIngredient, deleteIngredient, isLoading } = useIngredients();
+  const { recipes } = useRecipes();
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
