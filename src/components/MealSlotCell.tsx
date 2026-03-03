@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MealInstance, DayOfWeek, MealSlot, Recipe } from '@/types/meal';
 import { useMealPlan } from '@/contexts/MealPlanContext';
+import { useRecipes } from '@/contexts/RecipesContext';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,8 @@ export function MealSlotCell({
   onEditClick,
   onMealDragStart,
 }: MealSlotCellProps) {
-  const { removeMealFromSlot, recipes, addMealToSlot } = useMealPlan();
+  const { removeMealFromSlot, addMealToSlot } = useMealPlan();
+  const { recipes } = useRecipes();
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   const handleRemove = (e: React.MouseEvent) => {

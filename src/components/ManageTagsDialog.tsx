@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useMealPlan } from '@/contexts/MealPlanContext';
+import { useRecipes } from '@/contexts/RecipesContext';
 import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
 
 interface ManageTagsDialogProps {
@@ -11,7 +11,7 @@ interface ManageTagsDialogProps {
 }
 
 export function ManageTagsDialog({ open, onClose }: ManageTagsDialogProps) {
-  const { allTags, recipes, renameTag, deleteTag } = useMealPlan();
+  const { allTags, recipes, renameTag, deleteTag } = useRecipes();
   const [newTagName, setNewTagName] = useState('');
   const [editingTag, setEditingTag] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');

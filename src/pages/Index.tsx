@@ -5,6 +5,8 @@ import { WeeklyCalendar } from '@/components/WeeklyCalendar';
 import { Recipe } from '@/types/meal';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useMealPlan } from '@/contexts/MealPlanContext';
+import { useIngredients } from '@/contexts/IngredientsContext';
+import { useRecipes } from '@/contexts/RecipesContext';
 import { cn } from '@/lib/utils';
 
 function CalendarSkeleton() {
@@ -74,7 +76,10 @@ function SidebarSkeleton() {
 
 const Index = () => {
   const isMobile = useIsMobile();
-  const { isLoading } = useMealPlan();
+  const { isLoading: ingredientsLoading } = useIngredients();
+  const { isLoading: recipesLoading } = useRecipes();
+  const { isLoading: mealPlanLoading } = useMealPlan();
+  const isLoading = ingredientsLoading || recipesLoading || mealPlanLoading;
   const [isDragging, setIsDragging] = useState(false);
   const [draggedRecipe, setDraggedRecipe] = useState<Recipe | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);

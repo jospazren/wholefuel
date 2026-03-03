@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MealInstance, DayOfWeek, MealSlot, Recipe } from '@/types/meal';
 import { useMealPlan } from '@/contexts/MealPlanContext';
+import { useRecipes } from '@/contexts/RecipesContext';
 import { RecipeEditorDialog, RecipeEditorMode } from '@/components/RecipeEditorDialog';
 
 interface MealEditSheetProps {
@@ -12,7 +13,8 @@ interface MealEditSheetProps {
 }
 
 export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetProps) {
-  const { updateMealInstance, removeMealFromSlot, recipes, calculateMacrosFromIngredients } = useMealPlan();
+  const { updateMealInstance, removeMealFromSlot } = useMealPlan();
+  const { recipes, calculateMacrosFromIngredients } = useRecipes();
 
   if (!meal || !day || !slot) return null;
 
