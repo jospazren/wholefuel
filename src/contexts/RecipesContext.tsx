@@ -78,8 +78,6 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
             name: rec.name,
             description: rec.description || '',
             image: rec.image || undefined,
-            servings: rec.servings,
-            category: rec.category as string,
             tags: tagsByRecipe.get(rec.id) || [],
             ingredients: (rec.recipe_ingredients || []).map((ri: any) => ({
               ingredientId: ri.ingredient_id,
@@ -131,8 +129,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
       name: recipe.name,
       description: recipe.description,
       image: recipe.image,
-      servings: recipe.servings,
-      category: recipe.category,
+      category: recipe.tags?.[0] || null,
       total_calories: recipe.totalMacros.calories,
       total_protein: recipe.totalMacros.protein,
       total_fat: recipe.totalMacros.fat,
@@ -183,8 +180,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
     if (updates.name !== undefined) dbUpdates.name = updates.name;
     if (updates.description !== undefined) dbUpdates.description = updates.description;
     if (updates.image !== undefined) dbUpdates.image = updates.image;
-    if (updates.servings !== undefined) dbUpdates.servings = updates.servings;
-    if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.tags !== undefined) dbUpdates.category = updates.tags?.[0] || null;
     if (updates.instructions !== undefined) dbUpdates.instructions = updates.instructions;
     if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
     if (updates.link !== undefined) dbUpdates.link = updates.link;
