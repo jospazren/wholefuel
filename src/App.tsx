@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { MealPlanProvider } from "@/contexts/MealPlanContext";
 import { IngredientsProvider } from "@/contexts/IngredientsContext";
 import { RecipesProvider } from "@/contexts/RecipesContext";
+import { MealsProvider } from "@/contexts/MealsContext";
 import { useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import RecipesPage from "./pages/RecipesPage";
@@ -76,11 +77,13 @@ const App = () => (
       <BrowserRouter>
         <IngredientsProvider>
         <RecipesProvider>
+        <MealsProvider>
         <MealPlanProvider>
           <Toaster />
           <Sonner />
           <AppRoutes />
         </MealPlanProvider>
+        </MealsProvider>
         </RecipesProvider>
         </IngredientsProvider>
       </BrowserRouter>
