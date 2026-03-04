@@ -17,6 +17,7 @@ import TargetsPage from "./pages/TargetsPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <BrowserRouter>
+        <AuthProvider>
         <IngredientsProvider>
         <RecipesProvider>
         <MealsProvider>
@@ -86,6 +88,7 @@ const App = () => (
         </MealsProvider>
         </RecipesProvider>
         </IngredientsProvider>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
