@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useRecipes } from '@/contexts/RecipesContext';
-import { Recipe } from '@/types/meal';
+import { useMeals } from '@/contexts/MealsContext';
+import { Recipe, MealSlotEntry } from '@/types/meal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ const RecipesPage = () => {
     isLoading,
   } = useRecipes();
   const { weeklyPlan } = useMealPlan();
+  const { getMeal } = useMeals();
   const [search, setSearch] = useState('');
   const [selectedTags, setSelectedTags] = useState<Set<string>>(new Set());
   const [editorMode, setEditorMode] = useState<RecipeEditorMode | null>(null);
@@ -81,7 +83,6 @@ const RecipesPage = () => {
         description: '',
         category: data.tags[0] || 'main',
         tags: data.tags,
-        servings: 1,
         ingredients: data.ingredients,
         totalMacros: macros,
         instructions: data.instructions,
@@ -102,7 +103,14 @@ const RecipesPage = () => {
   };
 
   const isRecipeUsedThisWeek = (id: string) => {
-    return Object.values(weeklyPlan).some(day => Object.values(day).some(meal => (meal as any)?.recipeId === id));
+    return Object.values(weeklyPlan).some(day =>
+      Object.values(day).some(entry => {
+        const slotEntry = entry as MealSlotEntry | undefined;
+        if (!slotEntry) return false;
+        const meal = getMeal(slotEntry.mealId);
+        return meal?.sourceRecipeId === id;
+      })
+    );
   };
 
   return <AppLayout>
@@ -192,11 +200,11 @@ const RecipesPage = () => {
               <h3 className="font-semibold text-foreground">{recipe.name}</h3>
             </div>
             <div className="flex items-center gap-3 text-sm mb-2">
-              <span className="text-macro-calories font-medium">{recipe.totalMacros.calories} kcal</span>
+              <span className="text-macro-calories font-medium">{recipe.totalMacros?.calories ?? 0} kcal</span>
               <span className="text-muted-foreground">|</span>
-              <span className="text-macro-protein">{recipe.totalMacros.protein}P</span>
-              <span className="text-macro-carbs">{recipe.totalMacros.carbs}C</span>
-              <span className="text-macro-fat">{recipe.totalMacros.fat}F</span>
+              <span className="text-macro-protein">{recipe.totalMacros?.protein ?? 0}P</span>
+              <span className="text-macro-carbs">{recipe.totalMacros?.carbs ?? 0}C</span>
+              <span className="text-macro-fat">{recipe.totalMacros?.fat ?? 0}F</span>
             </div>
             {recipe.tags.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
