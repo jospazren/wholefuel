@@ -40,10 +40,10 @@ export function RecipeCard({
         {recipe.name}
       </h4>
       <MacroBand
-        calories={recipe.totalMacros.calories}
-        protein={recipe.totalMacros.protein}
-        carbs={recipe.totalMacros.carbs}
-        fat={recipe.totalMacros.fat}
+        calories={recipe.totalMacros?.calories ?? 0}
+        protein={recipe.totalMacros?.protein ?? 0}
+        carbs={recipe.totalMacros?.carbs ?? 0}
+        fat={recipe.totalMacros?.fat ?? 0}
       />
     </div>
   );

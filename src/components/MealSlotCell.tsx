@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { MealInstance, DayOfWeek, MealSlot, Recipe } from '@/types/meal';
+import { MealSlotEntry, DayOfWeek, MealSlot, Recipe } from '@/types/meal';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useRecipes } from '@/contexts/RecipesContext';
+import { useMeals } from '@/contexts/MealsContext';
 import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 interface MealSlotCellProps {
   day: DayOfWeek;
   slot: MealSlot;
-  meal?: MealInstance;
+  meal?: MealSlotEntry;
   isDragOver: boolean;
   onDragOver: (e: React.DragEvent) => void;
   onDragLeave: (e: React.DragEvent) => void;
@@ -34,6 +35,7 @@ export function MealSlotCell({
 }: MealSlotCellProps) {
   const { removeMealFromSlot, addMealToSlot } = useMealPlan();
   const { recipes } = useRecipes();
+  const { getMeal, getMealMacros } = useMeals();
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   const handleRemove = (e: React.MouseEvent) => {
@@ -51,7 +53,10 @@ export function MealSlotCell({
     setPopoverOpen(false);
   };
 
-  if (!meal) {
+  // Look up the actual meal data
+  const mealData = meal ? getMeal(meal.mealId) : undefined;
+
+  if (!meal || !mealData) {
     return (
       <div
         className={cn(
@@ -100,10 +105,8 @@ export function MealSlotCell({
     );
   }
 
-  const cals = Math.round(meal.customMacros.calories * meal.servingMultiplier);
-  const protein = Math.round(meal.customMacros.protein * meal.servingMultiplier);
-  const carbs = Math.round(meal.customMacros.carbs * meal.servingMultiplier);
-  const fat = Math.round(meal.customMacros.fat * meal.servingMultiplier);
+  // Compute macros from the meal's ingredients
+  const macros = getMealMacros(mealData);
 
   return (
     <div
@@ -122,7 +125,7 @@ export function MealSlotCell({
       <div className="px-2.5 py-2">
         <div className="flex items-start justify-between gap-1 mb-1.5">
           <span className="text-[12px] font-semibold text-foreground line-clamp-2 leading-tight flex-1">
-            {meal.recipeName}
+            {mealData.name}
           </span>
           <Button
             variant="ghost"
@@ -133,7 +136,7 @@ export function MealSlotCell({
             <X className="h-2.5 w-2.5" />
           </Button>
         </div>
-        <MacroBand calories={cals} protein={protein} carbs={carbs} fat={fat} />
+        <MacroBand calories={macros?.calories ?? 0} protein={macros?.protein ?? 0} carbs={macros?.carbs ?? 0} fat={macros?.fat ?? 0} />
       </div>
     </div>
   );
