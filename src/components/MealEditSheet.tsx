@@ -1,38 +1,45 @@
-import { useState } from 'react';
-import { MealInstance, DayOfWeek, MealSlot, Recipe } from '@/types/meal';
+import { MealSlotEntry, DayOfWeek, MealSlot, Recipe } from '@/types/meal';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useRecipes } from '@/contexts/RecipesContext';
+import { useMeals } from '@/contexts/MealsContext';
 import { RecipeEditorDialog, RecipeEditorMode } from '@/components/RecipeEditorDialog';
 
 interface MealEditSheetProps {
-  meal: MealInstance | null;
+  meal: MealSlotEntry | null;
   day: DayOfWeek | null;
   slot: MealSlot | null;
   open: boolean;
   onClose: () => void;
 }
 
-export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetProps) {
-  const { updateMealInstance, removeMealFromSlot } = useMealPlan();
-  const { recipes, calculateMacrosFromIngredients } = useRecipes();
+export function MealEditSheet({ meal: entry, day, slot, open, onClose }: MealEditSheetProps) {
+  const { removeMealFromSlot } = useMealPlan();
+  const { recipes } = useRecipes();
+  const { getMeal, getMealMacros, updateMeal } = useMeals();
 
-  if (!meal || !day || !slot) return null;
+  if (!entry || !day || !slot) return null;
 
-  // Build a pseudo-recipe from the meal instance for the editor
-  const linkedRecipe = recipes.find(r => r.id === meal.recipeId);
+  const mealData = getMeal(entry.mealId);
+  if (!mealData) return null;
+
+  // Build a pseudo-recipe from the meal for the editor
+  const linkedRecipe = mealData.sourceRecipeId
+    ? recipes.find(r => r.id === mealData.sourceRecipeId)
+    : undefined;
+
+  const macros = getMealMacros(mealData);
+
   const pseudoRecipe: Recipe = {
-    id: meal.recipeId,
-    name: meal.recipeName,
+    id: mealData.id,
+    name: mealData.name,
     description: '',
-    servings: 1,
-    category: (linkedRecipe?.category as string) || 'main',
     tags: linkedRecipe?.tags || [],
-    ingredients: meal.ingredients.map(i => ({
+    ingredients: (mealData.ingredients || []).map(i => ({
       ingredientId: i.ingredientId,
       name: i.name,
       servingMultiplier: i.servingMultiplier,
     })),
-    totalMacros: meal.customMacros,
+    totalMacros: macros,
     instructions: linkedRecipe?.instructions,
     notes: linkedRecipe?.notes,
     link: linkedRecipe?.link,
@@ -50,8 +57,8 @@ export function MealEditSheet({ meal, day, slot, open, onClose }: MealEditSheetP
   };
 
   const handleSave = (data: { name: string; ingredients: any[] }) => {
-    updateMealInstance(day, slot, {
-      recipeName: data.name,
+    updateMeal(entry.mealId, {
+      name: data.name,
       ingredients: data.ingredients,
     });
     onClose();
