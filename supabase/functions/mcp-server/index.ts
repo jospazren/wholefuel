@@ -72,10 +72,10 @@ function getWeekStartDate(): string {
 const mcpServer = new McpServer({ name: "wholefuel-mcp", version: "2.0.0" });
 
 // Helper: write tags for a recipe
-async function writeRecipeTags(supabase: ReturnType<typeof createClient>, recipeId: string, tags: string[]) {
+async function writeRecipeTags(supabase: ReturnType<typeof createClient>, recipeId: string, tags: string[], userId: string) {
   await supabase.from('recipe_tags').delete().eq('recipe_id', recipeId);
   if (tags.length > 0) {
-    await supabase.from('recipe_tags').insert(tags.map(tag => ({ recipe_id: recipeId, tag })));
+    await supabase.from('recipe_tags').insert(tags.map(tag => ({ recipe_id: recipeId, tag_name: tag, user_id: userId })));
   }
 }
 
@@ -112,7 +112,7 @@ mcpServer.tool("list_recipes", {
     let tagMap: Record<string, string[]> = {};
     if (ids.length > 0) {
       const { data: tags } = await auth.supabase.from('recipe_tags').select('recipe_id, tag_name').in('recipe_id', ids);
-      if (tags) for (const t of tags) { if (!tagMap[t.recipe_id]) tagMap[t.recipe_id] = []; tagMap[t.recipe_id].push(.select('recipe_id, tag_name')); }
+      if (tags) for (const t of tags) { if (!tagMap[t.recipe_id]) tagMap[t.recipe_id] = []; tagMap[t.recipe_id].push(t.tag_name); }
     }
     const enriched = recipes?.map(r => ({ ...r, tags: tagMap[r.id] || [] }));
     return { content: [{ type: "text", text: JSON.stringify(enriched, null, 2) }] };
@@ -145,7 +145,7 @@ mcpServer.tool("create_recipe", {
     const { data: recipe, error: rErr } = await auth.supabase.from('recipes').insert({ name, category: tags?.[0] || null, servings: 1, instructions: instructions || null, link: link || null, notes: notes || null, user_id: auth.userId, total_calories: m.cal, total_protein: m.pro, total_fat: m.fat, total_carbs: m.carb }).select().single();
     if (rErr || !recipe) return { content: [{ type: "text", text: `Error creating recipe: ${rErr?.message}` }] };
     await auth.supabase.from('recipe_ingredients').insert(ingredients.map(ing => ({ recipe_id: recipe.id, ingredient_id: ing.ingredient_id, name: iMap.get(ing.ingredient_id)?.name || 'Unknown', serving_multiplier: ing.serving_multiplier })));
-    if (tags && tags.length > 0) await writeRecipeTags(auth.supabase, recipe.id, tags);
+    if (tags && tags.length > 0) await writeRecipeTags(auth.supabase, recipe.id, tags, auth.userId);
     return { content: [{ type: "text", text: `Created recipe "${name}" (${ingredients.length} ingredients). ID: ${recipe.id}` }] };
   },
 });
@@ -175,7 +175,7 @@ mcpServer.tool("bulk_create_recipes", {
       const { data: cr, error: re } = await auth.supabase.from('recipes').insert({ name: r.name, category: r.tags?.[0] || null, servings: 1, instructions: r.instructions || null, link: r.link || null, notes: r.notes || null, user_id: auth.userId, total_calories: m.cal, total_protein: m.pro, total_fat: m.fat, total_carbs: m.carb }).select().single();
       if (re || !cr) { errs.push(`"${r.name}": ${re?.message}`); continue; }
       await auth.supabase.from('recipe_ingredients').insert(r.ingredients.map(i => ({ recipe_id: cr.id, ingredient_id: i.ingredient_id, name: iMap.get(i.ingredient_id)?.name || 'Unknown', serving_multiplier: i.serving_multiplier })));
-      if (r.tags?.length) await writeRecipeTags(auth.supabase, cr.id, r.tags);
+      if (r.tags?.length) await writeRecipeTags(auth.supabase, cr.id, r.tags, auth.userId);
       ok.push(r.name);
     }
     let msg = `Created ${ok.length} recipe(s)`;
@@ -253,7 +253,7 @@ mcpServer.tool("edit_recipe", {
       await auth.supabase.from('recipe_ingredients').delete().eq('recipe_id', recipe_id);
       await auth.supabase.from('recipe_ingredients').insert(ingredients.map(i => ({ recipe_id, ingredient_id: i.ingredient_id, name: iMap.get(i.ingredient_id)?.name || 'Unknown', serving_multiplier: i.serving_multiplier })));
     }
-    if (tags !== undefined) await writeRecipeTags(auth.supabase, recipe_id, tags);
+    if (tags !== undefined) await writeRecipeTags(auth.supabase, recipe_id, tags, auth.userId);
     if (Object.keys(upd).length) await auth.supabase.from('recipes').update(upd).eq('id', recipe_id);
     return { content: [{ type: "text", text: `Updated recipe "${name || existing.name}"` }] };
   },
@@ -426,7 +426,6 @@ mcpServer.tool("delete_meal", {
     const { meal_id } = input as { meal_id: string };
     const { data: meal } = await auth.supabase.from('meals').select('id, name').eq('id', meal_id).eq('user_id', auth.userId).single();
     if (!meal) return { content: [{ type: "text", text: "Meal not found" }] };
-    // meal_plans rows will cascade-delete, meal_ingredients too
     const { error } = await auth.supabase.from('meals').delete().eq('id', meal_id);
     if (error) return { content: [{ type: "text", text: `Error: ${error.message}` }] };
     return { content: [{ type: "text", text: `Deleted meal "${meal.name}"` }] };
@@ -447,7 +446,6 @@ mcpServer.tool("list_meal_plan", {
     if (!auth) return { content: [{ type: "text", text: "Unauthorized" }] };
     const { week_start_date = getWeekStartDate() } = input as { week_start_date?: string };
 
-    // Get meal_plans with meal data
     const { data: plans, error } = await auth.supabase
       .from('meal_plans')
       .select('id, day_of_week, meal_slot, meal_id, meals(id, name, source_recipe_id, meal_ingredients(ingredient_id, name, serving_multiplier))')
@@ -458,7 +456,6 @@ mcpServer.tool("list_meal_plan", {
 
     if (error) return { content: [{ type: "text", text: `Error: ${error.message}` }] };
 
-    // Collect ingredient IDs for macro calculation
     const allIngIds = new Set<string>();
     for (const p of plans || []) {
       const meal = (p as any).meals;
@@ -473,7 +470,6 @@ mcpServer.tool("list_meal_plan", {
       if (ings) ingMap = new Map(ings.map(i => [i.id, i]));
     }
 
-    // Group by day with computed macros
     const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     const grouped: Record<string, any[]> = {};
     for (const p of plans || []) {
@@ -525,7 +521,6 @@ mcpServer.tool("add_meal_to_plan", {
     if (!auth) return { content: [{ type: "text", text: "Unauthorized" }] };
     const { day, slot, recipe_id, week_start_date = getWeekStartDate() } = input as { day: string; slot: string; recipe_id: string; week_start_date?: string };
 
-    // Get recipe with ingredients
     const { data: recipe, error: rErr } = await auth.supabase
       .from('recipes')
       .select('id, name, recipe_ingredients(ingredient_id, name, serving_multiplier)')
@@ -535,7 +530,6 @@ mcpServer.tool("add_meal_to_plan", {
 
     if (rErr || !recipe) return { content: [{ type: "text", text: "Recipe not found" }] };
 
-    // Create a meal entity from the recipe
     const { data: meal, error: mErr } = await auth.supabase
       .from('meals')
       .insert({ user_id: auth.userId, source_recipe_id: recipe.id, name: recipe.name })
@@ -544,7 +538,6 @@ mcpServer.tool("add_meal_to_plan", {
 
     if (mErr || !meal) return { content: [{ type: "text", text: `Error creating meal: ${mErr?.message}` }] };
 
-    // Copy recipe ingredients to meal_ingredients
     const recipeIngs = (recipe as any).recipe_ingredients || [];
     if (recipeIngs.length > 0) {
       await auth.supabase.from('meal_ingredients').insert(
@@ -557,7 +550,6 @@ mcpServer.tool("add_meal_to_plan", {
       );
     }
 
-    // Check if slot already has a meal — if so, delete old meal entity
     const { data: existing } = await auth.supabase
       .from('meal_plans')
       .select('id, meal_id')
@@ -568,12 +560,9 @@ mcpServer.tool("add_meal_to_plan", {
       .single();
 
     if (existing) {
-      // Remove old meal entity
       await auth.supabase.from('meals').delete().eq('id', existing.meal_id);
-      // Update the slot
       await auth.supabase.from('meal_plans').update({ meal_id: meal.id }).eq('id', existing.id);
     } else {
-      // Insert new
       await auth.supabase.from('meal_plans').insert({
         user_id: auth.userId,
         week_start_date,
@@ -603,7 +592,6 @@ mcpServer.tool("remove_meal_from_plan", {
     if (!auth) return { content: [{ type: "text", text: "Unauthorized" }] };
     const { day, slot, week_start_date = getWeekStartDate() } = input as { day: string; slot: string; week_start_date?: string };
 
-    // Find the meal_plans row
     const { data: plan } = await auth.supabase
       .from('meal_plans')
       .select('id, meal_id')
@@ -615,12 +603,9 @@ mcpServer.tool("remove_meal_from_plan", {
 
     if (!plan) return { content: [{ type: "text", text: `No meal at ${day} ${slot} (week ${week_start_date})` }] };
 
-    // Get meal name before deleting
     const { data: meal } = await auth.supabase.from('meals').select('name').eq('id', plan.meal_id).single();
 
-    // Delete meal_plans row
     await auth.supabase.from('meal_plans').delete().eq('id', plan.id);
-    // Delete the meal entity
     await auth.supabase.from('meals').delete().eq('id', plan.meal_id);
 
     return { content: [{ type: "text", text: `Removed "${meal?.name || 'Unknown'}" from ${day} ${slot} (week ${week_start_date})` }] };
@@ -641,7 +626,6 @@ mcpServer.tool("get_shopping_list", {
     if (!auth) return { content: [{ type: "text", text: "Unauthorized" }] };
     const { week_start_date = getWeekStartDate() } = input as { week_start_date?: string };
 
-    // Get meal_plans for the week with meal ingredients
     const { data: plans, error } = await auth.supabase
       .from('meal_plans')
       .select('meal_id, meals(meal_ingredients(ingredient_id, name, serving_multiplier))')
@@ -650,7 +634,6 @@ mcpServer.tool("get_shopping_list", {
 
     if (error) return { content: [{ type: "text", text: `Error: ${error.message}` }] };
 
-    // Collect all ingredient IDs
     const allIngIds = new Set<string>();
     for (const p of plans || []) {
       const meal = (p as any).meals;
@@ -659,11 +642,9 @@ mcpServer.tool("get_shopping_list", {
 
     if (allIngIds.size === 0) return { content: [{ type: "text", text: `No meals in plan for week ${week_start_date}. Shopping list is empty.` }] };
 
-    // Get ingredient serving sizes
     const { data: ingData } = await auth.supabase.from('ingredients').select('id, serving_grams').in('id', Array.from(allIngIds));
     const ingGrams = new Map(ingData?.map(i => [i.id, Number(i.serving_grams) || 100]) || []);
 
-    // Aggregate: ingredient name -> total grams
     const agg: Record<string, { name: string; grams: number }> = {};
     for (const p of plans || []) {
       const meal = (p as any).meals;
