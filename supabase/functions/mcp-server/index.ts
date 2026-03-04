@@ -111,8 +111,8 @@ mcpServer.tool("list_recipes", {
     const ids = recipes?.map(r => r.id) || [];
     let tagMap: Record<string, string[]> = {};
     if (ids.length > 0) {
-      const { data: tags } = await auth.supabase.from('recipe_tags').select('recipe_id, tag').in('recipe_id', ids);
-      if (tags) for (const t of tags) { if (!tagMap[t.recipe_id]) tagMap[t.recipe_id] = []; tagMap[t.recipe_id].push(t.tag); }
+      const { data: tags } = await auth.supabase.from('recipe_tags').select('recipe_id, tag_name').in('recipe_id', ids);
+      if (tags) for (const t of tags) { if (!tagMap[t.recipe_id]) tagMap[t.recipe_id] = []; tagMap[t.recipe_id].push(.select('recipe_id, tag_name')); }
     }
     const enriched = recipes?.map(r => ({ ...r, tags: tagMap[r.id] || [] }));
     return { content: [{ type: "text", text: JSON.stringify(enriched, null, 2) }] };
