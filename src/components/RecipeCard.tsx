@@ -28,8 +28,8 @@ export function RecipeCard({
       onDragEnd={onDragEnd}
       onClick={onClick}
       className={cn(
-        'glass-card rounded-2xl p-2.5 cursor-grab active:cursor-grabbing transition-all duration-150',
-        'hover:bg-white/80 hover:shadow-sm',
+        'bg-card border border-border rounded-xl p-2.5 cursor-grab active:cursor-grabbing transition-all duration-150',
+        'hover:shadow-sm',
         'w-[199px] h-[66.5px] box-border',
         isDragging && 'opacity-50 rotate-1 scale-105 shadow-lg',
         onClick && 'cursor-pointer',
