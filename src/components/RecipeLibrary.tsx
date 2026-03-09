@@ -86,7 +86,7 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
               placeholder="Search recipes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 text-sm rounded-2xl glass-subtle border-0 shadow-sm"
+              className="pl-8 h-8 text-sm rounded-lg bg-accent border-0 shadow-sm"
             />
           </div>
 
