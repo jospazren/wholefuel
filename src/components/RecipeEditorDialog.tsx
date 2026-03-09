@@ -547,7 +547,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
             <div>
               <h3 className="text-base font-bold mb-3">Ingredients</h3>
 
-              <div className="bg-accent rounded-xl p-3">xl p-3">xl p-3">
+              <div className="bg-accent rounded-xl p-3">
                 {/* Column headers */}
                 <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground tracking-wider uppercase pb-2 border-b border-border/30">
                   <span className="shrink-0 w-4" />
