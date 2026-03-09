@@ -547,7 +547,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
             <div>
               <h3 className="text-base font-bold mb-3">Ingredients</h3>
 
-              <div className="bg-accent rounded-xl p-3">xl p-3">
+              <div className="bg-accent rounded-xl p-3">xl p-3">xl p-3">
                 {/* Column headers */}
                 <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground tracking-wider uppercase pb-2 border-b border-border/30">
                   <span className="shrink-0 w-4" />
@@ -634,7 +634,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
               <h3 className="text-base font-bold mb-3">Instructions</h3>
               <div className="space-y-2">
                 {formInstructionSteps.map((step, idx) => (
-                  <div key={idx} className="flex items-starbg-accent rounded-lg px-4 py-3"unded-lg>
+                  <div key={idx} className="flex itbg-accent rounded-lg px-4 py-3" px-4 py-3"unded-lg>
                     <div className="shrink-0 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">
                       {idx + 1}
                     </div>
@@ -672,7 +672,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
                 value={formNotes}
                 onChange={(e) => setFormNotes(e.target.value)}
                 placeholder="Add notes about this recipe..."
-                className="w-full min-h-[100px] rounded-2xl glalg bg-accenty-3 text-sm text-foreground placeholder:text-muted-foreground resize-y outline-none focus:ring-2 focus:ring-ring"
+                className="w-full min-h-[100plg bg-accent px-4 pg bg-accenty-3 text-sm text-foreground placeholder:text-muted-foreground resize-y outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>

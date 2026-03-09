@@ -371,7 +371,8 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                     type="number"
                     value={weeklyTargets.tdee || ''}
                     onChange={(e) => handleTdeeChange(e.target.value)}
-                    className="h-8 w-[65px] text-xs text-center border-0 glass-subbg-accent rounded-lg                  placeholder="2500"
+                    className="h-8 w-[65px] text-xs text-center border-0 bg-accent rounded-lg"
+                    placeholder="2500"
                   />
                   <span className="text-[11px] text-muted-foreground">tdee</span>
                 </div>
