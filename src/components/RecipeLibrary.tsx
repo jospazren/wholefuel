@@ -98,7 +98,7 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
                 'text-[10px] px-2.5 py-1 rounded-full font-medium transition-all',
                 selectedTags.size === 0
                   ? 'text-primary-foreground shadow-md bg-primary'
-                  : 'glass-subtle text-muted-foreground hover:bg-white/70'
+                   : 'bg-accent text-muted-foreground hover:bg-accent/80'
               )}
             >
               All
