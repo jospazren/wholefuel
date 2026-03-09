@@ -277,7 +277,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
 
                 <div className="flex items-center gap-2">
                   <Select value={weeklyTargets.presetId || 'none'} onValueChange={handlePresetChange}>
-                    <SelectTrigger className="h-8 w-[100px] text-xs bg-accent border-0 rounded-lg                      <SelectValue placeholder="No Preset" />
+                    <SelectTrigger className="h-8 w-[100px] text-xs bg-accent border-0 rounded-lg                   <SelectValue placeholder="No Preset" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">No Preset</SelectItem>
@@ -343,7 +343,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
               {/* Right: Preset + Weight + TDEE + Macro Summary + Filter */}
               <div className="flex items-center gap-3">
                 <Select value={weeklyTargets.presetId || 'none'} onValueChange={handlePresetChange}>
-                  <SelectTrigger className="h-8 w-[120px] text-xs glabg-accent border-0 rounded-lg                    <SelectValue placeholder="No Preset" />
+                  <SelectTrigger className="h-8 w-[120px] text-xs glabg-bg-accent border-0 rounded-lg              <SelectValue placeholder="No Preset" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No Preset</SelectItem>
@@ -358,7 +358,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                     type="number"
                     value={weeklyTargets.weightKg || ''}
                     onChange={(e) => handleWeightChange(e.target.value)}
-                    className="h-8 w-[60px] text-xs text-center border-0 glass-subtle rounded-xl px-1"
+                    className="h-8 w-[60px] text-xs text-center border-0 glass-bg-accent rounded-lg
                     placeholder="80"
                   />
                   <span className="text-[11px] text-muted-foreground">kg</span>
