@@ -547,7 +547,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
             <div>
               <h3 className="text-base font-bold mb-3">Ingredients</h3>
 
-              <div className="bg-accent rounded-xl p-3">
+              <div className="bg-accent rounded--3">
                 {/* Column headers */}
                 <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground tracking-wider uppercase pb-2 border-b border-border/30">
                   <span className="shrink-0 w-4" />
@@ -634,7 +634,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
               <h3 className="text-base font-bold mb-3">Instructions</h3>
               <div className="space-y-2">
                 {formInstructionSteps.map((step, idx) => (
-                  <div key={idx} className="flex items-start gap-3 glass-subtle rounded-xl px-4 py-3">
+                  <div key={idx} className="flex items-start gap-3 glasbg-accent rounded-lg4 py-3">
                     <div className="shrink-0 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">
                       {idx + 1}
                     </div>
