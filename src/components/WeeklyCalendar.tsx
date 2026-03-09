@@ -46,7 +46,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
   } = useMealPlan();
   const isMobile = useIsMobile();
   const [dragOverSlot, setDragOverSlot] = useState<{ day: DayOfWeek; slot: MealSlot } | null>(null);
-  const [editingMeal, setEditingMeal] = useState<{ meal: MealInstance; day: DayOfWeek; slot: MealSlot } | null>(null);
+  const [editingMeal, setEditingMeal] = useState<{ meal: MealSlotAssignment; day: DayOfWeek; slot: MealSlot } | null>(null);
   const [draggingMeal, setDraggingMeal] = useState<{ day: DayOfWeek; slot: MealSlot } | null>(null);
   const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const [macroVisibility, setMacroVisibility] = useState<MacroVisibility>(getMacroVisibility);
