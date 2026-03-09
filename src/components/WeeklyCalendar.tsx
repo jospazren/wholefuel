@@ -360,7 +360,8 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                     type="number"
                     value={weeklyTargets.weightKg || ''}
                     onChange={(e) => handleWeightChange(e.target.value)}
-                    className="h-8 w-[60px] text-xs text-center border-0 glass-bg-accbg-accent rounded-lg            placeholder="80"
+                    className="h-8 w-[60px] text-xs text-center border-0 bg-accent rounded-lg"
+                    placeholder="80"
                   />
                   <span className="text-[11px] text-muted-foreground">kg</span>
                 </div>
