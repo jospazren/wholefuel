@@ -54,7 +54,6 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
     })));
     updateRecipe(editingRecipeId, {
       name: data.name,
-      category: data.tags[0] || 'main',
       tags: data.tags,
       ingredients: data.ingredients,
       totalMacros: macros,
