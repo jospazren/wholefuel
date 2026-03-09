@@ -344,7 +344,8 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
               {/* Right: Preset + Weight + TDEE + Macro Summary + Filter */}
               <div className="flex items-center gap-3">
                 <Select value={weeklyTargets.presetId || 'none'} onValueChange={handlePresetChange}>
-                  <SelectTrigger className="h-8 w-[120px] text-xs glabg-bg-bg-accent border-0 rounded-lg        <SelectValue placeholder="No Preset" />
+                  <SelectTrigger className="h-8 w-[120px] text-xs bg-accent border-0 rounded-lg">
+                    <SelectValue placeholder="No Preset" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No Preset</SelectItem>
