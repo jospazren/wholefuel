@@ -68,7 +68,6 @@ const RecipesPage = () => {
     if (editingRecipeId) {
       updateRecipe(editingRecipeId, {
         name: data.name,
-        category: data.tags[0] || 'main',
         tags: data.tags,
         ingredients: data.ingredients,
         totalMacros: macros,
@@ -81,7 +80,6 @@ const RecipesPage = () => {
         id: `recipe-${Date.now()}`,
         name: data.name,
         description: '',
-        category: data.tags[0] || 'main',
         tags: data.tags,
         ingredients: data.ingredients,
         totalMacros: macros,

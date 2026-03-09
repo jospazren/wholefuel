@@ -1,43 +1,34 @@
 
 
-## Plan: Fix Build Errors + Revolut-inspired Visual Redesign
+## Add PWA Support for Android Installation
 
-### Part 1: Fix Build Errors (prerequisite)
+### Overview
+Make the app installable as a Progressive Web App (PWA) on Android devices by adding `vite-plugin-pwa` with a proper manifest and service worker.
 
-There are three categories of errors:
+### Changes
 
-**A. Stale database types** — The `meals` and `meal_ingredients` tables exist in the database but the auto-generated TypeScript types haven't been refreshed. This causes all the `MealsContext.tsx` errors (`'meals' is not assignable to parameter of type 'never'`). A no-op migration will trigger a types regeneration.
+**1. Install dependency**
+- `vite-plugin-pwa`
 
-**B. Missing `MealInstance` export** — `WeeklyCalendar.tsx` imports `MealInstance` from `@/types/meal`, but that type doesn't exist. Remove the import.
+**2. Configure PWA plugin (`vite.config.ts`)**
+- Add `VitePWA()` plugin with:
+  - `registerType: 'autoUpdate'`
+  - Manifest with app name "Whole", theme color, icons, display: standalone
+  - Workbox config with `navigateFallbackDenylist: [/^\/~oauth/]` to avoid caching auth redirects
+  - Runtime caching for API calls
 
-**C. `category` property on `Recipe`** — `RecipeLibrary.tsx` and `RecipesPage.tsx` set `category` on Recipe objects, but the `Recipe` interface in `meal.ts` doesn't include it. Remove `category` from those object literals (tags already replaced it).
+**3. Add PWA icons (`public/`)**
+- Create `pwa-192x192.png` and `pwa-512x512.png` placeholder icons (simple colored squares with "W" letter, or use the existing favicon as a base)
 
-### Part 2: Revolut-Inspired Redesign
+**4. Update `index.html`**
+- Add mobile-optimized meta tags:
+  - `<meta name="theme-color" content="...">`
+  - `<link rel="apple-touch-icon" href="/pwa-192x192.png">`
+  - `<meta name="mobile-web-app-capable" content="yes">`
 
-Based on the Mobbin reference, shift from the current mint-green glassmorphism to a clean, minimal Revolut-style aesthetic:
+**5. No separate manifest.json file needed**
+- `vite-plugin-pwa` auto-generates and injects the manifest from the Vite config, so no manual `manifest.json` is required.
 
-**Color system:**
-- Primary: `#009688` (teal)
-- Secondary green: `#009960`  
-- Secondary blue: `#0096B3`
-- Background: pure white `#FFFFFF`
-- Cards: white with very subtle borders, no glassmorphism
-- Text: near-black for primary, gray for secondary
-
-**Design language changes:**
-- Remove gradient background — use flat white/light gray
-- Remove glassmorphism effects (backdrop blur, semi-transparent surfaces)
-- Clean card style: white background, thin `1px` border, subtle shadow
-- Typography: keep Inter, increase contrast, reduce decorative elements
-- Minimal sidebar with simple icon + text rows
-- Pill-shaped action buttons (outlined, not filled)
-- Reduce border-radius from 12px to 8-10px for a more structured feel
-- Cleaner spacing and more whitespace
-
-**Files to update:**
-- `src/index.css` — New CSS variables, remove glass utilities, flat background
-- `tailwind.config.ts` — Update color tokens
-- `src/components/AppLayout.tsx` — Remove gradient/glass styling
-- `src/components/AppSidebar.tsx` — Cleaner sidebar
-- Navigation and card components — Align with minimal style
+### Result
+After visiting the app on Android Chrome, users will see the "Add to Home Screen" / "Install app" prompt. The app will launch in standalone mode (no browser chrome) and work offline for cached pages.
 

@@ -54,7 +54,6 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
     })));
     updateRecipe(editingRecipeId, {
       name: data.name,
-      category: data.tags[0] || 'main',
       tags: data.tags,
       ingredients: data.ingredients,
       totalMacros: macros,
@@ -87,7 +86,7 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
               placeholder="Search recipes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 text-sm rounded-2xl glass-subtle border-0 shadow-sm"
+              className="pl-8 h-8 text-sm rounded-lg bg-accent border-0 shadow-sm"
             />
           </div>
 
@@ -99,7 +98,7 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
                 'text-[10px] px-2.5 py-1 rounded-full font-medium transition-all',
                 selectedTags.size === 0
                   ? 'text-primary-foreground shadow-md bg-primary'
-                  : 'glass-subtle text-muted-foreground hover:bg-white/70'
+                   : 'bg-accent text-muted-foreground hover:bg-accent/80'
               )}
             >
               All
@@ -112,7 +111,7 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
                   'text-[10px] px-2.5 py-1 rounded-full font-medium transition-all',
                   selectedTags.has(tag)
                     ? 'text-primary-foreground shadow-md bg-primary'
-                    : 'glass-subtle text-muted-foreground hover:bg-white/70'
+                    : 'bg-accent text-muted-foreground hover:bg-accent/80'
                 )}
               >
                 {tag}

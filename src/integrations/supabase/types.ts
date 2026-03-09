@@ -140,62 +140,115 @@ export type Database = {
         }
         Relationships: []
       }
+      meal_ingredients: {
+        Row: {
+          id: string
+          ingredient_id: string
+          meal_id: string
+          name: string
+          serving_multiplier: number
+        }
+        Insert: {
+          id?: string
+          ingredient_id: string
+          meal_id: string
+          name: string
+          serving_multiplier?: number
+        }
+        Update: {
+          id?: string
+          ingredient_id?: string
+          meal_id?: string
+          name?: string
+          serving_multiplier?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meal_ingredients_ingredient_id_fkey"
+            columns: ["ingredient_id"]
+            isOneToOne: false
+            referencedRelation: "ingredients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meal_ingredients_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meal_plans: {
         Row: {
           created_at: string
-          custom_calories: number
-          custom_carbs: number
-          custom_fat: number
-          custom_protein: number
           day_of_week: string
           id: string
-          ingredients_json: Json | null
+          meal_id: string
           meal_slot: string
-          recipe_id: string | null
-          recipe_name: string
-          serving_multiplier: number
           updated_at: string
           user_id: string
           week_start_date: string
         }
         Insert: {
           created_at?: string
-          custom_calories?: number
-          custom_carbs?: number
-          custom_fat?: number
-          custom_protein?: number
           day_of_week: string
           id?: string
-          ingredients_json?: Json | null
+          meal_id: string
           meal_slot: string
-          recipe_id?: string | null
-          recipe_name: string
-          serving_multiplier?: number
           updated_at?: string
           user_id: string
           week_start_date?: string
         }
         Update: {
           created_at?: string
-          custom_calories?: number
-          custom_carbs?: number
-          custom_fat?: number
-          custom_protein?: number
           day_of_week?: string
           id?: string
-          ingredients_json?: Json | null
+          meal_id?: string
           meal_slot?: string
-          recipe_id?: string | null
-          recipe_name?: string
-          serving_multiplier?: number
           updated_at?: string
           user_id?: string
           week_start_date?: string
         }
         Relationships: [
           {
-            foreignKeyName: "meal_plans_recipe_id_fkey"
-            columns: ["recipe_id"]
+            foreignKeyName: "meal_plans_meal_id_fkey"
+            columns: ["meal_id"]
+            isOneToOne: false
+            referencedRelation: "meals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meals: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          source_recipe_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          source_recipe_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          source_recipe_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meals_source_recipe_id_fkey"
+            columns: ["source_recipe_id"]
             isOneToOne: false
             referencedRelation: "recipes"
             referencedColumns: ["id"]
@@ -209,7 +262,6 @@ export type Database = {
           name: string
           recipe_id: string
           serving_multiplier: number
-          unit: string
         }
         Insert: {
           id?: string
@@ -217,7 +269,6 @@ export type Database = {
           name: string
           recipe_id: string
           serving_multiplier?: number
-          unit?: string
         }
         Update: {
           id?: string
@@ -225,7 +276,6 @@ export type Database = {
           name?: string
           recipe_id?: string
           serving_multiplier?: number
-          unit?: string
         }
         Relationships: [
           {
@@ -275,7 +325,7 @@ export type Database = {
       }
       recipes: {
         Row: {
-          category: string
+          category: string | null
           created_at: string
           description: string | null
           id: string
@@ -293,7 +343,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          category?: string
+          category?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -311,7 +361,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          category?: string
+          category?: string | null
           created_at?: string
           description?: string | null
           id?: string

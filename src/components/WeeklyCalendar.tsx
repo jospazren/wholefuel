@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMealPlan } from '@/contexts/MealPlanContext';
-import { Recipe, DayOfWeek, MealSlot, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, DAY_FULL_LABELS, MealInstance, WeeklyTargets, DietPreset, computeTargetsFromPreset } from '@/types/meal';
+import { Recipe, DayOfWeek, MealSlot, MealSlotAssignment, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, DAY_FULL_LABELS, WeeklyTargets, DietPreset, computeTargetsFromPreset } from '@/types/meal';
 import { ViewSettingsDialog, getMacroVisibility, MacroVisibility } from '@/components/ViewSettingsDialog';
 import { MealSlotCell } from '@/components/MealSlotCell';
 import { MealEditSheet } from '@/components/MealEditSheet';
@@ -46,7 +46,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
   } = useMealPlan();
   const isMobile = useIsMobile();
   const [dragOverSlot, setDragOverSlot] = useState<{ day: DayOfWeek; slot: MealSlot } | null>(null);
-  const [editingMeal, setEditingMeal] = useState<{ meal: MealInstance; day: DayOfWeek; slot: MealSlot } | null>(null);
+  const [editingMeal, setEditingMeal] = useState<{ meal: MealSlotAssignment; day: DayOfWeek; slot: MealSlot } | null>(null);
   const [draggingMeal, setDraggingMeal] = useState<{ day: DayOfWeek; slot: MealSlot } | null>(null);
   const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const [macroVisibility, setMacroVisibility] = useState<MacroVisibility>(getMacroVisibility);
@@ -277,7 +277,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
 
                 <div className="flex items-center gap-2">
                   <Select value={weeklyTargets.presetId || 'none'} onValueChange={handlePresetChange}>
-                    <SelectTrigger className="h-8 w-[100px] text-xs glass-subtle border-0 rounded-xl">
+                    <SelectTrigger className="h-8 w-[100px] text-xs bg-accent border-0 rounded-lg">
                       <SelectValue placeholder="No Preset" />
                     </SelectTrigger>
                     <SelectContent>
@@ -344,7 +344,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
               {/* Right: Preset + Weight + TDEE + Macro Summary + Filter */}
               <div className="flex items-center gap-3">
                 <Select value={weeklyTargets.presetId || 'none'} onValueChange={handlePresetChange}>
-                  <SelectTrigger className="h-8 w-[120px] text-xs glass-subtle border-0 rounded-xl">
+                  <SelectTrigger className="h-8 w-[120px] text-xs bg-accent border-0 rounded-lg">
                     <SelectValue placeholder="No Preset" />
                   </SelectTrigger>
                   <SelectContent>
@@ -360,7 +360,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                     type="number"
                     value={weeklyTargets.weightKg || ''}
                     onChange={(e) => handleWeightChange(e.target.value)}
-                    className="h-8 w-[60px] text-xs text-center border-0 glass-subtle rounded-xl px-1"
+                    className="h-8 w-[60px] text-xs text-center border-0 bg-accent rounded-lg"
                     placeholder="80"
                   />
                   <span className="text-[11px] text-muted-foreground">kg</span>
@@ -371,7 +371,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                     type="number"
                     value={weeklyTargets.tdee || ''}
                     onChange={(e) => handleTdeeChange(e.target.value)}
-                    className="h-8 w-[65px] text-xs text-center border-0 glass-subtle rounded-xl px-1"
+                    className="h-8 w-[65px] text-xs text-center border-0 bg-accent rounded-lg"
                     placeholder="2500"
                   />
                   <span className="text-[11px] text-muted-foreground">tdee</span>

@@ -62,7 +62,7 @@ export function ViewSettingsDialog({ open, onOpenChange, onSave, visibility }: V
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md glass-card border-white/30" style={{ backdropFilter: 'blur(20px)' }}>
+      <DialogContent className="sm:max-w-md bg-card border border-border">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">View Settings</DialogTitle>
         </DialogHeader>

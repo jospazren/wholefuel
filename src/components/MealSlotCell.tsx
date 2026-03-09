@@ -111,7 +111,7 @@ export function MealSlotCell({
   return (
     <div
       className={cn(
-        'rounded-2xl glass-card transition-all duration-150 relative group min-h-[60px]',
+        'rounded-xl bg-card border border-border transition-all duration-150 relative group min-h-[60px]',
         'cursor-grab active:cursor-grabbing hover:shadow-sm',
         isDragOver && 'border-primary bg-primary/10'
       )}
