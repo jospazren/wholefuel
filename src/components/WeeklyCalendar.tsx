@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMealPlan } from '@/contexts/MealPlanContext';
-import { Recipe, DayOfWeek, MealSlot, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, DAY_FULL_LABELS, WeeklyTargets, DietPreset, computeTargetsFromPreset } from '@/types/meal';
+import { Recipe, DayOfWeek, MealSlot, MealSlotAssignment, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, DAY_FULL_LABELS, WeeklyTargets, DietPreset, computeTargetsFromPreset } from '@/types/meal';
 import { ViewSettingsDialog, getMacroVisibility, MacroVisibility } from '@/components/ViewSettingsDialog';
 import { MealSlotCell } from '@/components/MealSlotCell';
 import { MealEditSheet } from '@/components/MealEditSheet';
