@@ -633,7 +633,8 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
               <h3 className="text-base font-bold mb-3">Instructions</h3>
               <div className="space-y-2">
                 {formInstructionSteps.map((step, idx) => (
-                  <div key={idx} className="flex itbg-accent roundeems-start gap-3 bg-accent rounded-lg px-4 py-3"      <div className="shrink-0 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">
+                  <div key={idx} className="flex items-start gap-3 bg-accent rounded-lg px-4 py-3">
+                    <div className="shrink-0 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">
                       {idx + 1}
                     </div>
                     <input
