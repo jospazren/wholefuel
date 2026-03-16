@@ -54,12 +54,12 @@ export function MealsProvider({ children }: { children: ReactNode }) {
 
       if (dbMeals) {
         const mealsMap = new Map<string, Meal>();
-        dbMeals.forEach((m: any) => {
+        dbMeals.forEach((m) => {
           mealsMap.set(m.id, {
             id: m.id,
             name: m.name,
             sourceRecipeId: m.source_recipe_id || null,
-            ingredients: (m.meal_ingredients || []).map((mi: any) => ({
+            ingredients: (m.meal_ingredients || []).map((mi) => ({
               ingredientId: mi.ingredient_id,
               name: mi.name,
               servingMultiplier: Number(mi.serving_multiplier),
@@ -102,7 +102,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
         user_id: user.id,
         source_recipe_id: recipe.id,
         name: recipe.name,
-      } as any)
+      })
       .select()
       .single();
 
@@ -121,7 +121,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
             ingredient_id: ing.ingredientId,
             name: ing.name,
             serving_multiplier: ing.servingMultiplier,
-          })) as any
+          }))
         );
 
       if (ingError) {
@@ -162,7 +162,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     if (updates.name !== undefined) {
-      await supabase.from('meals').update({ name: updates.name } as any).eq('id', id);
+      await supabase.from('meals').update({ name: updates.name }).eq('id', id);
     }
 
     if (updates.ingredients) {
@@ -174,7 +174,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
             ingredient_id: ing.ingredientId,
             name: ing.name,
             serving_multiplier: ing.servingMultiplier,
-          })) as any
+          }))
         );
       }
     }

@@ -27,7 +27,6 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
   const { ingredients } = useIngredients();
   const [recipes, setRecipes] = useState<Recipe[]>(defaultRecipes);
   const [isLoading, setIsLoading] = useState(true);
-  const [dbRecipeMap, setDbRecipeMap] = useState<Map<string, string>>(new Map());
 
   const isAuthPage = location.pathname === '/auth';
 
@@ -36,7 +35,6 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
       loadRecipes();
     } else if (!user) {
       setRecipes(defaultRecipes);
-      setDbRecipeMap(new Map());
       setIsLoading(false);
     }
   }, [user, isAuthPage]);
@@ -63,23 +61,21 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
       if (dbRecipes && dbRecipes.length > 0) {
         const tagsByRecipe = new Map<string, string[]>();
         if (dbTags) {
-          dbTags.forEach((t: any) => {
+          dbTags.forEach((t) => {
             const existing = tagsByRecipe.get(t.recipe_id) || [];
             existing.push(t.tag_name);
             tagsByRecipe.set(t.recipe_id, existing);
           });
         }
 
-        const recipeMap = new Map<string, string>();
         const loadedRecipes: Recipe[] = dbRecipes.map(rec => {
-          recipeMap.set(rec.id, rec.id);
           return {
             id: rec.id,
             name: rec.name,
             description: rec.description || '',
             image: rec.image || undefined,
             tags: tagsByRecipe.get(rec.id) || [],
-            ingredients: (rec.recipe_ingredients || []).map((ri: any) => ({
+            ingredients: (rec.recipe_ingredients || []).map((ri) => ({
               ingredientId: ri.ingredient_id,
               name: ri.name,
               servingMultiplier: Number(ri.serving_multiplier),
@@ -90,13 +86,12 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
               fat: Number(rec.total_fat),
               carbs: Number(rec.total_carbs),
             },
-            instructions: (rec as any).instructions || undefined,
-            notes: (rec as any).notes || undefined,
-            link: (rec as any).link || undefined,
+            instructions: rec.instructions || undefined,
+            notes: rec.notes || undefined,
+            link: rec.link || undefined,
           };
         });
         setRecipes(loadedRecipes);
-        setDbRecipeMap(recipeMap);
       }
     } catch (error) {
       console.error('Error loading recipes:', error);
@@ -137,7 +132,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
       instructions: recipe.instructions,
       notes: recipe.notes,
       link: recipe.link,
-    } as any).select().single();
+    }).select().single();
 
     if (recipeError || !recipeData) {
       console.error('Error adding recipe:', recipeError);
@@ -162,7 +157,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
           recipe_id: recipeData.id,
           tag_name: tag,
           user_id: user.id,
-        })) as any
+        }))
       );
     }
 
@@ -176,22 +171,21 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
 
     if (!user) return;
 
-    const dbUpdates: any = {};
-    if (updates.name !== undefined) dbUpdates.name = updates.name;
-    if (updates.description !== undefined) dbUpdates.description = updates.description;
-    if (updates.image !== undefined) dbUpdates.image = updates.image;
-    if (updates.tags !== undefined) dbUpdates.category = updates.tags?.[0] || null;
-    if (updates.instructions !== undefined) dbUpdates.instructions = updates.instructions;
-    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
-    if (updates.link !== undefined) dbUpdates.link = updates.link;
-    if (updates.totalMacros !== undefined) {
-      dbUpdates.total_calories = updates.totalMacros.calories;
-      dbUpdates.total_protein = updates.totalMacros.protein;
-      dbUpdates.total_fat = updates.totalMacros.fat;
-      dbUpdates.total_carbs = updates.totalMacros.carbs;
-    }
-
-    await supabase.from('recipes').update(dbUpdates).eq('id', id).eq('user_id', user.id);
+    await supabase.from('recipes').update({
+      ...(updates.name !== undefined && { name: updates.name }),
+      ...(updates.description !== undefined && { description: updates.description }),
+      ...(updates.image !== undefined && { image: updates.image }),
+      ...(updates.tags !== undefined && { category: updates.tags?.[0] || null }),
+      ...(updates.instructions !== undefined && { instructions: updates.instructions }),
+      ...(updates.notes !== undefined && { notes: updates.notes }),
+      ...(updates.link !== undefined && { link: updates.link }),
+      ...(updates.totalMacros !== undefined && {
+        total_calories: updates.totalMacros.calories,
+        total_protein: updates.totalMacros.protein,
+        total_fat: updates.totalMacros.fat,
+        total_carbs: updates.totalMacros.carbs,
+      }),
+    }).eq('id', id).eq('user_id', user.id);
 
     if (updates.ingredients) {
       await supabase.from('recipe_ingredients').delete().eq('recipe_id', id);
@@ -215,7 +209,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
             recipe_id: id,
             tag_name: tag,
             user_id: user.id,
-          })) as any
+          }))
         );
       }
     }
@@ -245,7 +239,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
 
     await supabase
       .from('recipe_tags')
-      .update({ tag_name: newName } as any)
+      .update({ tag_name: newName })
       .eq('tag_name', oldName)
       .eq('user_id', user.id);
   };
