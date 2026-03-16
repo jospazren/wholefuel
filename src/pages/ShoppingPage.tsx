@@ -7,13 +7,31 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Download, Printer, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { ShoppingCart, Download, Printer, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ShoppingPage = () => {
-  const { generateShoppingList, weeklyPlan } = useMealPlan();
+  const { generateShoppingList, weeklyPlan, currentWeekStart } = useMealPlan();
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
   const [isGenerated, setIsGenerated] = useState(false);
+
+  const storageKey = `wholefuel-shopping-checks-${currentWeekStart}`;
+
+  const getStoredChecks = (): Set<string> => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set();
+    } catch {
+      return new Set();
+    }
+  };
+
+  const saveChecks = (items: ShoppingItem[]) => {
+    try {
+      const checkedIds = items.filter(i => i.purchased).map(i => i.ingredientId);
+      localStorage.setItem(storageKey, JSON.stringify(checkedIds));
+    } catch {}
+  };
 
   // Check if there are any meals in the plan
   const hasMeals = Object.values(weeklyPlan).some(day =>
@@ -22,16 +40,30 @@ const ShoppingPage = () => {
 
   const handleGenerate = () => {
     const list = generateShoppingList();
-    setShoppingList(list);
+    const checked = getStoredChecks();
+    const listWithChecks = list.map(item => ({
+      ...item,
+      purchased: checked.has(item.ingredientId),
+    }));
+    setShoppingList(listWithChecks);
     setIsGenerated(true);
   };
 
   const handleTogglePurchased = (ingredientId: string) => {
-    setShoppingList(prev => prev.map(item =>
-      item.ingredientId === ingredientId
-        ? { ...item, purchased: !item.purchased }
-        : item
-    ));
+    setShoppingList(prev => {
+      const next = prev.map(item =>
+        item.ingredientId === ingredientId
+          ? { ...item, purchased: !item.purchased }
+          : item
+      );
+      saveChecks(next);
+      return next;
+    });
+  };
+
+  const handleClearAll = () => {
+    localStorage.removeItem(storageKey);
+    setShoppingList(prev => prev.map(item => ({ ...item, purchased: false })));
   };
 
   const handleServingsChange = (ingredientId: string, servings: number) => {
@@ -117,6 +149,10 @@ const ShoppingPage = () => {
               <Button variant="outline" onClick={handlePrint} className="gap-2">
                 <Printer className="h-4 w-4" />
                 Print
+              </Button>
+              <Button variant="outline" onClick={handleClearAll} className="gap-2" disabled={purchasedCount === 0}>
+                <XCircle className="h-4 w-4" />
+                Clear checks
               </Button>
               <div className="flex-1" />
               <Badge variant="secondary" className="text-sm">

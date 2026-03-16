@@ -118,6 +118,7 @@ export function IngredientsProvider({ children }: { children: ReactNode }) {
   };
 
   const addIngredient = async (ingredient: BaseIngredient) => {
+    const previous = ingredients;
     setIngredients(prev => [...prev, ingredient]);
 
     if (!user) return;
@@ -138,6 +139,7 @@ export function IngredientsProvider({ children }: { children: ReactNode }) {
     }).select().single();
 
     if (error) {
+      setIngredients(previous);
       console.error('Error adding ingredient:', error);
       toast.error('Failed to save ingredient');
     } else if (data) {
@@ -148,11 +150,12 @@ export function IngredientsProvider({ children }: { children: ReactNode }) {
   };
 
   const updateIngredient = async (id: string, updates: Partial<BaseIngredient>) => {
+    const previous = ingredients;
     setIngredients(prev => prev.map(ing => ing.id === id ? { ...ing, ...updates } : ing));
 
     if (!user) return;
 
-    await supabase.from('ingredients').update({
+    const { error: updateError } = await supabase.from('ingredients').update({
       ...(updates.name !== undefined && { name: updates.name }),
       ...(updates.caloriesPerServing !== undefined && { calories_per_serving: updates.caloriesPerServing }),
       ...(updates.proteinPerServing !== undefined && { protein_per_serving: updates.proteinPerServing }),
@@ -165,14 +168,23 @@ export function IngredientsProvider({ children }: { children: ReactNode }) {
       ...(updates.servingDescription !== undefined && { serving_description: updates.servingDescription }),
       ...(updates.servingGrams !== undefined && { serving_grams: updates.servingGrams }),
     }).eq('id', id).eq('user_id', user.id);
+    if (updateError) {
+      setIngredients(previous);
+      toast.error('Failed to update ingredient');
+    }
   };
 
   const deleteIngredient = async (id: string) => {
+    const previous = ingredients;
     setIngredients(prev => prev.filter(ing => ing.id !== id));
 
     if (!user) return;
 
-    await supabase.from('ingredients').delete().eq('id', id).eq('user_id', user.id);
+    const { error } = await supabase.from('ingredients').delete().eq('id', id).eq('user_id', user.id);
+    if (error) {
+      setIngredients(previous);
+      toast.error('Failed to delete ingredient');
+    }
   };
 
   return (

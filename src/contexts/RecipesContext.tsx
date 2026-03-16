@@ -115,10 +115,12 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
   }, [ingredients]);
 
   const addRecipe = async (recipe: Recipe) => {
+    const previous = recipes;
     setRecipes(prev => [...prev, recipe]);
 
     if (!user) return;
 
+    try {
     const { data: recipeData, error: recipeError } = await supabase.from('recipes').insert({
       user_id: user.id,
       name: recipe.name,
@@ -134,11 +136,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
       link: recipe.link,
     }).select().single();
 
-    if (recipeError || !recipeData) {
-      console.error('Error adding recipe:', recipeError);
-      toast.error('Failed to save recipe');
-      return;
-    }
+    if (recipeError || !recipeData) throw recipeError || new Error('No recipe data');
 
     if (recipe.ingredients.length > 0) {
       await supabase.from('recipe_ingredients').insert(
@@ -164,14 +162,20 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
     setRecipes(prev => prev.map(r =>
       r.id === recipe.id ? { ...r, id: recipeData.id } : r
     ));
+    } catch {
+      setRecipes(previous);
+      toast.error('Failed to save recipe');
+    }
   };
 
   const updateRecipe = async (id: string, updates: Partial<Recipe>) => {
+    const previous = recipes;
     setRecipes(prev => prev.map(rec => rec.id === id ? { ...rec, ...updates } : rec));
 
     if (!user) return;
 
-    await supabase.from('recipes').update({
+    try {
+    const { error: recipeUpdateError } = await supabase.from('recipes').update({
       ...(updates.name !== undefined && { name: updates.name }),
       ...(updates.description !== undefined && { description: updates.description }),
       ...(updates.image !== undefined && { image: updates.image }),
@@ -186,6 +190,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
         total_carbs: updates.totalMacros.carbs,
       }),
     }).eq('id', id).eq('user_id', user.id);
+    if (recipeUpdateError) throw recipeUpdateError;
 
     if (updates.ingredients) {
       await supabase.from('recipe_ingredients').delete().eq('recipe_id', id);
@@ -213,14 +218,23 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
         );
       }
     }
+    } catch {
+      setRecipes(previous);
+      toast.error('Failed to update recipe');
+    }
   };
 
   const deleteRecipe = async (id: string) => {
+    const previous = recipes;
     setRecipes(prev => prev.filter(rec => rec.id !== id));
 
     if (!user) return;
 
-    await supabase.from('recipes').delete().eq('id', id).eq('user_id', user.id);
+    const { error } = await supabase.from('recipes').delete().eq('id', id).eq('user_id', user.id);
+    if (error) {
+      setRecipes(previous);
+      toast.error('Failed to delete recipe');
+    }
   };
 
   const allTags = useMemo(() => {
@@ -230,6 +244,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
   }, [recipes]);
 
   const renameTag = async (oldName: string, newName: string) => {
+    const previous = recipes;
     setRecipes(prev => prev.map(r => ({
       ...r,
       tags: r.tags.map(t => t === oldName ? newName : t),
@@ -237,14 +252,19 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
 
     if (!user) return;
 
-    await supabase
+    const { error } = await supabase
       .from('recipe_tags')
       .update({ tag_name: newName })
       .eq('tag_name', oldName)
       .eq('user_id', user.id);
+    if (error) {
+      setRecipes(previous);
+      toast.error('Failed to rename tag');
+    }
   };
 
   const deleteTag = async (tagName: string) => {
+    const previous = recipes;
     setRecipes(prev => prev.map(r => ({
       ...r,
       tags: r.tags.filter(t => t !== tagName),
@@ -252,11 +272,15 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
 
     if (!user) return;
 
-    await supabase
+    const { error } = await supabase
       .from('recipe_tags')
       .delete()
       .eq('tag_name', tagName)
       .eq('user_id', user.id);
+    if (error) {
+      setRecipes(previous);
+      toast.error('Failed to delete tag');
+    }
   };
 
   return (
