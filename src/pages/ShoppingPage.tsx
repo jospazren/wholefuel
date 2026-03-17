@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { ShoppingItem } from '@/types/meal';
@@ -15,34 +15,23 @@ const ShoppingPage = () => {
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
   const [isGenerated, setIsGenerated] = useState(false);
 
-  const storageKey = `wholefuel-shopping-list-${currentWeekStart}`;
+  const storageKey = `wholefuel-shopping-checks-${currentWeekStart}`;
 
-  const getStoredList = (): ShoppingItem[] | null => {
+  const getStoredChecks = (): Set<string> => {
     try {
       const stored = localStorage.getItem(storageKey);
-      return stored ? (JSON.parse(stored) as ShoppingItem[]) : null;
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set();
     } catch {
-      return null;
+      return new Set();
     }
   };
 
-  const saveList = (items: ShoppingItem[]) => {
+  const saveChecks = (items: ShoppingItem[]) => {
     try {
-      localStorage.setItem(storageKey, JSON.stringify(items));
+      const checkedIds = items.filter(i => i.purchased).map(i => i.ingredientId);
+      localStorage.setItem(storageKey, JSON.stringify(checkedIds));
     } catch {}
   };
-
-  // Restore persisted list on mount / when week changes
-  useEffect(() => {
-    const stored = getStoredList();
-    if (stored && stored.length > 0) {
-      setShoppingList(stored);
-      setIsGenerated(true);
-    } else {
-      setShoppingList([]);
-      setIsGenerated(false);
-    }
-  }, [currentWeekStart]);
 
   // Check if there are any meals in the plan
   const hasMeals = Object.values(weeklyPlan).some(day =>
@@ -51,15 +40,13 @@ const ShoppingPage = () => {
 
   const handleGenerate = () => {
     const list = generateShoppingList();
-    // Preserve existing check state when refreshing
-    const currentChecked = new Set(shoppingList.filter(i => i.purchased).map(i => i.ingredientId));
+    const checked = getStoredChecks();
     const listWithChecks = list.map(item => ({
       ...item,
-      purchased: currentChecked.has(item.ingredientId),
+      purchased: checked.has(item.ingredientId),
     }));
     setShoppingList(listWithChecks);
     setIsGenerated(true);
-    saveList(listWithChecks);
   };
 
   const handleTogglePurchased = (ingredientId: string) => {
@@ -69,17 +56,14 @@ const ShoppingPage = () => {
           ? { ...item, purchased: !item.purchased }
           : item
       );
-      saveList(next);
+      saveChecks(next);
       return next;
     });
   };
 
   const handleClearAll = () => {
-    setShoppingList(prev => {
-      const next = prev.map(item => ({ ...item, purchased: false }));
-      saveList(next);
-      return next;
-    });
+    localStorage.removeItem(storageKey);
+    setShoppingList(prev => prev.map(item => ({ ...item, purchased: false })));
   };
 
   const handleServingsChange = (ingredientId: string, servings: number) => {
