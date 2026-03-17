@@ -19,7 +19,7 @@ function createAuthClient(authHeader: string) {
 }
 
 function createServiceClient() {
-  return createClient(
+  return createClient<any>(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
