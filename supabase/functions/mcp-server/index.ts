@@ -11,7 +11,7 @@ const corsHeaders = {
 const app = new Hono();
 
 function createAuthClient(authHeader: string) {
-  return createClient(
+  return createClient<any>(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_ANON_KEY')!,
     { global: { headers: { Authorization: authHeader } } }
@@ -19,7 +19,7 @@ function createAuthClient(authHeader: string) {
 }
 
 function createServiceClient() {
-  return createClient(
+  return createClient<any>(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
@@ -58,7 +58,7 @@ async function validateApiKey(apiKey: string) {
   if (error || !keyData || keyData.revoked_at) return null;
   if (keyData.expires_at && new Date(keyData.expires_at) < new Date()) return null;
   serviceClient.from('mcp_api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyData.id).then(() => {});
-  const userSupabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const userSupabase = createClient<any>(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   return { userId: keyData.user_id, supabase: userSupabase };
 }
 
