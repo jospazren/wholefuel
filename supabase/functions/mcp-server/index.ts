@@ -11,7 +11,7 @@ const corsHeaders = {
 const app = new Hono();
 
 function createAuthClient(authHeader: string) {
-  return createClient(
+  return createClient<any>(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_ANON_KEY')!,
     { global: { headers: { Authorization: authHeader } } }
