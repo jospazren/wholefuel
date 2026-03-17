@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { McpServer, StreamableHttpTransport } from "mcp-lite";
 import { createClient } from "@supabase/supabase-js";
-import { AsyncLocalStorage } from "node:async_hooks";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,9 +32,9 @@ async function hashApiKey(key: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-type AuthContext = { userId: string; supabase: ReturnType<typeof createClient> };
-const authStorage = new AsyncLocalStorage<AuthContext>();
-function getCurrentAuth() { return authStorage.getStore() ?? null; }
+let currentAuthContext: { userId: string; supabase: ReturnType<typeof createClient> } | null = null;
+function getCurrentAuth() { return currentAuthContext; }
+function setCurrentAuth(auth: typeof currentAuthContext) { currentAuthContext = auth; }
 
 async function validateAuth(authHeader: string | null) {
   if (!authHeader?.startsWith('Bearer ')) return null;
@@ -706,12 +705,15 @@ app.all('/*', async (c) => {
     if (!auth) {
       return new Response(JSON.stringify({ jsonrpc: "2.0", id: body?.id ?? null, error: { code: -32001, message: "Unauthorized" } }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
-    return await authStorage.run(auth, async () => {
+    setCurrentAuth(auth);
+    try {
       const response = await httpHandler(c.req.raw);
       const newHeaders = new Headers(response.headers);
       Object.entries(corsHeaders).forEach(([k, v]) => newHeaders.set(k, v));
       return new Response(response.body, { status: response.status, headers: newHeaders });
-    });
+    } finally {
+      setCurrentAuth(null);
+    }
   }
 
   const response = await httpHandler(c.req.raw);

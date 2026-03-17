@@ -27,6 +27,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
   const { ingredients } = useIngredients();
   const [recipes, setRecipes] = useState<Recipe[]>(defaultRecipes);
   const [isLoading, setIsLoading] = useState(true);
+  const [dbRecipeMap, setDbRecipeMap] = useState<Map<string, string>>(new Map());
 
   const isAuthPage = location.pathname === '/auth';
 
@@ -35,6 +36,7 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
       loadRecipes();
     } else if (!user) {
       setRecipes(defaultRecipes);
+      setDbRecipeMap(new Map());
       setIsLoading(false);
     }
   }, [user, isAuthPage]);
@@ -61,21 +63,23 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
       if (dbRecipes && dbRecipes.length > 0) {
         const tagsByRecipe = new Map<string, string[]>();
         if (dbTags) {
-          dbTags.forEach((t) => {
+          dbTags.forEach((t: any) => {
             const existing = tagsByRecipe.get(t.recipe_id) || [];
             existing.push(t.tag_name);
             tagsByRecipe.set(t.recipe_id, existing);
           });
         }
 
+        const recipeMap = new Map<string, string>();
         const loadedRecipes: Recipe[] = dbRecipes.map(rec => {
+          recipeMap.set(rec.id, rec.id);
           return {
             id: rec.id,
             name: rec.name,
             description: rec.description || '',
             image: rec.image || undefined,
             tags: tagsByRecipe.get(rec.id) || [],
-            ingredients: (rec.recipe_ingredients || []).map((ri) => ({
+            ingredients: (rec.recipe_ingredients || []).map((ri: any) => ({
               ingredientId: ri.ingredient_id,
               name: ri.name,
               servingMultiplier: Number(ri.serving_multiplier),
@@ -86,12 +90,13 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
               fat: Number(rec.total_fat),
               carbs: Number(rec.total_carbs),
             },
-            instructions: rec.instructions || undefined,
-            notes: rec.notes || undefined,
-            link: rec.link || undefined,
+            instructions: (rec as any).instructions || undefined,
+            notes: (rec as any).notes || undefined,
+            link: (rec as any).link || undefined,
           };
         });
         setRecipes(loadedRecipes);
+        setDbRecipeMap(recipeMap);
       }
     } catch (error) {
       console.error('Error loading recipes:', error);
@@ -115,12 +120,10 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
   }, [ingredients]);
 
   const addRecipe = async (recipe: Recipe) => {
-    const previous = recipes;
     setRecipes(prev => [...prev, recipe]);
 
     if (!user) return;
 
-    try {
     const { data: recipeData, error: recipeError } = await supabase.from('recipes').insert({
       user_id: user.id,
       name: recipe.name,
@@ -134,9 +137,13 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
       instructions: recipe.instructions,
       notes: recipe.notes,
       link: recipe.link,
-    }).select().single();
+    } as any).select().single();
 
-    if (recipeError || !recipeData) throw recipeError || new Error('No recipe data');
+    if (recipeError || !recipeData) {
+      console.error('Error adding recipe:', recipeError);
+      toast.error('Failed to save recipe');
+      return;
+    }
 
     if (recipe.ingredients.length > 0) {
       await supabase.from('recipe_ingredients').insert(
@@ -155,42 +162,36 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
           recipe_id: recipeData.id,
           tag_name: tag,
           user_id: user.id,
-        }))
+        })) as any
       );
     }
 
     setRecipes(prev => prev.map(r =>
       r.id === recipe.id ? { ...r, id: recipeData.id } : r
     ));
-    } catch {
-      setRecipes(previous);
-      toast.error('Failed to save recipe');
-    }
   };
 
   const updateRecipe = async (id: string, updates: Partial<Recipe>) => {
-    const previous = recipes;
     setRecipes(prev => prev.map(rec => rec.id === id ? { ...rec, ...updates } : rec));
 
     if (!user) return;
 
-    try {
-    const { error: recipeUpdateError } = await supabase.from('recipes').update({
-      ...(updates.name !== undefined && { name: updates.name }),
-      ...(updates.description !== undefined && { description: updates.description }),
-      ...(updates.image !== undefined && { image: updates.image }),
-      ...(updates.tags !== undefined && { category: updates.tags?.[0] || null }),
-      ...(updates.instructions !== undefined && { instructions: updates.instructions }),
-      ...(updates.notes !== undefined && { notes: updates.notes }),
-      ...(updates.link !== undefined && { link: updates.link }),
-      ...(updates.totalMacros !== undefined && {
-        total_calories: updates.totalMacros.calories,
-        total_protein: updates.totalMacros.protein,
-        total_fat: updates.totalMacros.fat,
-        total_carbs: updates.totalMacros.carbs,
-      }),
-    }).eq('id', id).eq('user_id', user.id);
-    if (recipeUpdateError) throw recipeUpdateError;
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.image !== undefined) dbUpdates.image = updates.image;
+    if (updates.tags !== undefined) dbUpdates.category = updates.tags?.[0] || null;
+    if (updates.instructions !== undefined) dbUpdates.instructions = updates.instructions;
+    if (updates.notes !== undefined) dbUpdates.notes = updates.notes;
+    if (updates.link !== undefined) dbUpdates.link = updates.link;
+    if (updates.totalMacros !== undefined) {
+      dbUpdates.total_calories = updates.totalMacros.calories;
+      dbUpdates.total_protein = updates.totalMacros.protein;
+      dbUpdates.total_fat = updates.totalMacros.fat;
+      dbUpdates.total_carbs = updates.totalMacros.carbs;
+    }
+
+    await supabase.from('recipes').update(dbUpdates).eq('id', id).eq('user_id', user.id);
 
     if (updates.ingredients) {
       await supabase.from('recipe_ingredients').delete().eq('recipe_id', id);
@@ -214,27 +215,18 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
             recipe_id: id,
             tag_name: tag,
             user_id: user.id,
-          }))
+          })) as any
         );
       }
-    }
-    } catch {
-      setRecipes(previous);
-      toast.error('Failed to update recipe');
     }
   };
 
   const deleteRecipe = async (id: string) => {
-    const previous = recipes;
     setRecipes(prev => prev.filter(rec => rec.id !== id));
 
     if (!user) return;
 
-    const { error } = await supabase.from('recipes').delete().eq('id', id).eq('user_id', user.id);
-    if (error) {
-      setRecipes(previous);
-      toast.error('Failed to delete recipe');
-    }
+    await supabase.from('recipes').delete().eq('id', id).eq('user_id', user.id);
   };
 
   const allTags = useMemo(() => {
@@ -244,7 +236,6 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
   }, [recipes]);
 
   const renameTag = async (oldName: string, newName: string) => {
-    const previous = recipes;
     setRecipes(prev => prev.map(r => ({
       ...r,
       tags: r.tags.map(t => t === oldName ? newName : t),
@@ -252,19 +243,14 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
 
     if (!user) return;
 
-    const { error } = await supabase
+    await supabase
       .from('recipe_tags')
-      .update({ tag_name: newName })
+      .update({ tag_name: newName } as any)
       .eq('tag_name', oldName)
       .eq('user_id', user.id);
-    if (error) {
-      setRecipes(previous);
-      toast.error('Failed to rename tag');
-    }
   };
 
   const deleteTag = async (tagName: string) => {
-    const previous = recipes;
     setRecipes(prev => prev.map(r => ({
       ...r,
       tags: r.tags.filter(t => t !== tagName),
@@ -272,15 +258,11 @@ export function RecipesProvider({ children }: { children: ReactNode }) {
 
     if (!user) return;
 
-    const { error } = await supabase
+    await supabase
       .from('recipe_tags')
       .delete()
       .eq('tag_name', tagName)
       .eq('user_id', user.id);
-    if (error) {
-      setRecipes(previous);
-      toast.error('Failed to delete tag');
-    }
   };
 
   return (

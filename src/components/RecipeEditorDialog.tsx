@@ -671,7 +671,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
                 value={formNotes}
                 onChange={(e) => setFormNotes(e.target.value)}
                 placeholder="Add notes about this recipe..."
-                className="w-full min-h-[100px] rounded-xl bg-accent px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground resize-y outline-none focus:ring-2 focus:ring-ring"
+                className="w-full min-h-[100plg bg-accent px-4 pg bg-accenty-3 text-sm text-foreground placeholder:text-muted-foreground resize-y outline-none focus:ring-2 focus:ring-ring"
               />
             </div>
           </div>
