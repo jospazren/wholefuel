@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { ShoppingItem } from '@/types/meal';
@@ -7,13 +7,42 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingCart, Download, Printer, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { ShoppingCart, Download, Printer, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ShoppingPage = () => {
-  const { generateShoppingList, weeklyPlan } = useMealPlan();
+  const { generateShoppingList, weeklyPlan, currentWeekStart } = useMealPlan();
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
   const [isGenerated, setIsGenerated] = useState(false);
+
+  const storageKey = `wholefuel-shopping-list-${currentWeekStart}`;
+
+  const getStoredList = (): ShoppingItem[] | null => {
+    try {
+      const stored = localStorage.getItem(storageKey);
+      return stored ? (JSON.parse(stored) as ShoppingItem[]) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const saveList = (items: ShoppingItem[]) => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(items));
+    } catch {}
+  };
+
+  // Restore persisted list on mount / when week changes
+  useEffect(() => {
+    const stored = getStoredList();
+    if (stored && stored.length > 0) {
+      setShoppingList(stored);
+      setIsGenerated(true);
+    } else {
+      setShoppingList([]);
+      setIsGenerated(false);
+    }
+  }, [currentWeekStart]);
 
   // Check if there are any meals in the plan
   const hasMeals = Object.values(weeklyPlan).some(day =>
@@ -22,16 +51,35 @@ const ShoppingPage = () => {
 
   const handleGenerate = () => {
     const list = generateShoppingList();
-    setShoppingList(list);
+    // Preserve existing check state when refreshing
+    const currentChecked = new Set(shoppingList.filter(i => i.purchased).map(i => i.ingredientId));
+    const listWithChecks = list.map(item => ({
+      ...item,
+      purchased: currentChecked.has(item.ingredientId),
+    }));
+    setShoppingList(listWithChecks);
     setIsGenerated(true);
+    saveList(listWithChecks);
   };
 
   const handleTogglePurchased = (ingredientId: string) => {
-    setShoppingList(prev => prev.map(item =>
-      item.ingredientId === ingredientId
-        ? { ...item, purchased: !item.purchased }
-        : item
-    ));
+    setShoppingList(prev => {
+      const next = prev.map(item =>
+        item.ingredientId === ingredientId
+          ? { ...item, purchased: !item.purchased }
+          : item
+      );
+      saveList(next);
+      return next;
+    });
+  };
+
+  const handleClearAll = () => {
+    setShoppingList(prev => {
+      const next = prev.map(item => ({ ...item, purchased: false }));
+      saveList(next);
+      return next;
+    });
   };
 
   const handleServingsChange = (ingredientId: string, servings: number) => {
@@ -117,6 +165,10 @@ const ShoppingPage = () => {
               <Button variant="outline" onClick={handlePrint} className="gap-2">
                 <Printer className="h-4 w-4" />
                 Print
+              </Button>
+              <Button variant="outline" onClick={handleClearAll} className="gap-2" disabled={purchasedCount === 0}>
+                <XCircle className="h-4 w-4" />
+                Clear checks
               </Button>
               <div className="flex-1" />
               <Badge variant="secondary" className="text-sm">

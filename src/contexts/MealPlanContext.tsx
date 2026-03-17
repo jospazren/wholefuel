@@ -162,7 +162,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
 
       // Process diet presets
       if (presetsResult.data) {
-        setDietPresets(presetsResult.data.map((p: any) => ({
+        setDietPresets(presetsResult.data.map((p) => ({
           id: p.id, name: p.name,
           tdeeMultiplier: Number(p.tdee_multiplier),
           proteinPerKg: p.protein_per_kg != null ? Number(p.protein_per_kg) : null,
@@ -181,8 +181,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           protein: Number(dt.protein),
           fat: Number(dt.fat),
           carbs: Number(dt.carbs),
-          presetId: (dt as any).preset_id || null,
-          weightKg: Number((dt as any).weight_kg) || 80,
+          presetId: dt.preset_id || null,
+          weightKg: Number(dt.weight_kg) || 80,
         });
       } else {
         // Fallback to most recent targets
@@ -202,8 +202,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
             protein: Number(latestTargets.protein),
             fat: Number(latestTargets.fat),
             carbs: Number(latestTargets.carbs),
-            presetId: (latestTargets as any).preset_id || null,
-            weightKg: Number((latestTargets as any).weight_kg) || 80,
+            presetId: latestTargets.preset_id || null,
+            weightKg: Number(latestTargets.weight_kg) || 80,
           });
         } else {
           setWeeklyTargetsState(defaultTargets);
@@ -217,7 +217,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           monday: {}, tuesday: {}, wednesday: {}, thursday: {},
           friday: {}, saturday: {}, sunday: {},
         };
-        dbMealPlans.forEach((mp: any) => {
+        dbMealPlans.forEach((mp) => {
           const day = mp.day_of_week as DayOfWeek;
           const slot = mp.meal_slot as MealSlot;
           loadedPlan[day][slot] = {
@@ -249,6 +249,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
   };
 
   const setWeeklyTargets = async (targets: WeeklyTargets) => {
+    const previousTargets = weeklyTargets;
     setWeeklyTargetsState(targets);
     if (!user) return;
 
@@ -265,9 +266,10 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         carbs: targets.carbs,
         preset_id: targets.presetId,
         weight_kg: targets.weightKg,
-      } as any, { onConflict: 'user_id,week_start_date' });
+      }, { onConflict: 'user_id,week_start_date' });
 
     if (error) {
+      setWeeklyTargetsState(previousTargets);
       console.error('Error saving targets:', error);
       toast.error('Failed to save targets');
     }
@@ -275,6 +277,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
 
   // Diet Preset CRUD
   const addDietPreset = async (preset: DietPreset) => {
+    const previousPresets = dietPresets;
     setDietPresets(prev => [...prev, preset]);
     if (!user) return;
     const { data, error } = await supabase.from('diet_presets').insert({
@@ -283,28 +286,41 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       protein_per_kg: preset.proteinPerKg,
       carbs_per_kg: preset.carbsPerKg,
       fat_per_kg: preset.fatPerKg,
-    } as any).select().single();
-    if (error) { toast.error('Failed to save preset'); }
-    else if (data) { setDietPresets(prev => prev.map(p => p.id === preset.id ? { ...p, id: data.id } : p)); }
+    }).select().single();
+    if (error) {
+      setDietPresets(previousPresets);
+      toast.error('Failed to save preset');
+    } else if (data) { setDietPresets(prev => prev.map(p => p.id === preset.id ? { ...p, id: data.id } : p)); }
   };
 
   const updateDietPreset = async (id: string, preset: DietPreset) => {
+    const previousPresets = dietPresets;
     setDietPresets(prev => prev.map(p => p.id === id ? preset : p));
     if (!user) return;
-    await supabase.from('diet_presets').update({
+    const { error } = await supabase.from('diet_presets').update({
       name: preset.name, tdee_multiplier: preset.tdeeMultiplier,
       protein_per_kg: preset.proteinPerKg, carbs_per_kg: preset.carbsPerKg, fat_per_kg: preset.fatPerKg,
-    } as any).eq('id', id).eq('user_id', user.id);
+    }).eq('id', id).eq('user_id', user.id);
+    if (error) {
+      setDietPresets(previousPresets);
+      toast.error('Failed to update preset');
+    }
   };
 
   const deleteDietPreset = async (id: string) => {
+    const previousPresets = dietPresets;
     setDietPresets(prev => prev.filter(p => p.id !== id));
     if (!user) return;
-    await supabase.from('diet_presets').delete().eq('id', id).eq('user_id', user.id);
+    const { error } = await supabase.from('diet_presets').delete().eq('id', id).eq('user_id', user.id);
+    if (error) {
+      setDietPresets(previousPresets);
+      toast.error('Failed to delete preset');
+    }
   };
 
   // Meal scheduling
   const addMealToSlot = async (day: DayOfWeek, slot: MealSlot, recipe: Recipe) => {
+    const previousPlan = weeklyPlan;
     // Create a meal entity from the recipe
     const meal = await createMealFromRecipe(recipe);
     if (!meal) return;
@@ -329,11 +345,13 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         day_of_week: day,
         meal_slot: slot,
         meal_id: meal.id,
-      } as any, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' })
+      }, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' })
       .select()
       .single();
 
     if (error) {
+      setWeeklyPlan(previousPlan);
+      await deleteMealEntity(meal.id);
       console.error('Error adding meal to slot:', error);
       toast.error('Failed to save meal');
     } else if (data) {
@@ -346,6 +364,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
 
   const removeMealFromSlot = async (day: DayOfWeek, slot: MealSlot) => {
     const assignment = weeklyPlan[day][slot];
+    const previousPlan = weeklyPlan;
 
     setWeeklyPlan(prev => ({
       ...prev,
@@ -354,16 +373,21 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
 
     if (!user) return;
 
-    // Delete the meal_plans row
-    await supabase.from('meal_plans').delete()
-      .eq('user_id', user.id)
-      .eq('week_start_date', currentWeekStart)
-      .eq('day_of_week', day)
-      .eq('meal_slot', slot);
+    try {
+      const { error } = await supabase.from('meal_plans').delete()
+        .eq('user_id', user.id)
+        .eq('week_start_date', currentWeekStart)
+        .eq('day_of_week', day)
+        .eq('meal_slot', slot);
+      if (error) throw error;
 
-    // Also delete the meal entity (it was created for this slot)
-    if (assignment) {
-      await deleteMealEntity(assignment.mealId);
+      // Also delete the meal entity (it was created for this slot)
+      if (assignment) {
+        await deleteMealEntity(assignment.mealId);
+      }
+    } catch {
+      setWeeklyPlan(previousPlan);
+      toast.error('Failed to remove meal');
     }
   };
 
@@ -374,6 +398,8 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     if (!sourceAssignment) return;
     if (fromDay === toDay && fromSlot === toSlot) return;
 
+    const previousPlan = weeklyPlan;
+
     setWeeklyPlan(prev => {
       const updated = { ...prev };
       updated[fromDay] = { ...prev[fromDay], [fromSlot]: targetAssignment };
@@ -383,31 +409,36 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
 
     if (!user) return;
 
-    // Delete source slot
-    await supabase.from('meal_plans').delete()
-      .eq('user_id', user.id)
-      .eq('week_start_date', currentWeekStart)
-      .eq('day_of_week', fromDay)
-      .eq('meal_slot', fromSlot);
+    try {
+      const { error: deleteError } = await supabase.from('meal_plans').delete()
+        .eq('user_id', user.id)
+        .eq('week_start_date', currentWeekStart)
+        .eq('day_of_week', fromDay)
+        .eq('meal_slot', fromSlot);
+      if (deleteError) throw deleteError;
 
-    // Upsert source meal into target slot
-    await supabase.from('meal_plans').upsert({
-      user_id: user.id,
-      week_start_date: currentWeekStart,
-      day_of_week: toDay,
-      meal_slot: toSlot,
-      meal_id: sourceAssignment.mealId,
-    } as any, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' });
-
-    // If there was a target meal, move it to source slot
-    if (targetAssignment) {
-      await supabase.from('meal_plans').upsert({
+      const { error: upsertError } = await supabase.from('meal_plans').upsert({
         user_id: user.id,
         week_start_date: currentWeekStart,
-        day_of_week: fromDay,
-        meal_slot: fromSlot,
-        meal_id: targetAssignment.mealId,
-      } as any, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' });
+        day_of_week: toDay,
+        meal_slot: toSlot,
+        meal_id: sourceAssignment.mealId,
+      }, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' });
+      if (upsertError) throw upsertError;
+
+      if (targetAssignment) {
+        const { error: swapError } = await supabase.from('meal_plans').upsert({
+          user_id: user.id,
+          week_start_date: currentWeekStart,
+          day_of_week: fromDay,
+          meal_slot: fromSlot,
+          meal_id: targetAssignment.mealId,
+        }, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' });
+        if (swapError) throw swapError;
+      }
+    } catch {
+      setWeeklyPlan(previousPlan);
+      toast.error('Failed to move meal');
     }
   };
 

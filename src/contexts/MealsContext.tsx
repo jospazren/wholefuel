@@ -54,12 +54,12 @@ export function MealsProvider({ children }: { children: ReactNode }) {
 
       if (dbMeals) {
         const mealsMap = new Map<string, Meal>();
-        dbMeals.forEach((m: any) => {
+        dbMeals.forEach((m) => {
           mealsMap.set(m.id, {
             id: m.id,
             name: m.name,
             sourceRecipeId: m.source_recipe_id || null,
-            ingredients: (m.meal_ingredients || []).map((mi: any) => ({
+            ingredients: (m.meal_ingredients || []).map((mi) => ({
               ingredientId: mi.ingredient_id,
               name: mi.name,
               servingMultiplier: Number(mi.serving_multiplier),
@@ -102,7 +102,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
         user_id: user.id,
         source_recipe_id: recipe.id,
         name: recipe.name,
-      } as any)
+      })
       .select()
       .single();
 
@@ -121,7 +121,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
             ingredient_id: ing.ingredientId,
             name: ing.name,
             serving_multiplier: ing.servingMultiplier,
-          })) as any
+          }))
         );
 
       if (ingError) {
@@ -150,6 +150,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
   };
 
   const updateMeal = async (id: string, updates: Partial<Pick<Meal, 'name' | 'ingredients'>>) => {
+    const previousMeals = meals;
     setMeals(prev => {
       const next = new Map(prev);
       const existing = next.get(id);
@@ -161,26 +162,34 @@ export function MealsProvider({ children }: { children: ReactNode }) {
 
     if (!user) return;
 
-    if (updates.name !== undefined) {
-      await supabase.from('meals').update({ name: updates.name } as any).eq('id', id);
-    }
-
-    if (updates.ingredients) {
-      await supabase.from('meal_ingredients').delete().eq('meal_id', id);
-      if (updates.ingredients.length > 0) {
-        await supabase.from('meal_ingredients').insert(
-          updates.ingredients.map(ing => ({
-            meal_id: id,
-            ingredient_id: ing.ingredientId,
-            name: ing.name,
-            serving_multiplier: ing.servingMultiplier,
-          })) as any
-        );
+    try {
+      if (updates.name !== undefined) {
+        const { error } = await supabase.from('meals').update({ name: updates.name }).eq('id', id);
+        if (error) throw error;
       }
+
+      if (updates.ingredients) {
+        await supabase.from('meal_ingredients').delete().eq('meal_id', id);
+        if (updates.ingredients.length > 0) {
+          const { error } = await supabase.from('meal_ingredients').insert(
+            updates.ingredients.map(ing => ({
+              meal_id: id,
+              ingredient_id: ing.ingredientId,
+              name: ing.name,
+              serving_multiplier: ing.servingMultiplier,
+            }))
+          );
+          if (error) throw error;
+        }
+      }
+    } catch {
+      setMeals(previousMeals);
+      toast.error('Failed to update meal');
     }
   };
 
   const deleteMeal = async (id: string) => {
+    const previousMeals = meals;
     setMeals(prev => {
       const next = new Map(prev);
       next.delete(id);
@@ -189,7 +198,11 @@ export function MealsProvider({ children }: { children: ReactNode }) {
 
     if (!user) return;
 
-    await supabase.from('meals').delete().eq('id', id);
+    const { error } = await supabase.from('meals').delete().eq('id', id);
+    if (error) {
+      setMeals(previousMeals);
+      toast.error('Failed to delete meal');
+    }
   };
 
   return (

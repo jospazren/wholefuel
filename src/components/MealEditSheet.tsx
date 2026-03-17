@@ -1,4 +1,4 @@
-import { MealSlotEntry, DayOfWeek, MealSlot, Recipe } from '@/types/meal';
+import { MealSlotEntry, DayOfWeek, MealSlot, Recipe, RecipeIngredient } from '@/types/meal';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useRecipes } from '@/contexts/RecipesContext';
 import { useMeals } from '@/contexts/MealsContext';
@@ -56,7 +56,7 @@ export function MealEditSheet({ meal: entry, day, slot, open, onClose }: MealEdi
     onDelete: handleDelete,
   };
 
-  const handleSave = (data: { name: string; ingredients: any[] }) => {
+  const handleSave = (data: { name: string; ingredients: RecipeIngredient[] }) => {
     updateMeal(entry.mealId, {
       name: data.name,
       ingredients: data.ingredients,
