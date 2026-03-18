@@ -475,6 +475,13 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     return totals;
   };
 
+  // Memoized ingredient lookup map for O(1) access
+  const ingredientMap = useMemo(() => {
+    const map = new Map<string, typeof ingredients[0]>();
+    ingredients.forEach(i => map.set(i.id, i));
+    return map;
+  }, [ingredients]);
+
   // Shopping list — computed from meal ingredients
   const generateShoppingList = (): ShoppingItem[] => {
     const itemMap = new Map<string, ShoppingItem>();
@@ -486,7 +493,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           const meal = getMeal(assignment.mealId);
           if (meal) {
             meal.ingredients.forEach(ing => {
-              const ingData = ingredients.find(i => i.id === ing.ingredientId);
+              const ingData = ingredientMap.get(ing.ingredientId);
               const servingDescription = ingData?.servingDescription || '100g';
 
               const existing = itemMap.get(ing.ingredientId);

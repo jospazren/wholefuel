@@ -80,9 +80,16 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     return meals.get(id);
   }, [meals]);
 
+  // Memoized ingredient lookup map for O(1) access
+  const ingredientMap = useMemo(() => {
+    const map = new Map<string, BaseIngredient>();
+    ingredients.forEach(i => map.set(i.id, i));
+    return map;
+  }, [ingredients]);
+
   const getMealMacros = useCallback((meal: Meal): Macros => {
     return meal.ingredients.reduce((totals, ing) => {
-      const baseIng = ingredients.find(i => i.id === ing.ingredientId);
+      const baseIng = ingredientMap.get(ing.ingredientId);
       if (baseIng) {
         totals.calories += Math.round(baseIng.caloriesPerServing * ing.servingMultiplier);
         totals.protein += Math.round(baseIng.proteinPerServing * ing.servingMultiplier);
@@ -91,7 +98,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
       }
       return totals;
     }, { calories: 0, protein: 0, fat: 0, carbs: 0 });
-  }, [ingredients]);
+  }, [ingredientMap]);
 
   const createMealFromRecipe = async (recipe: Recipe): Promise<Meal | null> => {
     if (!user) return null;
