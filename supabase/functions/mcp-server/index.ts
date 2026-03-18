@@ -317,7 +317,7 @@ mcpServer.tool("bulk_create_ingredients", {
   handler: async (input: unknown) => {
     const auth = getCurrentAuth();
     if (!auth) return { content: [{ type: "text", text: "Unauthorized" }] };
-    const { ingredients } = input as { ingredients: any[] };
+    const { ingredients } = input as { ingredients: CreateIngredientInput[] };
     if (!ingredients?.length) return { content: [{ type: "text", text: "No ingredients provided" }] };
     const rows = ingredients.map(i => ({ name: i.name, calories_per_serving: i.calories_per_serving, protein_per_serving: i.protein_per_serving, fat_per_serving: i.fat_per_serving, carbs_per_serving: i.carbs_per_serving, fiber_per_serving: i.fiber_per_serving || 0, sodium_per_serving: i.sodium_per_serving || 0, brand: i.brand || null, category: i.category || null, serving_description: i.serving_description || '100g', serving_grams: i.serving_grams || 100, user_id: auth.userId }));
     const { data, error } = await auth.supabase.from('ingredients').insert(rows).select('id, name');
