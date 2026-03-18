@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Meal, MealIngredient, Macros, Recipe } from '@/types/meal';
+import { Meal, MealIngredient, Macros, Recipe, BaseIngredient } from '@/types/meal';
 import { useIngredients } from '@/contexts/IngredientsContext';
 
 interface MealsContextType {
