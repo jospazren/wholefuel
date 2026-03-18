@@ -194,7 +194,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           weightKg: Number(dt.weight_kg) || 80,
         });
       } else {
-        // Fallback to most recent targets
+        // Fallback to most recent targets and clone as snapshot for this week
         const { data: latestTargets } = await supabase
           .from('weekly_targets')
           .select('*')
@@ -204,7 +204,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           .single();
 
         if (latestTargets) {
-          setWeeklyTargetsState({
+          const clonedTargets: WeeklyTargets = {
             tdee: Number(latestTargets.tdee),
             strategy: latestTargets.strategy as WeeklyTargets['strategy'],
             dailyCalories: Number(latestTargets.daily_calories),
@@ -213,6 +213,21 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
             carbs: Number(latestTargets.carbs),
             presetId: latestTargets.preset_id || null,
             weightKg: Number(latestTargets.weight_kg) || 80,
+          };
+          setWeeklyTargetsState(clonedTargets);
+
+          // Persist the cloned snapshot for this week
+          await supabase.from('weekly_targets').insert({
+            user_id: user.id,
+            week_start_date: currentWeekStart,
+            tdee: clonedTargets.tdee,
+            strategy: clonedTargets.strategy,
+            daily_calories: clonedTargets.dailyCalories,
+            protein: clonedTargets.protein,
+            fat: clonedTargets.fat,
+            carbs: clonedTargets.carbs,
+            preset_id: clonedTargets.presetId,
+            weight_kg: clonedTargets.weightKg,
           });
         } else {
           setWeeklyTargetsState(defaultTargets);
