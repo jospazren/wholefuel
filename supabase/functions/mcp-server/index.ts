@@ -174,7 +174,7 @@ mcpServer.tool("bulk_create_recipes", {
     const ok: string[] = [], errs: string[] = [];
     for (const r of recipes) {
       const m = calcMacros(r.ingredients, iMap);
-      const { data: cr, error: re } = await auth.supabase.from('recipes').insert({ name: r.name, category: r.tags?.[0] || null, servings: 1, instructions: r.instructions || null, link: r.link || null, notes: r.notes || null, user_id: auth.userId, total_calories: m.cal, total_protein: m.pro, total_fat: m.fat, total_carbs: m.carb }).select().single();
+      const { data: cr, error: re } = await auth.supabase.from('recipes').insert({ name: r.name, category: r.tags?.[0] || null, instructions: r.instructions || null, link: r.link || null, notes: r.notes || null, user_id: auth.userId, total_calories: m.cal, total_protein: m.pro, total_fat: m.fat, total_carbs: m.carb }).select().single();
       if (re || !cr) { errs.push(`"${r.name}": ${re?.message}`); continue; }
       await auth.supabase.from('recipe_ingredients').insert(r.ingredients.map(i => ({ recipe_id: cr.id, ingredient_id: i.ingredient_id, name: iMap.get(i.ingredient_id)?.name || 'Unknown', serving_multiplier: i.serving_multiplier })));
       if (r.tags?.length) await writeRecipeTags(auth.supabase, cr.id, r.tags, auth.userId);
