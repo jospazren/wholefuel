@@ -291,7 +291,7 @@ mcpServer.tool("create_ingredient", {
   handler: async (input: unknown) => {
     const auth = getCurrentAuth();
     if (!auth) return { content: [{ type: "text", text: "Unauthorized" }] };
-    const p = input as any;
+    const p = input as CreateIngredientInput;
     const { data, error } = await auth.supabase.from('ingredients').insert({
       name: p.name, calories_per_serving: p.calories_per_serving, protein_per_serving: p.protein_per_serving,
       fat_per_serving: p.fat_per_serving, carbs_per_serving: p.carbs_per_serving,
