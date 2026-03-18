@@ -144,7 +144,7 @@ mcpServer.tool("create_recipe", {
     if (ingErr || !ingData) return { content: [{ type: "text", text: `Error fetching ingredients: ${ingErr?.message}` }] };
     const iMap = new Map(ingData.map(i => [i.id, i]));
     const m = calcMacros(ingredients, iMap);
-    const { data: recipe, error: rErr } = await auth.supabase.from('recipes').insert({ name, category: tags?.[0] || null, servings: 1, instructions: instructions || null, link: link || null, notes: notes || null, user_id: auth.userId, total_calories: m.cal, total_protein: m.pro, total_fat: m.fat, total_carbs: m.carb }).select().single();
+    const { data: recipe, error: rErr } = await auth.supabase.from('recipes').insert({ name, category: tags?.[0] || null, instructions: instructions || null, link: link || null, notes: notes || null, user_id: auth.userId, total_calories: m.cal, total_protein: m.pro, total_fat: m.fat, total_carbs: m.carb }).select().single();
     if (rErr || !recipe) return { content: [{ type: "text", text: `Error creating recipe: ${rErr?.message}` }] };
     await auth.supabase.from('recipe_ingredients').insert(ingredients.map(ing => ({ recipe_id: recipe.id, ingredient_id: ing.ingredient_id, name: iMap.get(ing.ingredient_id)?.name || 'Unknown', serving_multiplier: ing.serving_multiplier })));
     if (tags && tags.length > 0) await writeRecipeTags(auth.supabase, recipe.id, tags, auth.userId);
