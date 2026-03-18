@@ -371,6 +371,48 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addEstimatedMealToSlot = async (day: DayOfWeek, slot: MealSlot, data: EstimatedMealInput) => {
+    const meal = await createEstimatedMeal(data);
+    if (!meal) return;
+
+    const assignment: MealSlotAssignment = {
+      id: `${day}-${slot}-${Date.now()}`,
+      mealId: meal.id,
+    };
+
+    setWeeklyPlan(prev => ({
+      ...prev,
+      [day]: { ...prev[day], [slot]: assignment },
+    }));
+
+    if (!user) return;
+
+    const { data: dbData, error } = await supabase
+      .from('meal_plans')
+      .upsert({
+        user_id: user.id,
+        week_start_date: currentWeekStart,
+        day_of_week: day,
+        meal_slot: slot,
+        meal_id: meal.id,
+      }, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' })
+      .select()
+      .single();
+
+    if (error) {
+      setWeeklyPlan(prev => ({
+        ...prev,
+        [day]: { ...prev[day], [slot]: undefined },
+      }));
+      await deleteMealEntity(meal.id);
+      toast.error('Failed to save estimated meal');
+    } else if (dbData) {
+      setWeeklyPlan(prev => ({
+        ...prev,
+        [day]: { ...prev[day], [slot]: { id: dbData.id, mealId: meal.id } },
+      }));
+    }
+
   const removeMealFromSlot = async (day: DayOfWeek, slot: MealSlot) => {
     const assignment = weeklyPlan[day][slot];
     const previousPlan = weeklyPlan;
