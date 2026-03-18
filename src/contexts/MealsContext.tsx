@@ -3,14 +3,23 @@ import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { Meal, MealIngredient, Macros, Recipe, BaseIngredient } from '@/types/meal';
+import { Meal, MealIngredient, Macros, Recipe, BaseIngredient, MealType } from '@/types/meal';
 import { useIngredients } from '@/contexts/IngredientsContext';
+
+interface EstimatedMealData {
+  name: string;
+  estCalories: number;
+  estProtein: number;
+  estFat: number;
+  estCarbs: number;
+}
 
 interface MealsContextType {
   meals: Map<string, Meal>;
   getMeal: (id: string) => Meal | undefined;
   createMealFromRecipe: (recipe: Recipe) => Promise<Meal | null>;
-  updateMeal: (id: string, updates: Partial<Pick<Meal, 'name' | 'ingredients'>>) => Promise<void>;
+  createEstimatedMeal: (data: EstimatedMealData) => Promise<Meal | null>;
+  updateMeal: (id: string, updates: Partial<Pick<Meal, 'name' | 'ingredients' | 'estCalories' | 'estProtein' | 'estFat' | 'estCarbs'>>) => Promise<void>;
   deleteMeal: (id: string) => Promise<void>;
   getMealMacros: (meal: Meal) => Macros;
   isLoading: boolean;
@@ -58,12 +67,17 @@ export function MealsProvider({ children }: { children: ReactNode }) {
           mealsMap.set(m.id, {
             id: m.id,
             name: m.name,
+            type: (m.type as MealType) || 'planned',
             sourceRecipeId: m.source_recipe_id || null,
             ingredients: (m.meal_ingredients || []).map((mi) => ({
               ingredientId: mi.ingredient_id,
               name: mi.name,
               servingMultiplier: Number(mi.serving_multiplier),
             })),
+            estCalories: m.est_calories != null ? Number(m.est_calories) : undefined,
+            estProtein: m.est_protein != null ? Number(m.est_protein) : undefined,
+            estFat: m.est_fat != null ? Number(m.est_fat) : undefined,
+            estCarbs: m.est_carbs != null ? Number(m.est_carbs) : undefined,
           });
         });
         setMeals(mealsMap);
@@ -88,6 +102,15 @@ export function MealsProvider({ children }: { children: ReactNode }) {
   }, [ingredients]);
 
   const getMealMacros = useCallback((meal: Meal): Macros => {
+    if (meal.type === 'estimated') {
+      return {
+        calories: meal.estCalories ?? 0,
+        protein: meal.estProtein ?? 0,
+        fat: meal.estFat ?? 0,
+        carbs: meal.estCarbs ?? 0,
+      };
+    }
+
     return meal.ingredients.reduce((totals, ing) => {
       const baseIng = ingredientMap.get(ing.ingredientId);
       if (baseIng) {
@@ -109,6 +132,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
         user_id: user.id,
         source_recipe_id: recipe.id,
         name: recipe.name,
+        type: 'planned',
       })
       .select()
       .single();
@@ -139,6 +163,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     const meal: Meal = {
       id: mealData.id,
       name: recipe.name,
+      type: 'planned',
       sourceRecipeId: recipe.id,
       ingredients: recipe.ingredients.map(ing => ({
         ingredientId: ing.ingredientId,
@@ -156,7 +181,52 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     return meal;
   };
 
-  const updateMeal = async (id: string, updates: Partial<Pick<Meal, 'name' | 'ingredients'>>) => {
+  const createEstimatedMeal = async (data: EstimatedMealData): Promise<Meal | null> => {
+    if (!user) return null;
+
+    const { data: mealData, error } = await supabase
+      .from('meals')
+      .insert({
+        user_id: user.id,
+        name: data.name,
+        type: 'estimated',
+        est_calories: data.estCalories,
+        est_protein: data.estProtein,
+        est_fat: data.estFat,
+        est_carbs: data.estCarbs,
+        source_recipe_id: null,
+      })
+      .select()
+      .single();
+
+    if (error || !mealData) {
+      console.error('Error creating estimated meal:', error);
+      toast.error('Failed to create estimated meal');
+      return null;
+    }
+
+    const meal: Meal = {
+      id: mealData.id,
+      name: data.name,
+      type: 'estimated',
+      sourceRecipeId: null,
+      ingredients: [],
+      estCalories: data.estCalories,
+      estProtein: data.estProtein,
+      estFat: data.estFat,
+      estCarbs: data.estCarbs,
+    };
+
+    setMeals(prev => {
+      const next = new Map(prev);
+      next.set(meal.id, meal);
+      return next;
+    });
+
+    return meal;
+  };
+
+  const updateMeal = async (id: string, updates: Partial<Pick<Meal, 'name' | 'ingredients' | 'estCalories' | 'estProtein' | 'estFat' | 'estCarbs'>>) => {
     const previousMeals = meals;
     setMeals(prev => {
       const next = new Map(prev);
@@ -170,8 +240,15 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     try {
-      if (updates.name !== undefined) {
-        const { error } = await supabase.from('meals').update({ name: updates.name }).eq('id', id);
+      const dbUpdates: Record<string, unknown> = {};
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.estCalories !== undefined) dbUpdates.est_calories = updates.estCalories;
+      if (updates.estProtein !== undefined) dbUpdates.est_protein = updates.estProtein;
+      if (updates.estFat !== undefined) dbUpdates.est_fat = updates.estFat;
+      if (updates.estCarbs !== undefined) dbUpdates.est_carbs = updates.estCarbs;
+
+      if (Object.keys(dbUpdates).length > 0) {
+        const { error } = await supabase.from('meals').update(dbUpdates).eq('id', id);
         if (error) throw error;
       }
 
@@ -218,6 +295,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
         meals,
         getMeal,
         createMealFromRecipe,
+        createEstimatedMeal,
         updateMeal,
         deleteMeal,
         getMealMacros,

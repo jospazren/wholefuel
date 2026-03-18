@@ -223,25 +223,40 @@ export type Database = {
       meals: {
         Row: {
           created_at: string
+          est_calories: number | null
+          est_carbs: number | null
+          est_fat: number | null
+          est_protein: number | null
           id: string
           name: string
           source_recipe_id: string | null
+          type: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          est_calories?: number | null
+          est_carbs?: number | null
+          est_fat?: number | null
+          est_protein?: number | null
           id?: string
           name: string
           source_recipe_id?: string | null
+          type?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          est_calories?: number | null
+          est_carbs?: number | null
+          est_fat?: number | null
+          est_protein?: number | null
           id?: string
           name?: string
           source_recipe_id?: string | null
+          type?: string
           updated_at?: string
           user_id?: string
         }

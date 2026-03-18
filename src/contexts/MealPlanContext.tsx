@@ -40,6 +40,14 @@ const saveWeekStart = (weekStart: string) => {
   }
 };
 
+interface EstimatedMealInput {
+  name: string;
+  estCalories: number;
+  estProtein: number;
+  estFat: number;
+  estCarbs: number;
+}
+
 interface MealPlanContextType {
   currentWeekStart: string;
   goToPreviousWeek: () => void;
@@ -51,6 +59,7 @@ interface MealPlanContextType {
   weeklyTargets: WeeklyTargets;
   setWeeklyTargets: (targets: WeeklyTargets) => void;
   addMealToSlot: (day: DayOfWeek, slot: MealSlot, recipe: Recipe) => void;
+  addEstimatedMealToSlot: (day: DayOfWeek, slot: MealSlot, data: EstimatedMealInput) => void;
   moveMealToSlot: (fromDay: DayOfWeek, fromSlot: MealSlot, toDay: DayOfWeek, toSlot: MealSlot) => void;
   removeMealFromSlot: (day: DayOfWeek, slot: MealSlot) => void;
   getDailyMacros: (day: DayOfWeek) => Macros;
@@ -83,7 +92,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
   const { ingredients } = useIngredients();
-  const { getMeal, getMealMacros, createMealFromRecipe, deleteMeal: deleteMealEntity } = useMeals();
+  const { getMeal, getMealMacros, createMealFromRecipe, createEstimatedMeal, deleteMeal: deleteMealEntity } = useMeals();
   const [currentWeekStart, setCurrentWeekStartInternal] = useState<string>(getSavedWeekStart());
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>(defaultWeeklyPlan);
   const [weeklyTargets, setWeeklyTargetsState] = useState<WeeklyTargets>(defaultTargets);
@@ -362,6 +371,49 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const addEstimatedMealToSlot = async (day: DayOfWeek, slot: MealSlot, data: EstimatedMealInput) => {
+    const meal = await createEstimatedMeal(data);
+    if (!meal) return;
+
+    const assignment: MealSlotAssignment = {
+      id: `${day}-${slot}-${Date.now()}`,
+      mealId: meal.id,
+    };
+
+    setWeeklyPlan(prev => ({
+      ...prev,
+      [day]: { ...prev[day], [slot]: assignment },
+    }));
+
+    if (!user) return;
+
+    const { data: dbData, error } = await supabase
+      .from('meal_plans')
+      .upsert({
+        user_id: user.id,
+        week_start_date: currentWeekStart,
+        day_of_week: day,
+        meal_slot: slot,
+        meal_id: meal.id,
+      }, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' })
+      .select()
+      .single();
+
+    if (error) {
+      setWeeklyPlan(prev => ({
+        ...prev,
+        [day]: { ...prev[day], [slot]: undefined },
+      }));
+      await deleteMealEntity(meal.id);
+      toast.error('Failed to save estimated meal');
+    } else if (dbData) {
+      setWeeklyPlan(prev => ({
+        ...prev,
+        [day]: { ...prev[day], [slot]: { id: dbData.id, mealId: meal.id } },
+      }));
+    }
+  };
+
   const removeMealFromSlot = async (day: DayOfWeek, slot: MealSlot) => {
     const assignment = weeklyPlan[day][slot];
     const previousPlan = weeklyPlan;
@@ -529,6 +581,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         weeklyTargets,
         setWeeklyTargets,
         addMealToSlot,
+        addEstimatedMealToSlot,
         moveMealToSlot,
         removeMealFromSlot,
         getDailyMacros,

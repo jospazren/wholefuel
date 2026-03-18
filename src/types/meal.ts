@@ -60,11 +60,18 @@ export interface MealIngredient {
   servingMultiplier: number;
 }
 
+export type MealType = 'planned' | 'estimated';
+
 export interface Meal {
   id: string;
   name: string;
+  type: MealType;
   sourceRecipeId: string | null;
   ingredients: MealIngredient[];
+  estCalories?: number;
+  estProtein?: number;
+  estFat?: number;
+  estCarbs?: number;
 }
 
 export interface MealSlotAssignment {
