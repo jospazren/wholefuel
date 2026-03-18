@@ -27,7 +27,7 @@ interface IngredientsContextType {
 
 const IngredientsContext = createContext<IngredientsContextType | undefined>(undefined);
 
-function mapDbIngredient(ing: any): BaseIngredient {
+function mapDbIngredient(ing: Tables<'ingredients'>): BaseIngredient {
   return {
     id: ing.id,
     name: ing.name,
