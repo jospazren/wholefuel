@@ -412,6 +412,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         [day]: { ...prev[day], [slot]: { id: dbData.id, mealId: meal.id } },
       }));
     }
+  };
 
   const removeMealFromSlot = async (day: DayOfWeek, slot: MealSlot) => {
     const assignment = weeklyPlan[day][slot];
