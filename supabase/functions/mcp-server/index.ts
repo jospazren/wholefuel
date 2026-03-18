@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { McpServer, StreamableHttpTransport } from "mcp-lite";
 import { createClient } from "@supabase/supabase-js";
 import { AsyncLocalStorage } from "node:async_hooks";
+import type { Database, IngredientMacros, CreateIngredientInput } from "./types.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +12,7 @@ const corsHeaders = {
 const app = new Hono();
 
 function createAuthClient(authHeader: string) {
-  return createClient<any>(
+  return createClient<Database>(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_ANON_KEY')!,
     { global: { headers: { Authorization: authHeader } } }
@@ -19,7 +20,7 @@ function createAuthClient(authHeader: string) {
 }
 
 function createServiceClient() {
-  return createClient<any>(
+  return createClient<Database>(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
@@ -33,7 +34,7 @@ async function hashApiKey(key: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-type AuthContext = { userId: string; supabase: ReturnType<typeof createClient> };
+type AuthContext = { userId: string; supabase: ReturnType<typeof createClient<Database>> };
 const authStorage = new AsyncLocalStorage<AuthContext>();
 function getCurrentAuth() { return authStorage.getStore() ?? null; }
 
