@@ -82,7 +82,7 @@ async function writeRecipeTags(supabase: ReturnType<typeof createClient>, recipe
 }
 
 // Helper: calculate macros from ingredients
-function calcMacros(ingredients: Array<{ ingredient_id: string; serving_multiplier: number }>, ingredientMap: Map<string, any>) {
+function calcMacros(ingredients: Array<{ ingredient_id: string; serving_multiplier: number }>, ingredientMap: Map<string, IngredientMacros>) {
   let cal = 0, pro = 0, fat = 0, carb = 0;
   for (const ing of ingredients) {
     const d = ingredientMap.get(ing.ingredient_id);
