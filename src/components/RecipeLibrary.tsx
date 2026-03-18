@@ -46,7 +46,7 @@ export function RecipeLibrary({ onDragStart, onDragEnd, className }: RecipeLibra
     setEditorOpen(true);
   };
 
-  const handleEditorSave = (data: { name: string; tags: string[]; ingredients: any[]; instructions?: string; notes?: string; link?: string }) => {
+  const handleEditorSave = (data: { name: string; tags: string[]; ingredients: RecipeIngredient[]; instructions?: string; notes?: string; link?: string }) => {
     if (!editingRecipeId) return;
     const macros = calculateMacrosFromIngredients(data.ingredients.map(i => ({
       ingredientId: i.ingredientId,

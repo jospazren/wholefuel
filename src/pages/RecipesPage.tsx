@@ -59,7 +59,7 @@ const RecipesPage = () => {
     setEditorOpen(true);
   };
 
-  const handleEditorSave = (data: { name: string; tags: string[]; ingredients: any[]; instructions?: string; notes?: string; link?: string }) => {
+  const handleEditorSave = (data: { name: string; tags: string[]; ingredients: RecipeIngredient[]; instructions?: string; notes?: string; link?: string }) => {
     const macros = calculateMacrosFromIngredients(data.ingredients.map(i => ({
       ingredientId: i.ingredientId,
       servingMultiplier: i.servingMultiplier,

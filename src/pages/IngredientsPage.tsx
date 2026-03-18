@@ -296,7 +296,19 @@ const IngredientsPage = () => {
   );
 };
 
-function IngredientForm({ formData, setFormData }: { formData: any; setFormData: (data: any) => void }) {
+interface IngredientFormData {
+  name: string;
+  caloriesPerServing: string;
+  proteinPerServing: string;
+  fatPerServing: string;
+  carbsPerServing: string;
+  fiberPerServing: string;
+  sodiumPerServing: string;
+  brand: string;
+  servingDescription: string;
+}
+
+function IngredientForm({ formData, setFormData }: { formData: IngredientFormData; setFormData: (data: IngredientFormData) => void }) {
   return (
     <div className="grid gap-4 py-4">
       <div className="grid gap-2">

@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { BaseIngredient } from '@/types/meal';
+import { Tables } from '@/integrations/supabase/types';
 import { baseIngredients as defaultIngredients } from '@/data/ingredients';
 
 const PAGE_SIZE = 50;

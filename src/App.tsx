@@ -71,25 +71,22 @@ function AppRoutes() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
-        <IngredientsProvider>
-        <RecipesProvider>
-        <MealsProvider>
-        <MealPlanProvider>
-          <Toaster />
-          <Sonner />
-          <AppRoutes />
-        </MealPlanProvider>
-        </MealsProvider>
-        </RecipesProvider>
-        </IngredientsProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <TooltipProvider>
+    <BrowserRouter>
+      <AuthProvider>
+      <IngredientsProvider>
+      <RecipesProvider>
+      <MealsProvider>
+      <MealPlanProvider>
+        <Sonner />
+        <AppRoutes />
+      </MealPlanProvider>
+      </MealsProvider>
+      </RecipesProvider>
+      </IngredientsProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  </TooltipProvider>
 );
 
 export default App;
