@@ -3,7 +3,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useRecipes } from '@/contexts/RecipesContext';
 import { useMeals } from '@/contexts/MealsContext';
-import { Recipe, MealSlotEntry } from '@/types/meal';
+import { Recipe, MealSlotEntry, RecipeIngredient } from '@/types/meal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
