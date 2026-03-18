@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { McpServer, StreamableHttpTransport } from "mcp-lite";
 import { createClient } from "@supabase/supabase-js";
 import { AsyncLocalStorage } from "node:async_hooks";
+import type { Database, IngredientMacros, CreateIngredientInput } from "./types.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +12,7 @@ const corsHeaders = {
 const app = new Hono();
 
 function createAuthClient(authHeader: string) {
-  return createClient<any>(
+  return createClient<Database>(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_ANON_KEY')!,
     { global: { headers: { Authorization: authHeader } } }
@@ -19,7 +20,7 @@ function createAuthClient(authHeader: string) {
 }
 
 function createServiceClient() {
-  return createClient<any>(
+  return createClient<Database>(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
@@ -33,7 +34,7 @@ async function hashApiKey(key: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-type AuthContext = { userId: string; supabase: ReturnType<typeof createClient> };
+type AuthContext = { userId: string; supabase: ReturnType<typeof createClient<Database>> };
 const authStorage = new AsyncLocalStorage<AuthContext>();
 function getCurrentAuth() { return authStorage.getStore() ?? null; }
 
@@ -58,7 +59,7 @@ async function validateApiKey(apiKey: string) {
   if (error || !keyData || keyData.revoked_at) return null;
   if (keyData.expires_at && new Date(keyData.expires_at) < new Date()) return null;
   serviceClient.from('mcp_api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', keyData.id).then(() => {});
-  const userSupabase = createClient<any>(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const userSupabase = createClient<Database>(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
   return { userId: keyData.user_id, supabase: userSupabase };
 }
 
@@ -81,7 +82,7 @@ async function writeRecipeTags(supabase: ReturnType<typeof createClient>, recipe
 }
 
 // Helper: calculate macros from ingredients
-function calcMacros(ingredients: Array<{ ingredient_id: string; serving_multiplier: number }>, ingredientMap: Map<string, any>) {
+function calcMacros(ingredients: Array<{ ingredient_id: string; serving_multiplier: number }>, ingredientMap: Map<string, IngredientMacros>) {
   let cal = 0, pro = 0, fat = 0, carb = 0;
   for (const ing of ingredients) {
     const d = ingredientMap.get(ing.ingredient_id);
@@ -143,7 +144,7 @@ mcpServer.tool("create_recipe", {
     if (ingErr || !ingData) return { content: [{ type: "text", text: `Error fetching ingredients: ${ingErr?.message}` }] };
     const iMap = new Map(ingData.map(i => [i.id, i]));
     const m = calcMacros(ingredients, iMap);
-    const { data: recipe, error: rErr } = await auth.supabase.from('recipes').insert({ name, category: tags?.[0] || null, servings: 1, instructions: instructions || null, link: link || null, notes: notes || null, user_id: auth.userId, total_calories: m.cal, total_protein: m.pro, total_fat: m.fat, total_carbs: m.carb }).select().single();
+    const { data: recipe, error: rErr } = await auth.supabase.from('recipes').insert({ name, category: tags?.[0] || null, instructions: instructions || null, link: link || null, notes: notes || null, user_id: auth.userId, total_calories: m.cal, total_protein: m.pro, total_fat: m.fat, total_carbs: m.carb }).select().single();
     if (rErr || !recipe) return { content: [{ type: "text", text: `Error creating recipe: ${rErr?.message}` }] };
     await auth.supabase.from('recipe_ingredients').insert(ingredients.map(ing => ({ recipe_id: recipe.id, ingredient_id: ing.ingredient_id, name: iMap.get(ing.ingredient_id)?.name || 'Unknown', serving_multiplier: ing.serving_multiplier })));
     if (tags && tags.length > 0) await writeRecipeTags(auth.supabase, recipe.id, tags, auth.userId);
@@ -173,7 +174,7 @@ mcpServer.tool("bulk_create_recipes", {
     const ok: string[] = [], errs: string[] = [];
     for (const r of recipes) {
       const m = calcMacros(r.ingredients, iMap);
-      const { data: cr, error: re } = await auth.supabase.from('recipes').insert({ name: r.name, category: r.tags?.[0] || null, servings: 1, instructions: r.instructions || null, link: r.link || null, notes: r.notes || null, user_id: auth.userId, total_calories: m.cal, total_protein: m.pro, total_fat: m.fat, total_carbs: m.carb }).select().single();
+      const { data: cr, error: re } = await auth.supabase.from('recipes').insert({ name: r.name, category: r.tags?.[0] || null, instructions: r.instructions || null, link: r.link || null, notes: r.notes || null, user_id: auth.userId, total_calories: m.cal, total_protein: m.pro, total_fat: m.fat, total_carbs: m.carb }).select().single();
       if (re || !cr) { errs.push(`"${r.name}": ${re?.message}`); continue; }
       await auth.supabase.from('recipe_ingredients').insert(r.ingredients.map(i => ({ recipe_id: cr.id, ingredient_id: i.ingredient_id, name: iMap.get(i.ingredient_id)?.name || 'Unknown', serving_multiplier: i.serving_multiplier })));
       if (r.tags?.length) await writeRecipeTags(auth.supabase, cr.id, r.tags, auth.userId);
@@ -290,7 +291,7 @@ mcpServer.tool("create_ingredient", {
   handler: async (input: unknown) => {
     const auth = getCurrentAuth();
     if (!auth) return { content: [{ type: "text", text: "Unauthorized" }] };
-    const p = input as any;
+    const p = input as CreateIngredientInput;
     const { data, error } = await auth.supabase.from('ingredients').insert({
       name: p.name, calories_per_serving: p.calories_per_serving, protein_per_serving: p.protein_per_serving,
       fat_per_serving: p.fat_per_serving, carbs_per_serving: p.carbs_per_serving,
@@ -316,7 +317,7 @@ mcpServer.tool("bulk_create_ingredients", {
   handler: async (input: unknown) => {
     const auth = getCurrentAuth();
     if (!auth) return { content: [{ type: "text", text: "Unauthorized" }] };
-    const { ingredients } = input as { ingredients: any[] };
+    const { ingredients } = input as { ingredients: CreateIngredientInput[] };
     if (!ingredients?.length) return { content: [{ type: "text", text: "No ingredients provided" }] };
     const rows = ingredients.map(i => ({ name: i.name, calories_per_serving: i.calories_per_serving, protein_per_serving: i.protein_per_serving, fat_per_serving: i.fat_per_serving, carbs_per_serving: i.carbs_per_serving, fiber_per_serving: i.fiber_per_serving || 0, sodium_per_serving: i.sodium_per_serving || 0, brand: i.brand || null, category: i.category || null, serving_description: i.serving_description || '100g', serving_grams: i.serving_grams || 100, user_id: auth.userId }));
     const { data, error } = await auth.supabase.from('ingredients').insert(rows).select('id, name');

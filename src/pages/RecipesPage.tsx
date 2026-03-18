@@ -3,7 +3,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useRecipes } from '@/contexts/RecipesContext';
 import { useMeals } from '@/contexts/MealsContext';
-import { Recipe, MealSlotEntry } from '@/types/meal';
+import { Recipe, MealSlotEntry, RecipeIngredient } from '@/types/meal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -59,7 +59,7 @@ const RecipesPage = () => {
     setEditorOpen(true);
   };
 
-  const handleEditorSave = (data: { name: string; tags: string[]; ingredients: any[]; instructions?: string; notes?: string; link?: string }) => {
+  const handleEditorSave = (data: { name: string; tags: string[]; ingredients: RecipeIngredient[]; instructions?: string; notes?: string; link?: string }) => {
     const macros = calculateMacrosFromIngredients(data.ingredients.map(i => ({
       ingredientId: i.ingredientId,
       servingMultiplier: i.servingMultiplier,

@@ -1,7 +1,5 @@
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { MealPlanProvider } from "@/contexts/MealPlanContext";
 import { IngredientsProvider } from "@/contexts/IngredientsContext";
@@ -19,7 +17,7 @@ import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-const queryClient = new QueryClient();
+
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -73,25 +71,22 @@ function AppRoutes() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
-        <IngredientsProvider>
-        <RecipesProvider>
-        <MealsProvider>
-        <MealPlanProvider>
-          <Toaster />
-          <Sonner />
-          <AppRoutes />
-        </MealPlanProvider>
-        </MealsProvider>
-        </RecipesProvider>
-        </IngredientsProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <TooltipProvider>
+    <BrowserRouter>
+      <AuthProvider>
+      <IngredientsProvider>
+      <RecipesProvider>
+      <MealsProvider>
+      <MealPlanProvider>
+        <Sonner />
+        <AppRoutes />
+      </MealPlanProvider>
+      </MealsProvider>
+      </RecipesProvider>
+      </IngredientsProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  </TooltipProvider>
 );
 
 export default App;

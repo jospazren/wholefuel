@@ -83,11 +83,15 @@ const ShoppingPage = () => {
   };
 
   const handleServingsChange = (ingredientId: string, servings: number) => {
-    setShoppingList(prev => prev.map(item =>
-      item.ingredientId === ingredientId
-        ? { ...item, totalServings: servings }
-        : item
-    ));
+    setShoppingList(prev => {
+      const next = prev.map(item =>
+        item.ingredientId === ingredientId
+          ? { ...item, totalServings: servings }
+          : item
+      );
+      saveList(next);
+      return next;
+    });
   };
 
   const formatServings = (totalServings: number, servingDescription: string): string => {

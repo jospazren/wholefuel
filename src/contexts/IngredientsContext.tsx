@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { BaseIngredient } from '@/types/meal';
+import { Tables } from '@/integrations/supabase/types';
 import { baseIngredients as defaultIngredients } from '@/data/ingredients';
 
 const PAGE_SIZE = 50;
@@ -27,7 +28,7 @@ interface IngredientsContextType {
 
 const IngredientsContext = createContext<IngredientsContextType | undefined>(undefined);
 
-function mapDbIngredient(ing: any): BaseIngredient {
+function mapDbIngredient(ing: Tables<'ingredients'>): BaseIngredient {
   return {
     id: ing.id,
     name: ing.name,
