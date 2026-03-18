@@ -40,6 +40,14 @@ const saveWeekStart = (weekStart: string) => {
   }
 };
 
+interface EstimatedMealInput {
+  name: string;
+  estCalories: number;
+  estProtein: number;
+  estFat: number;
+  estCarbs: number;
+}
+
 interface MealPlanContextType {
   currentWeekStart: string;
   goToPreviousWeek: () => void;
@@ -51,6 +59,7 @@ interface MealPlanContextType {
   weeklyTargets: WeeklyTargets;
   setWeeklyTargets: (targets: WeeklyTargets) => void;
   addMealToSlot: (day: DayOfWeek, slot: MealSlot, recipe: Recipe) => void;
+  addEstimatedMealToSlot: (day: DayOfWeek, slot: MealSlot, data: EstimatedMealInput) => void;
   moveMealToSlot: (fromDay: DayOfWeek, fromSlot: MealSlot, toDay: DayOfWeek, toSlot: MealSlot) => void;
   removeMealFromSlot: (day: DayOfWeek, slot: MealSlot) => void;
   getDailyMacros: (day: DayOfWeek) => Macros;
