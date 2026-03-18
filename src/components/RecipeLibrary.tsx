@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Recipe } from '@/types/meal';
+import { Recipe, RecipeIngredient } from '@/types/meal';
 import { RecipeCard } from '@/components/RecipeCard';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
