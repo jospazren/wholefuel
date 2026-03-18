@@ -1,34 +1,61 @@
 
 
-## Add PWA Support for Android Installation
+## Phase A: Estimated Meals
 
-### Overview
-Make the app installable as a Progressive Web App (PWA) on Android devices by adding `vite-plugin-pwa` with a proper manifest and service worker.
+### What changes
 
-### Changes
+**1. Database migration** -- Add 5 columns to `meals` table:
+- `type TEXT NOT NULL DEFAULT 'planned'` (values: `'planned'` or `'estimated'`)
+- `est_calories NUMERIC DEFAULT NULL`
+- `est_protein NUMERIC DEFAULT NULL`
+- `est_fat NUMERIC DEFAULT NULL`
+- `est_carbs NUMERIC DEFAULT NULL`
 
-**1. Install dependency**
-- `vite-plugin-pwa`
+**2. TypeScript types** (`src/types/meal.ts`) -- Extend the `Meal` interface:
+```typescript
+export interface Meal {
+  id: string;
+  name: string;
+  type: 'planned' | 'estimated';
+  sourceRecipeId: string | null;
+  ingredients: MealIngredient[];
+  estCalories?: number;
+  estProtein?: number;
+  estFat?: number;
+  estCarbs?: number;
+}
+```
 
-**2. Configure PWA plugin (`vite.config.ts`)**
-- Add `VitePWA()` plugin with:
-  - `registerType: 'autoUpdate'`
-  - Manifest with app name "Whole", theme color, icons, display: standalone
-  - Workbox config with `navigateFallbackDenylist: [/^\/~oauth/]` to avoid caching auth redirects
-  - Runtime caching for API calls
+**3. MealsContext** (`src/contexts/MealsContext.tsx`):
+- **`loadMeals`**: Map the new DB columns into Meal objects
+- **`getMealMacros`**: If `meal.type === 'estimated'`, return the `est_*` fields directly instead of computing from ingredients
+- **`createEstimatedMeal`**: New function -- inserts a meal with `type: 'estimated'` and the four macro estimates, no `meal_ingredients`
+- **`updateMeal`**: Support updating `est_*` fields for estimated meals
+- Export the new function in context type
 
-**3. Add PWA icons (`public/`)**
-- Create `pwa-192x192.png` and `pwa-512x512.png` placeholder icons (simple colored squares with "W" letter, or use the existing favicon as a base)
+**4. UI: Add Estimated Meal to Calendar** (`src/components/MealSlotCell.tsx`):
+- In the "+ Add meal" popover, add a second option/tab: "Quick estimate" alongside "From recipe"
+- Quick estimate shows a small form: name + calories + protein + fat + carbs
+- Submitting calls `createEstimatedMeal` then `addMealToSlot`
 
-**4. Update `index.html`**
-- Add mobile-optimized meta tags:
-  - `<meta name="theme-color" content="...">`
-  - `<link rel="apple-touch-icon" href="/pwa-192x192.png">`
-  - `<meta name="mobile-web-app-capable" content="yes">`
+**5. Visual distinction**: Estimated meals in `MealSlotCell` get a subtle dashed border or italic name to differentiate from planned meals.
 
-**5. No separate manifest.json file needed**
-- `vite-plugin-pwa` auto-generates and injects the manifest from the Vite config, so no manual `manifest.json` is required.
+**6. Shopping list exclusion**: Estimated meals (no `meal_ingredients`) are already naturally excluded from shopping aggregation since it iterates `meal.ingredients` -- no code change needed.
 
-### Result
-After visiting the app on Android Chrome, users will see the "Add to Home Screen" / "Install app" prompt. The app will launch in standalone mode (no browser chrome) and work offline for cached pages.
+### Technical details
+
+- `getMealMacros` branching:
+```typescript
+if (meal.type === 'estimated') {
+  return {
+    calories: meal.estCalories ?? 0,
+    protein: meal.estProtein ?? 0,
+    fat: meal.estFat ?? 0,
+    carbs: meal.estCarbs ?? 0,
+  };
+}
+// ... existing ingredient-based calculation
+```
+
+- The `MealEditSheet` will need a conditional render: if estimated, show editable macro fields; if planned, show ingredient editor as today.
 
