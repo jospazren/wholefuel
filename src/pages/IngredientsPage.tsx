@@ -220,6 +220,8 @@ const IngredientsPage = () => {
                 <SortHeader field="fiberPerServing">Fiber</SortHeader>
                 <SortHeader field="sodiumPerServing">Sodium</SortHeader>
                 <TableHead>Brand</TableHead>
+                <SortHeader field="usedInRecipes">Used in</SortHeader>
+                <SortHeader field="lastUsed">Last used</SortHeader>
                 <TableHead className="w-20">Actions</TableHead>
               </TableRow>
             </TableHeader>
