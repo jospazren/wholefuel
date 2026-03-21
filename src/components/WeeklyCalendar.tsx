@@ -38,7 +38,8 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
     setWeeklyTargets,
     dietPresets,
     addMealToSlot, 
-    moveMealToSlot, 
+    moveMealToSlot,
+    duplicateMealToSlot,
     getDailyMacros,
     goToPreviousWeek,
     goToNextWeek,
@@ -51,6 +52,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
   const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const [macroVisibility, setMacroVisibility] = useState<MacroVisibility>(getMacroVisibility);
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getCurrentDayOfWeek);
+  const [duplicatingMealId, setDuplicatingMealId] = useState<string | null>(null);
 
   const handlePrevDay = () => {
     const idx = DAYS_OF_WEEK.indexOf(selectedDay);
@@ -105,10 +107,21 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
   };
 
   const handleEditClick = (day: DayOfWeek, slot: MealSlot) => {
+    // If in duplicate mode, clicking a slot places the duplicate there
+    if (duplicatingMealId) {
+      duplicateMealToSlot(duplicatingMealId, day, slot);
+      setDuplicatingMealId(null);
+      return;
+    }
     const meal = weeklyPlan[day][slot];
     if (meal) {
       setEditingMeal({ meal, day, slot });
     }
+  };
+
+  const handleStartDuplicate = (mealId: string) => {
+    setEditingMeal(null);
+    setDuplicatingMealId(mealId);
   };
 
   const isSlotDraggedOver = (day: DayOfWeek, slot: MealSlot) => {
@@ -185,6 +198,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
           slot={slot}
           meal={meal}
           isDragOver={isSlotDraggedOver(day, slot)}
+          isDuplicateTarget={!!duplicatingMealId}
           onDragOver={(e) => handleDragOver(e, day, slot)}
           onDragLeave={handleDragLeave}
           onDrop={(e) => handleDrop(e, day, slot)}
@@ -219,6 +233,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
               slot={slot}
               meal={meal}
               isDragOver={isSlotDraggedOver(day, slot)}
+              isDuplicateTarget={!!duplicatingMealId}
               onDragOver={(e) => handleDragOver(e, day, slot)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, day, slot)}
@@ -414,6 +429,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                       slot={slot}
                       meal={weeklyPlan[day][slot]}
                       isDragOver={isSlotDraggedOver(day, slot)}
+                      isDuplicateTarget={!!duplicatingMealId}
                       onDragOver={(e) => handleDragOver(e, day, slot)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, day, slot)}
@@ -428,12 +444,28 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
         </div>
       </div>
 
+      {/* Duplicate mode banner */}
+      {duplicatingMealId && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-primary text-primary-foreground px-5 py-2.5 rounded-full shadow-lg flex items-center gap-3 text-sm font-medium">
+          <span>Click a slot to place the duplicate</span>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-7 px-3 text-xs rounded-full"
+            onClick={() => setDuplicatingMealId(null)}
+          >
+            Cancel
+          </Button>
+        </div>
+      )}
+
       <MealEditSheet
         meal={editingMeal?.meal || null}
         day={editingMeal?.day || null}
         slot={editingMeal?.slot || null}
         open={!!editingMeal}
         onClose={() => setEditingMeal(null)}
+        onStartDuplicate={handleStartDuplicate}
       />
 
       <ViewSettingsDialog

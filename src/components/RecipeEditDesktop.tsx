@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RecipeIngredient, BaseIngredient, DayOfWeek, MealSlot, WeeklyPlan, DAYS_OF_WEEK, MEAL_SLOTS, DAY_FULL_LABELS } from '@/types/meal';
+import { RecipeIngredient, BaseIngredient } from '@/types/meal';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,8 +15,7 @@ import { RecipeEditorMode } from '@/components/RecipeEditorDialog';
 
 export interface MealActions {
   onPortionAdjust: (multiplier: number) => void;
-  onDuplicate: (day: DayOfWeek, slot: MealSlot) => void;
-  weeklyPlan: WeeklyPlan;
+  onDuplicate: () => void;
 }
 
 interface MacroBadge {
@@ -316,7 +315,10 @@ export function RecipeEditDesktop({
         {mealActions && (
           <div className="px-6 py-3 flex items-center gap-2 border-t shrink-0">
             <PortionAdjustButton onAdjust={mealActions.onPortionAdjust} />
-            <DuplicateToSlotButton weeklyPlan={mealActions.weeklyPlan} onDuplicate={mealActions.onDuplicate} />
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={mealActions.onDuplicate}>
+              <Copy className="h-3.5 w-3.5" />
+              Duplicate to slot
+            </Button>
           </div>
         )}
 
@@ -395,49 +397,7 @@ function PortionAdjustButton({ onAdjust }: { onAdjust: (multiplier: number) => v
   );
 }
 
-function DuplicateToSlotButton({ weeklyPlan, onDuplicate }: { weeklyPlan: WeeklyPlan; onDuplicate: (day: DayOfWeek, slot: MealSlot) => void }) {
-  const [showPicker, setShowPicker] = useState(false);
-  const [dupDay, setDupDay] = useState<DayOfWeek>(DAYS_OF_WEEK[0]);
-  const [dupSlot, setDupSlot] = useState<MealSlot>(MEAL_SLOTS[0]);
 
-  if (!showPicker) {
-    return (
-      <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setShowPicker(true)}>
-        <Copy className="h-3.5 w-3.5" />
-        Duplicate to slot
-      </Button>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-1.5">
-      <Select value={dupDay} onValueChange={(v) => setDupDay(v as DayOfWeek)}>
-        <SelectTrigger className="h-7 text-xs w-24">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {DAYS_OF_WEEK.map(d => (
-            <SelectItem key={d} value={d} className="text-xs">{DAY_FULL_LABELS[d]}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select value={dupSlot} onValueChange={(v) => setDupSlot(v as MealSlot)}>
-        <SelectTrigger className="h-7 text-xs w-16">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {MEAL_SLOTS.map(s => (
-            <SelectItem key={s} value={s} className="text-xs">{s.toUpperCase()}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { onDuplicate(dupDay, dupSlot); setShowPicker(false); }}>Go</Button>
-      <Button size="sm" variant="ghost" className="h-7 px-1.5" onClick={() => setShowPicker(false)}>
-        <X className="h-3 w-3" />
-      </Button>
-    </div>
-  );
-}
 
 function NewTagInput({ onAdd }: { onAdd: (tag: string) => void }) {
   const [value, setValue] = useState('');
