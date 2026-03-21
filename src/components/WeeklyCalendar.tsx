@@ -482,6 +482,8 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
         visibility={macroVisibility}
         onSave={setMacroVisibility}
       />
+
+      <WeeklyExportDialog open={exportOpen} onOpenChange={setExportOpen} />
     </>
   );
 }
