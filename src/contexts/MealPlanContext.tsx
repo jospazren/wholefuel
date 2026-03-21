@@ -93,7 +93,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
   const { ingredients } = useIngredients();
-  const { getMeal, getMealMacros, createMealFromRecipe, createEstimatedMeal, deleteMeal: deleteMealEntity } = useMeals();
+  const { getMeal, getMealMacros, createMealFromRecipe, createEstimatedMeal, duplicateMeal, deleteMeal: deleteMealEntity } = useMeals();
   const [currentWeekStart, setCurrentWeekStartInternal] = useState<string>(getSavedWeekStart());
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>(defaultWeeklyPlan);
   const [weeklyTargets, setWeeklyTargetsState] = useState<WeeklyTargets>(defaultTargets);
