@@ -58,10 +58,53 @@ const IngredientsPage = () => {
     }
   };
 
+  // Compute ingredient usage
+  const ingredientUsage = useMemo(() => {
+    const usage = new Map<string, { recipeCount: number; lastUsed: string | null }>();
+    // Count recipes using each ingredient
+    recipes.forEach(r => {
+      r.ingredients.forEach(ing => {
+        const existing = usage.get(ing.ingredientId);
+        if (existing) {
+          existing.recipeCount++;
+        } else {
+          usage.set(ing.ingredientId, { recipeCount: 1, lastUsed: null });
+        }
+      });
+    });
+    // Find last used date from meals
+    meals.forEach(meal => {
+      if (meal.type === 'planned') {
+        meal.ingredients.forEach(ing => {
+          const existing = usage.get(ing.ingredientId);
+          const mealDate = meal.createdAt || null;
+          if (existing) {
+            if (mealDate && (!existing.lastUsed || mealDate > existing.lastUsed)) {
+              existing.lastUsed = mealDate;
+            }
+          } else {
+            usage.set(ing.ingredientId, { recipeCount: 0, lastUsed: mealDate });
+          }
+        });
+      }
+    });
+    return usage;
+  }, [recipes, meals]);
+
   // Client-side sort on the already-fetched browse page
   const sortedIngredients = [...browseIngredients].sort((a, b) => {
-    const aVal = a[sortField];
-    const bVal = b[sortField];
+    if (sortField === 'usedInRecipes') {
+      const aVal = ingredientUsage.get(a.id)?.recipeCount ?? 0;
+      const bVal = ingredientUsage.get(b.id)?.recipeCount ?? 0;
+      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+    }
+    if (sortField === 'lastUsed') {
+      const aVal = ingredientUsage.get(a.id)?.lastUsed ?? '';
+      const bVal = ingredientUsage.get(b.id)?.lastUsed ?? '';
+      return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    }
+    const aVal = a[sortField as keyof BaseIngredient];
+    const bVal = b[sortField as keyof BaseIngredient];
     if (typeof aVal === 'string' && typeof bVal === 'string') {
       return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
     }
