@@ -19,7 +19,9 @@ interface MealsContextType {
   getMeal: (id: string) => Meal | undefined;
   createMealFromRecipe: (recipe: Recipe) => Promise<Meal | null>;
   createEstimatedMeal: (data: EstimatedMealData) => Promise<Meal | null>;
+  duplicateMeal: (id: string) => Promise<Meal | null>;
   updateMeal: (id: string, updates: Partial<Pick<Meal, 'name' | 'ingredients' | 'estCalories' | 'estProtein' | 'estFat' | 'estCarbs'>>) => Promise<void>;
+  adjustMealPortion: (id: string, multiplier: number) => Promise<void>;
   deleteMeal: (id: string) => Promise<void>;
   getMealMacros: (meal: Meal) => Macros;
   isLoading: boolean;
