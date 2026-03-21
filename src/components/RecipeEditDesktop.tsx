@@ -315,7 +315,10 @@ export function RecipeEditDesktop({
         {mealActions && (
           <div className="px-6 py-3 flex items-center gap-2 border-t shrink-0">
             <PortionAdjustButton onAdjust={mealActions.onPortionAdjust} />
-            <DuplicateToSlotButton weeklyPlan={mealActions.weeklyPlan} onDuplicate={mealActions.onDuplicate} />
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={mealActions.onDuplicate}>
+              <Copy className="h-3.5 w-3.5" />
+              Duplicate to slot
+            </Button>
           </div>
         )}
 
