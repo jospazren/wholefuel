@@ -15,8 +15,7 @@ import { RecipeEditorMode } from '@/components/RecipeEditorDialog';
 
 export interface MealActions {
   onPortionAdjust: (multiplier: number) => void;
-  onDuplicate: (day: DayOfWeek, slot: MealSlot) => void;
-  weeklyPlan: WeeklyPlan;
+  onDuplicate: () => void;
 }
 
 interface MacroBadge {
