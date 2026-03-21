@@ -30,6 +30,7 @@ const IngredientsPage = () => {
     addIngredient, updateIngredient, deleteIngredient, isLoading,
   } = useIngredients();
   const { recipes } = useRecipes();
+  const { meals } = useMeals();
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [editingIngredient, setEditingIngredient] = useState<BaseIngredient | null>(null);
