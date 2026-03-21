@@ -164,13 +164,30 @@ export function RecipeEditDesktop({
           <div className="space-y-6 pb-6">
             {/* Ingredients */}
             <div>
-              <h3 className="text-base font-bold mb-3">Ingredients</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-bold">Ingredients</h3>
+                {isMealMode && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">Cooking for</span>
+                    <Select value={String(batchMultiplier)} onValueChange={(v) => setBatchMultiplier(Number(v))}>
+                      <SelectTrigger className="h-7 w-16 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5, 6].map(n => (
+                          <SelectItem key={n} value={String(n)} className="text-xs">{n}×</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
 
               <div className="bg-accent rounded-xl p-3">
                 <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground tracking-wider uppercase pb-2 border-b border-border/30">
                   <span className="shrink-0 w-4" />
                   <span className="flex-1 min-w-0">Ingredient</span>
-                  <span className="w-14 text-center shrink-0">Qty</span>
+                  <span className="w-14 text-center shrink-0">{batchMultiplier > 1 ? 'Qty (×' + batchMultiplier + ')' : 'Qty'}</span>
                   <span className="w-20 shrink-0 text-left">Serving</span>
                   <span className="w-14 text-center shrink-0">Cal</span>
                   <span className="w-11 text-center shrink-0 text-emerald-600">P</span>
@@ -186,7 +203,7 @@ export function RecipeEditDesktop({
                   >
                     <div>
                       {formIngredients.map((ing, idx) => {
-                        const info = getIngredientInfo(ing.ingredientId, ing.servingMultiplier);
+                        const info = getIngredientInfo(ing.ingredientId, ing.servingMultiplier * batchMultiplier);
                         return (
                           <SortableIngredientRow
                             key={ing.ingredientId + '-' + idx}
