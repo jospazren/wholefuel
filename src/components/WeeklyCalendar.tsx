@@ -38,7 +38,8 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
     setWeeklyTargets,
     dietPresets,
     addMealToSlot, 
-    moveMealToSlot, 
+    moveMealToSlot,
+    duplicateMealToSlot,
     getDailyMacros,
     goToPreviousWeek,
     goToNextWeek,
@@ -51,6 +52,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
   const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const [macroVisibility, setMacroVisibility] = useState<MacroVisibility>(getMacroVisibility);
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getCurrentDayOfWeek);
+  const [duplicatingMealId, setDuplicatingMealId] = useState<string | null>(null);
 
   const handlePrevDay = () => {
     const idx = DAYS_OF_WEEK.indexOf(selectedDay);
