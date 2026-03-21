@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { useIngredients } from '@/contexts/IngredientsContext';
 import { useRecipes } from '@/contexts/RecipesContext';
+import { useMeals } from '@/contexts/MealsContext';
 import { BaseIngredient } from '@/types/meal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
