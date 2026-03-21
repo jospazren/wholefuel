@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RecipeIngredient, BaseIngredient } from '@/types/meal';
+import { RecipeIngredient, BaseIngredient, DayOfWeek, MealSlot, WeeklyPlan, DAYS_OF_WEEK, MEAL_SLOTS, DAY_FULL_LABELS } from '@/types/meal';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
