@@ -54,6 +54,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
   const [macroVisibility, setMacroVisibility] = useState<MacroVisibility>(getMacroVisibility);
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getCurrentDayOfWeek);
   const [duplicatingMealId, setDuplicatingMealId] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const handlePrevDay = () => {
     const idx = DAYS_OF_WEEK.indexOf(selectedDay);
