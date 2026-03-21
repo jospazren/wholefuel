@@ -274,6 +274,68 @@ export function MealsProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const adjustMealPortion = async (id: string, multiplier: number) => {
+    const meal = meals.get(id);
+    if (!meal || meal.type !== 'planned' || multiplier <= 0) return;
+
+    const updatedIngredients = meal.ingredients.map(ing => ({
+      ...ing,
+      servingMultiplier: Math.round(ing.servingMultiplier * multiplier * 100) / 100,
+    }));
+
+    await updateMeal(id, { ingredients: updatedIngredients });
+  };
+
+  const duplicateMeal = async (id: string): Promise<Meal | null> => {
+    const original = meals.get(id);
+    if (!original || !user) return null;
+
+    const { data: mealData, error: mealError } = await supabase
+      .from('meals')
+      .insert({
+        user_id: user.id,
+        source_recipe_id: original.sourceRecipeId,
+        name: original.name,
+        type: original.type,
+        est_calories: original.estCalories ?? null,
+        est_protein: original.estProtein ?? null,
+        est_fat: original.estFat ?? null,
+        est_carbs: original.estCarbs ?? null,
+      })
+      .select()
+      .single();
+
+    if (mealError || !mealData) {
+      toast.error('Failed to duplicate meal');
+      return null;
+    }
+
+    if (original.ingredients.length > 0) {
+      const { error: ingError } = await supabase
+        .from('meal_ingredients')
+        .insert(original.ingredients.map(ing => ({
+          meal_id: mealData.id,
+          ingredient_id: ing.ingredientId,
+          name: ing.name,
+          serving_multiplier: ing.servingMultiplier,
+        })));
+      if (ingError) console.error('Error duplicating meal ingredients:', ingError);
+    }
+
+    const cloned: Meal = {
+      ...original,
+      id: mealData.id,
+    };
+
+    setMeals(prev => {
+      const next = new Map(prev);
+      next.set(cloned.id, cloned);
+      return next;
+    });
+
+    return cloned;
+  };
+
   const deleteMeal = async (id: string) => {
     const previousMeals = meals;
     setMeals(prev => {
@@ -298,7 +360,9 @@ export function MealsProvider({ children }: { children: ReactNode }) {
         getMeal,
         createMealFromRecipe,
         createEstimatedMeal,
+        duplicateMeal,
         updateMeal,
+        adjustMealPortion,
         deleteMeal,
         getMealMacros,
         isLoading,
