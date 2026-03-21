@@ -444,12 +444,28 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
         </div>
       </div>
 
+      {/* Duplicate mode banner */}
+      {duplicatingMealId && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-primary text-primary-foreground px-5 py-2.5 rounded-full shadow-lg flex items-center gap-3 text-sm font-medium">
+          <span>Click a slot to place the duplicate</span>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-7 px-3 text-xs rounded-full"
+            onClick={() => setDuplicatingMealId(null)}
+          >
+            Cancel
+          </Button>
+        </div>
+      )}
+
       <MealEditSheet
         meal={editingMeal?.meal || null}
         day={editingMeal?.day || null}
         slot={editingMeal?.slot || null}
         open={!!editingMeal}
         onClose={() => setEditingMeal(null)}
+        onStartDuplicate={handleStartDuplicate}
       />
 
       <ViewSettingsDialog
