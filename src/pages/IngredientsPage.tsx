@@ -254,6 +254,14 @@ const IngredientsPage = () => {
                       <TableCell className="text-muted-foreground">{ing.fiberPerServing}g</TableCell>
                       <TableCell className="text-muted-foreground">{ing.sodiumPerServing}mg</TableCell>
                       <TableCell className="text-muted-foreground">{ing.brand || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground">{ingredientUsage.get(ing.id)?.recipeCount ?? 0}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {(() => {
+                          const lastUsed = ingredientUsage.get(ing.id)?.lastUsed;
+                          if (!lastUsed) return 'Never';
+                          return new Date(lastUsed).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                        })()}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(ing)}>
@@ -268,7 +276,7 @@ const IngredientsPage = () => {
                   ))}
                   {sortedIngredients.length === 0 && !isBrowseLoading && (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                         No ingredients found
                       </TableCell>
                     </TableRow>
