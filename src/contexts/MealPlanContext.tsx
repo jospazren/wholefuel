@@ -650,6 +650,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         setWeeklyTargets,
         addMealToSlot,
         addEstimatedMealToSlot,
+        duplicateMealToSlot,
         moveMealToSlot,
         removeMealFromSlot,
         getDailyMacros,
