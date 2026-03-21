@@ -8,14 +8,14 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { DragEndEvent } from '@dnd-kit/core';
 import { RecipeViewMobile } from '@/components/RecipeViewMobile';
 import { RecipeEditMobile } from '@/components/RecipeEditMobile';
-import { RecipeEditDesktop } from '@/components/RecipeEditDesktop';
+import { RecipeEditDesktop, MealActions } from '@/components/RecipeEditDesktop';
 
 export type RecipeEditorMode =
   | { type: 'add' }
   | { type: 'editRecipe'; recipe: Recipe }
   | { type: 'editMeal'; recipe: Recipe; onDelete?: () => void };
 
-interface RecipeEditorDialogProps {
+export interface RecipeEditorDialogProps {
   mode: RecipeEditorMode | null;
   open: boolean;
   onClose: () => void;
@@ -27,9 +27,10 @@ interface RecipeEditorDialogProps {
     notes?: string;
     link?: string;
   }) => void;
+  mealActions?: MealActions;
 }
 
-export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditorDialogProps) {
+export function RecipeEditorDialog({ mode, open, onClose, onSave, mealActions }: RecipeEditorDialogProps) {
   const { ingredients: ingredientDb } = useIngredients();
   const { calculateMacrosFromIngredients, allTags } = useRecipes();
   const isMobile = useIsMobile();
@@ -238,6 +239,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditor
       canDelete={canDelete}
       onDelete={mode?.type === 'editMeal' ? mode.onDelete : undefined}
       saveLabel={saveLabel}
+      mealActions={mealActions}
     />
   );
 }

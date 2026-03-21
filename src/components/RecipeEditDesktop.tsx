@@ -1,16 +1,23 @@
 import { useState } from 'react';
-import { RecipeIngredient, BaseIngredient } from '@/types/meal';
+import { RecipeIngredient, BaseIngredient, DayOfWeek, MealSlot, WeeklyPlan, DAYS_OF_WEEK, MEAL_SLOTS, DAY_FULL_LABELS } from '@/types/meal';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Plus, ExternalLink, Check, X, Trash2 } from 'lucide-react';
+import { Plus, ExternalLink, Check, X, Trash2, Scale, Copy } from 'lucide-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableIngredientRow } from '@/components/SortableIngredientRow';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RecipeEditorMode } from '@/components/RecipeEditorDialog';
+
+export interface MealActions {
+  onPortionAdjust: (multiplier: number) => void;
+  onDuplicate: (day: DayOfWeek, slot: MealSlot) => void;
+  weeklyPlan: WeeklyPlan;
+}
 
 interface MacroBadge {
   label: string;
@@ -58,6 +65,7 @@ interface RecipeEditDesktopProps {
   canDelete: boolean;
   onDelete?: () => void;
   saveLabel: string;
+  mealActions?: MealActions;
 }
 
 export function RecipeEditDesktop({
@@ -75,12 +83,15 @@ export function RecipeEditDesktop({
   formNotes, setFormNotes,
   macroBadges, allTags,
   canDelete, onDelete, saveLabel,
+  mealActions,
 }: RecipeEditDesktopProps) {
+  const [batchMultiplier, setBatchMultiplier] = useState(1);
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  const isMealMode = mode?.type === 'editMeal';
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
@@ -153,13 +164,30 @@ export function RecipeEditDesktop({
           <div className="space-y-6 pb-6">
             {/* Ingredients */}
             <div>
-              <h3 className="text-base font-bold mb-3">Ingredients</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-base font-bold">Ingredients</h3>
+                {isMealMode && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">Cooking for</span>
+                    <Select value={String(batchMultiplier)} onValueChange={(v) => setBatchMultiplier(Number(v))}>
+                      <SelectTrigger className="h-7 w-16 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[1, 2, 3, 4, 5, 6].map(n => (
+                          <SelectItem key={n} value={String(n)} className="text-xs">{n}×</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
 
               <div className="bg-accent rounded-xl p-3">
                 <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground tracking-wider uppercase pb-2 border-b border-border/30">
                   <span className="shrink-0 w-4" />
                   <span className="flex-1 min-w-0">Ingredient</span>
-                  <span className="w-14 text-center shrink-0">Qty</span>
+                  <span className="w-14 text-center shrink-0">{batchMultiplier > 1 ? 'Qty (×' + batchMultiplier + ')' : 'Qty'}</span>
                   <span className="w-20 shrink-0 text-left">Serving</span>
                   <span className="w-14 text-center shrink-0">Cal</span>
                   <span className="w-11 text-center shrink-0 text-emerald-600">P</span>
@@ -175,7 +203,7 @@ export function RecipeEditDesktop({
                   >
                     <div>
                       {formIngredients.map((ing, idx) => {
-                        const info = getIngredientInfo(ing.ingredientId, ing.servingMultiplier);
+                        const info = getIngredientInfo(ing.ingredientId, ing.servingMultiplier * batchMultiplier);
                         return (
                           <SortableIngredientRow
                             key={ing.ingredientId + '-' + idx}
@@ -284,6 +312,14 @@ export function RecipeEditDesktop({
           </div>
         </div>
 
+        {/* Meal Actions */}
+        {mealActions && (
+          <div className="px-6 py-3 flex items-center gap-2 border-t shrink-0">
+            <PortionAdjustButton onAdjust={mealActions.onPortionAdjust} />
+            <DuplicateToSlotButton weeklyPlan={mealActions.weeklyPlan} onDuplicate={mealActions.onDuplicate} />
+          </div>
+        )}
+
         {/* Footer */}
         <div className="px-6 py-4 flex items-center gap-3 border-t shrink-0">
           {canDelete && (
@@ -311,6 +347,95 @@ export function RecipeEditDesktop({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+
+function PortionAdjustButton({ onAdjust }: { onAdjust: (multiplier: number) => void }) {
+  const [showInput, setShowInput] = useState(false);
+  const [value, setValue] = useState('');
+
+  if (!showInput) {
+    return (
+      <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setShowInput(true)}>
+        <Scale className="h-3.5 w-3.5" />
+        Adjust portion
+      </Button>
+    );
+  }
+
+  const handleApply = () => {
+    const mult = parseFloat(value);
+    if (mult > 0) {
+      onAdjust(mult);
+      setShowInput(false);
+      setValue('');
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Input
+        autoFocus
+        type="number"
+        step="0.25"
+        min="0.25"
+        placeholder="e.g. 0.5"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') handleApply(); if (e.key === 'Escape') setShowInput(false); }}
+        className="h-7 w-20 text-xs"
+      />
+      <span className="text-xs text-muted-foreground">×</span>
+      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={handleApply}>Apply</Button>
+      <Button size="sm" variant="ghost" className="h-7 px-1.5" onClick={() => setShowInput(false)}>
+        <X className="h-3 w-3" />
+      </Button>
+    </div>
+  );
+}
+
+function DuplicateToSlotButton({ weeklyPlan, onDuplicate }: { weeklyPlan: WeeklyPlan; onDuplicate: (day: DayOfWeek, slot: MealSlot) => void }) {
+  const [showPicker, setShowPicker] = useState(false);
+  const [dupDay, setDupDay] = useState<DayOfWeek>(DAYS_OF_WEEK[0]);
+  const [dupSlot, setDupSlot] = useState<MealSlot>(MEAL_SLOTS[0]);
+
+  if (!showPicker) {
+    return (
+      <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setShowPicker(true)}>
+        <Copy className="h-3.5 w-3.5" />
+        Duplicate to slot
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Select value={dupDay} onValueChange={(v) => setDupDay(v as DayOfWeek)}>
+        <SelectTrigger className="h-7 text-xs w-24">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {DAYS_OF_WEEK.map(d => (
+            <SelectItem key={d} value={d} className="text-xs">{DAY_FULL_LABELS[d]}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={dupSlot} onValueChange={(v) => setDupSlot(v as MealSlot)}>
+        <SelectTrigger className="h-7 text-xs w-16">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {MEAL_SLOTS.map(s => (
+            <SelectItem key={s} value={s} className="text-xs">{s.toUpperCase()}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => { onDuplicate(dupDay, dupSlot); setShowPicker(false); }}>Go</Button>
+      <Button size="sm" variant="ghost" className="h-7 px-1.5" onClick={() => setShowPicker(false)}>
+        <X className="h-3 w-3" />
+      </Button>
+    </div>
   );
 }
 

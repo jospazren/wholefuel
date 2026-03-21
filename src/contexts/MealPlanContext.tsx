@@ -60,6 +60,7 @@ interface MealPlanContextType {
   setWeeklyTargets: (targets: WeeklyTargets) => void;
   addMealToSlot: (day: DayOfWeek, slot: MealSlot, recipe: Recipe) => void;
   addEstimatedMealToSlot: (day: DayOfWeek, slot: MealSlot, data: EstimatedMealInput) => void;
+  duplicateMealToSlot: (sourceMealId: string, toDay: DayOfWeek, toSlot: MealSlot) => void;
   moveMealToSlot: (fromDay: DayOfWeek, fromSlot: MealSlot, toDay: DayOfWeek, toSlot: MealSlot) => void;
   removeMealFromSlot: (day: DayOfWeek, slot: MealSlot) => void;
   getDailyMacros: (day: DayOfWeek) => Macros;
@@ -92,7 +93,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const location = useLocation();
   const { ingredients } = useIngredients();
-  const { getMeal, getMealMacros, createMealFromRecipe, createEstimatedMeal, deleteMeal: deleteMealEntity } = useMeals();
+  const { getMeal, getMealMacros, createMealFromRecipe, createEstimatedMeal, duplicateMeal, deleteMeal: deleteMealEntity } = useMeals();
   const [currentWeekStart, setCurrentWeekStartInternal] = useState<string>(getSavedWeekStart());
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan>(defaultWeeklyPlan);
   const [weeklyTargets, setWeeklyTargetsState] = useState<WeeklyTargets>(defaultTargets);
@@ -429,6 +430,49 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const duplicateMealToSlot = async (sourceMealId: string, toDay: DayOfWeek, toSlot: MealSlot) => {
+    const cloned = await duplicateMeal(sourceMealId);
+    if (!cloned) return;
+
+    const assignment: MealSlotAssignment = {
+      id: `${toDay}-${toSlot}-${Date.now()}`,
+      mealId: cloned.id,
+    };
+
+    setWeeklyPlan(prev => ({
+      ...prev,
+      [toDay]: { ...prev[toDay], [toSlot]: assignment },
+    }));
+
+    if (!user) return;
+
+    const { data: dbData, error } = await supabase
+      .from('meal_plans')
+      .upsert({
+        user_id: user.id,
+        week_start_date: currentWeekStart,
+        day_of_week: toDay,
+        meal_slot: toSlot,
+        meal_id: cloned.id,
+      }, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' })
+      .select()
+      .single();
+
+    if (error) {
+      setWeeklyPlan(prev => ({
+        ...prev,
+        [toDay]: { ...prev[toDay], [toSlot]: undefined },
+      }));
+      await deleteMealEntity(cloned.id);
+      toast.error('Failed to duplicate meal to slot');
+    } else if (dbData) {
+      setWeeklyPlan(prev => ({
+        ...prev,
+        [toDay]: { ...prev[toDay], [toSlot]: { id: dbData.id, mealId: cloned.id } },
+      }));
+    }
+  };
+
   const removeMealFromSlot = async (day: DayOfWeek, slot: MealSlot) => {
     const assignment = weeklyPlan[day][slot];
     const previousPlan = weeklyPlan;
@@ -469,8 +513,17 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
 
     setWeeklyPlan(prev => {
       const updated = { ...prev };
-      updated[fromDay] = { ...prev[fromDay], [fromSlot]: targetAssignment };
-      updated[toDay] = { ...prev[toDay], [toSlot]: sourceAssignment };
+      if (fromDay === toDay) {
+        // Same-day: apply both slot changes in one spread to avoid overwrite
+        updated[fromDay] = {
+          ...prev[fromDay],
+          [fromSlot]: targetAssignment,
+          [toSlot]: sourceAssignment,
+        };
+      } else {
+        updated[fromDay] = { ...prev[fromDay], [fromSlot]: targetAssignment };
+        updated[toDay] = { ...prev[toDay], [toSlot]: sourceAssignment };
+      }
       return updated;
     });
 
@@ -597,6 +650,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         setWeeklyTargets,
         addMealToSlot,
         addEstimatedMealToSlot,
+        duplicateMealToSlot,
         moveMealToSlot,
         removeMealFromSlot,
         getDailyMacros,
