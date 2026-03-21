@@ -88,6 +88,24 @@ export function MealSlotCell({
   const mealData = meal ? getMeal(meal.mealId) : undefined;
 
   if (!meal || !mealData) {
+    // In duplicate mode, show a clickable target
+    if (isDuplicateTarget) {
+      return (
+        <div
+          className={cn(
+            'rounded-2xl transition-all duration-150 px-2 min-h-[60px]',
+            'flex items-center justify-center cursor-pointer',
+            'border-2 border-dashed border-primary/40 bg-primary/5 hover:bg-primary/10 hover:border-primary/60'
+          )}
+          onClick={onEditClick}
+        >
+          <span className="text-[13px] font-medium text-primary">
+            Place here
+          </span>
+        </div>
+      );
+    }
+
     return (
       <div
         className={cn(
