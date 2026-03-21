@@ -83,6 +83,7 @@ export function RecipeEditDesktop({
   formNotes, setFormNotes,
   macroBadges, allTags,
   canDelete, onDelete, saveLabel,
+  mealActions,
 }: RecipeEditDesktopProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
