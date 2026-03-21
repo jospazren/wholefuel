@@ -304,6 +304,9 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                       ))}
                     </SelectContent>
                   </Select>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setExportOpen(true)}>
+                    <FileDown className="h-4 w-4" />
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setViewSettingsOpen(true)}>
                     <SlidersHorizontal className="h-4 w-4" />
                   </Button>
