@@ -240,5 +240,6 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave, mealActions }:
       onDelete={mode?.type === 'editMeal' ? mode.onDelete : undefined}
       saveLabel={saveLabel}
       mealActions={mealActions}
+    />
   );
 }
