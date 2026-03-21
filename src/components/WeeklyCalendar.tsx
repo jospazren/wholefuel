@@ -429,6 +429,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                       slot={slot}
                       meal={weeklyPlan[day][slot]}
                       isDragOver={isSlotDraggedOver(day, slot)}
+                      isDuplicateTarget={!!duplicatingMealId}
                       onDragOver={(e) => handleDragOver(e, day, slot)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, day, slot)}
