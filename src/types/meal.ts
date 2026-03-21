@@ -72,6 +72,7 @@ export interface Meal {
   estProtein?: number;
   estFat?: number;
   estCarbs?: number;
+  createdAt?: string;
 }
 
 export interface MealSlotAssignment {
