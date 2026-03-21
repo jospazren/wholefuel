@@ -8,7 +8,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { DragEndEvent } from '@dnd-kit/core';
 import { RecipeViewMobile } from '@/components/RecipeViewMobile';
 import { RecipeEditMobile } from '@/components/RecipeEditMobile';
-import { RecipeEditDesktop } from '@/components/RecipeEditDesktop';
+import { RecipeEditDesktop, MealActions } from '@/components/RecipeEditDesktop';
 
 export type RecipeEditorMode =
   | { type: 'add' }
