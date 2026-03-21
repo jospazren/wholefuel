@@ -469,8 +469,17 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
 
     setWeeklyPlan(prev => {
       const updated = { ...prev };
-      updated[fromDay] = { ...prev[fromDay], [fromSlot]: targetAssignment };
-      updated[toDay] = { ...prev[toDay], [toSlot]: sourceAssignment };
+      if (fromDay === toDay) {
+        // Same-day: apply both slot changes in one spread to avoid overwrite
+        updated[fromDay] = {
+          ...prev[fromDay],
+          [fromSlot]: targetAssignment,
+          [toSlot]: sourceAssignment,
+        };
+      } else {
+        updated[fromDay] = { ...prev[fromDay], [fromSlot]: targetAssignment };
+        updated[toDay] = { ...prev[toDay], [toSlot]: sourceAssignment };
+      }
       return updated;
     });
 
