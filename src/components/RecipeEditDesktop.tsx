@@ -10,7 +10,14 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { SortableIngredientRow } from '@/components/SortableIngredientRow';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RecipeEditorMode } from '@/components/RecipeEditorDialog';
+
+export interface MealActions {
+  onPortionAdjust: (multiplier: number) => void;
+  onDuplicate: (day: DayOfWeek, slot: MealSlot) => void;
+  weeklyPlan: WeeklyPlan;
+}
 
 interface MacroBadge {
   label: string;
