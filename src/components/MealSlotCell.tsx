@@ -18,6 +18,7 @@ interface MealSlotCellProps {
   slot: MealSlot;
   meal?: MealSlotEntry;
   isDragOver: boolean;
+  isDuplicateTarget?: boolean;
   onDragOver: (e: React.DragEvent) => void;
   onDragLeave: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
@@ -30,6 +31,7 @@ export function MealSlotCell({
   slot,
   meal,
   isDragOver,
+  isDuplicateTarget,
   onDragOver,
   onDragLeave,
   onDrop,
