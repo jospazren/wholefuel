@@ -65,6 +65,7 @@ interface RecipeEditDesktopProps {
   canDelete: boolean;
   onDelete?: () => void;
   saveLabel: string;
+  mealActions?: MealActions;
 }
 
 export function RecipeEditDesktop({
