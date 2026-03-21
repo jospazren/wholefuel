@@ -85,11 +85,13 @@ export function RecipeEditDesktop({
   canDelete, onDelete, saveLabel,
   mealActions,
 }: RecipeEditDesktopProps) {
+  const [batchMultiplier, setBatchMultiplier] = useState(1);
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  const isMealMode = mode?.type === 'editMeal';
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
