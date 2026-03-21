@@ -20,7 +20,7 @@ import {
 import { Apple, Plus, Search, Pencil, Trash2, ArrowUpDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type SortField = 'name' | 'caloriesPerServing' | 'proteinPerServing' | 'fatPerServing' | 'carbsPerServing' | 'fiberPerServing' | 'sodiumPerServing' | 'servingDescription';
+type SortField = 'name' | 'caloriesPerServing' | 'proteinPerServing' | 'fatPerServing' | 'carbsPerServing' | 'fiberPerServing' | 'sodiumPerServing' | 'servingDescription' | 'usedInRecipes' | 'lastUsed';
 type SortDirection = 'asc' | 'desc';
 
 const IngredientsPage = () => {
