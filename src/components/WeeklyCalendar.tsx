@@ -107,10 +107,21 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
   };
 
   const handleEditClick = (day: DayOfWeek, slot: MealSlot) => {
+    // If in duplicate mode, clicking a slot places the duplicate there
+    if (duplicatingMealId) {
+      duplicateMealToSlot(duplicatingMealId, day, slot);
+      setDuplicatingMealId(null);
+      return;
+    }
     const meal = weeklyPlan[day][slot];
     if (meal) {
       setEditingMeal({ meal, day, slot });
     }
+  };
+
+  const handleStartDuplicate = (mealId: string) => {
+    setEditingMeal(null);
+    setDuplicatingMealId(mealId);
   };
 
   const isSlotDraggedOver = (day: DayOfWeek, slot: MealSlot) => {
