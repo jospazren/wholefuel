@@ -430,6 +430,49 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const duplicateMealToSlot = async (sourceMealId: string, toDay: DayOfWeek, toSlot: MealSlot) => {
+    const cloned = await duplicateMeal(sourceMealId);
+    if (!cloned) return;
+
+    const assignment: MealSlotAssignment = {
+      id: `${toDay}-${toSlot}-${Date.now()}`,
+      mealId: cloned.id,
+    };
+
+    setWeeklyPlan(prev => ({
+      ...prev,
+      [toDay]: { ...prev[toDay], [toSlot]: assignment },
+    }));
+
+    if (!user) return;
+
+    const { data: dbData, error } = await supabase
+      .from('meal_plans')
+      .upsert({
+        user_id: user.id,
+        week_start_date: currentWeekStart,
+        day_of_week: toDay,
+        meal_slot: toSlot,
+        meal_id: cloned.id,
+      }, { onConflict: 'user_id,day_of_week,meal_slot,week_start_date' })
+      .select()
+      .single();
+
+    if (error) {
+      setWeeklyPlan(prev => ({
+        ...prev,
+        [toDay]: { ...prev[toDay], [toSlot]: undefined },
+      }));
+      await deleteMealEntity(cloned.id);
+      toast.error('Failed to duplicate meal to slot');
+    } else if (dbData) {
+      setWeeklyPlan(prev => ({
+        ...prev,
+        [toDay]: { ...prev[toDay], [toSlot]: { id: dbData.id, mealId: cloned.id } },
+      }));
+    }
+  };
+
   const removeMealFromSlot = async (day: DayOfWeek, slot: MealSlot) => {
     const assignment = weeklyPlan[day][slot];
     const previousPlan = weeklyPlan;
