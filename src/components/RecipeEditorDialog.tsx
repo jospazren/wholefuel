@@ -15,7 +15,7 @@ export type RecipeEditorMode =
   | { type: 'editRecipe'; recipe: Recipe }
   | { type: 'editMeal'; recipe: Recipe; onDelete?: () => void };
 
-interface RecipeEditorDialogProps {
+export interface RecipeEditorDialogProps {
   mode: RecipeEditorMode | null;
   open: boolean;
   onClose: () => void;
@@ -27,9 +27,10 @@ interface RecipeEditorDialogProps {
     notes?: string;
     link?: string;
   }) => void;
+  mealActions?: MealActions;
 }
 
-export function RecipeEditorDialog({ mode, open, onClose, onSave }: RecipeEditorDialogProps) {
+export function RecipeEditorDialog({ mode, open, onClose, onSave, mealActions }: RecipeEditorDialogProps) {
   const { ingredients: ingredientDb } = useIngredients();
   const { calculateMacrosFromIngredients, allTags } = useRecipes();
   const isMobile = useIsMobile();
