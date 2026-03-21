@@ -80,6 +80,7 @@ export function MealsProvider({ children }: { children: ReactNode }) {
             estProtein: m.est_protein != null ? Number(m.est_protein) : undefined,
             estFat: m.est_fat != null ? Number(m.est_fat) : undefined,
             estCarbs: m.est_carbs != null ? Number(m.est_carbs) : undefined,
+            createdAt: m.created_at,
           });
         });
         setMeals(mealsMap);

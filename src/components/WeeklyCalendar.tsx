@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { WeeklyExportDialog } from '@/components/WeeklyExportDialog';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { Recipe, DayOfWeek, MealSlot, MealSlotAssignment, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, DAY_FULL_LABELS, WeeklyTargets, DietPreset, computeTargetsFromPreset } from '@/types/meal';
 import { ViewSettingsDialog, getMacroVisibility, MacroVisibility } from '@/components/ViewSettingsDialog';
@@ -8,7 +9,7 @@ import { DayMacroBars } from '@/components/DayMacroBars';
 import { MacroBadgeRow } from '@/components/MacroBadge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, CalendarDays, SlidersHorizontal, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays, SlidersHorizontal, PanelLeftClose, PanelLeftOpen, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -53,6 +54,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
   const [macroVisibility, setMacroVisibility] = useState<MacroVisibility>(getMacroVisibility);
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getCurrentDayOfWeek);
   const [duplicatingMealId, setDuplicatingMealId] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const handlePrevDay = () => {
     const idx = DAYS_OF_WEEK.indexOf(selectedDay);
@@ -302,6 +304,9 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                       ))}
                     </SelectContent>
                   </Select>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setExportOpen(true)}>
+                    <FileDown className="h-4 w-4" />
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setViewSettingsOpen(true)}>
                     <SlidersHorizontal className="h-4 w-4" />
                   </Button>
@@ -402,6 +407,9 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                   />
                 </div>
 
+                <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setExportOpen(true)}>
+                  <FileDown className="h-4 w-4" />
+                </Button>
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setViewSettingsOpen(true)}>
                   <SlidersHorizontal className="h-4 w-4" />
                 </Button>
@@ -474,6 +482,8 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
         visibility={macroVisibility}
         onSave={setMacroVisibility}
       />
+
+      <WeeklyExportDialog open={exportOpen} onOpenChange={setExportOpen} />
     </>
   );
 }

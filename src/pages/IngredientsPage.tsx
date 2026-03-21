@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AppLayout } from '@/components/AppLayout';
 import { useIngredients } from '@/contexts/IngredientsContext';
 import { useRecipes } from '@/contexts/RecipesContext';
+import { useMeals } from '@/contexts/MealsContext';
 import { BaseIngredient } from '@/types/meal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +20,7 @@ import {
 import { Apple, Plus, Search, Pencil, Trash2, ArrowUpDown, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type SortField = 'name' | 'caloriesPerServing' | 'proteinPerServing' | 'fatPerServing' | 'carbsPerServing' | 'fiberPerServing' | 'sodiumPerServing' | 'servingDescription';
+type SortField = 'name' | 'caloriesPerServing' | 'proteinPerServing' | 'fatPerServing' | 'carbsPerServing' | 'fiberPerServing' | 'sodiumPerServing' | 'servingDescription' | 'usedInRecipes' | 'lastUsed';
 type SortDirection = 'asc' | 'desc';
 
 const IngredientsPage = () => {
@@ -29,6 +30,7 @@ const IngredientsPage = () => {
     addIngredient, updateIngredient, deleteIngredient, isLoading,
   } = useIngredients();
   const { recipes } = useRecipes();
+  const { meals } = useMeals();
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [editingIngredient, setEditingIngredient] = useState<BaseIngredient | null>(null);
@@ -56,10 +58,53 @@ const IngredientsPage = () => {
     }
   };
 
+  // Compute ingredient usage
+  const ingredientUsage = useMemo(() => {
+    const usage = new Map<string, { recipeCount: number; lastUsed: string | null }>();
+    // Count recipes using each ingredient
+    recipes.forEach(r => {
+      r.ingredients.forEach(ing => {
+        const existing = usage.get(ing.ingredientId);
+        if (existing) {
+          existing.recipeCount++;
+        } else {
+          usage.set(ing.ingredientId, { recipeCount: 1, lastUsed: null });
+        }
+      });
+    });
+    // Find last used date from meals
+    meals.forEach(meal => {
+      if (meal.type === 'planned') {
+        meal.ingredients.forEach(ing => {
+          const existing = usage.get(ing.ingredientId);
+          const mealDate = meal.createdAt || null;
+          if (existing) {
+            if (mealDate && (!existing.lastUsed || mealDate > existing.lastUsed)) {
+              existing.lastUsed = mealDate;
+            }
+          } else {
+            usage.set(ing.ingredientId, { recipeCount: 0, lastUsed: mealDate });
+          }
+        });
+      }
+    });
+    return usage;
+  }, [recipes, meals]);
+
   // Client-side sort on the already-fetched browse page
   const sortedIngredients = [...browseIngredients].sort((a, b) => {
-    const aVal = a[sortField];
-    const bVal = b[sortField];
+    if (sortField === 'usedInRecipes') {
+      const aVal = ingredientUsage.get(a.id)?.recipeCount ?? 0;
+      const bVal = ingredientUsage.get(b.id)?.recipeCount ?? 0;
+      return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+    }
+    if (sortField === 'lastUsed') {
+      const aVal = ingredientUsage.get(a.id)?.lastUsed ?? '';
+      const bVal = ingredientUsage.get(b.id)?.lastUsed ?? '';
+      return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    }
+    const aVal = a[sortField as keyof BaseIngredient];
+    const bVal = b[sortField as keyof BaseIngredient];
     if (typeof aVal === 'string' && typeof bVal === 'string') {
       return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
     }
@@ -175,6 +220,8 @@ const IngredientsPage = () => {
                 <SortHeader field="fiberPerServing">Fiber</SortHeader>
                 <SortHeader field="sodiumPerServing">Sodium</SortHeader>
                 <TableHead>Brand</TableHead>
+                <SortHeader field="usedInRecipes">Used in</SortHeader>
+                <SortHeader field="lastUsed">Last used</SortHeader>
                 <TableHead className="w-20">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -207,6 +254,14 @@ const IngredientsPage = () => {
                       <TableCell className="text-muted-foreground">{ing.fiberPerServing}g</TableCell>
                       <TableCell className="text-muted-foreground">{ing.sodiumPerServing}mg</TableCell>
                       <TableCell className="text-muted-foreground">{ing.brand || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground">{ingredientUsage.get(ing.id)?.recipeCount ?? 0}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {(() => {
+                          const lastUsed = ingredientUsage.get(ing.id)?.lastUsed;
+                          if (!lastUsed) return 'Never';
+                          return new Date(lastUsed).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                        })()}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(ing)}>
@@ -221,7 +276,7 @@ const IngredientsPage = () => {
                   ))}
                   {sortedIngredients.length === 0 && !isBrowseLoading && (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                         No ingredients found
                       </TableCell>
                     </TableRow>
