@@ -12,6 +12,8 @@ import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight, CalendarDays, SlidersHorizontal, PanelLeftClose, PanelLeftOpen, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -55,6 +57,68 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getCurrentDayOfWeek);
   const [duplicatingMealId, setDuplicatingMealId] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [perDayMode, setPerDayMode] = useState(
+    Object.values(weeklyTargets.perDayCalories).some(v => v !== null)
+  );
+  const [perDayInputs, setPerDayInputs] = useState<Record<DayOfWeek, string>>(() => {
+    const result: Record<string, string> = {};
+    DAYS_OF_WEEK.forEach(day => {
+      result[day] = weeklyTargets.perDayCalories[day]?.toString() ?? '';
+    });
+    return result as Record<DayOfWeek, string>;
+  });
+
+  // Sync perDayMode and inputs when weeklyTargets change (e.g. week navigation)
+  const targetsRef = JSON.stringify(weeklyTargets.perDayCalories);
+  useState(() => {}); // placeholder
+  // Use effect-like pattern via key comparison
+  const [lastTargetsRef, setLastTargetsRef] = useState(targetsRef);
+  if (targetsRef !== lastTargetsRef) {
+    setLastTargetsRef(targetsRef);
+    const hasOverrides = Object.values(weeklyTargets.perDayCalories).some(v => v !== null);
+    setPerDayMode(hasOverrides);
+    const newInputs: Record<string, string> = {};
+    DAYS_OF_WEEK.forEach(day => {
+      newInputs[day] = weeklyTargets.perDayCalories[day]?.toString() ?? '';
+    });
+    setPerDayInputs(newInputs as Record<DayOfWeek, string>);
+  }
+
+  const handlePerDayToggle = (checked: boolean) => {
+    setPerDayMode(checked);
+    if (checked) {
+      // Pre-fill all days with current base
+      const filled: Record<string, string> = {};
+      DAYS_OF_WEEK.forEach(day => {
+        filled[day] = perDayInputs[day] || weeklyTargets.dailyCalories.toString();
+      });
+      setPerDayInputs(filled as Record<DayOfWeek, string>);
+    } else {
+      // Clear all overrides
+      setWeeklyTargets({
+        ...weeklyTargets,
+        perDayCalories: { monday: null, tuesday: null, wednesday: null, thursday: null, friday: null, saturday: null, sunday: null },
+      });
+    }
+  };
+
+  const handlePerDayInput = (day: DayOfWeek, value: string) => {
+    setPerDayInputs(prev => ({ ...prev, [day]: value }));
+    const val = parseInt(value);
+    const override = (!isNaN(val) && val !== weeklyTargets.dailyCalories) ? val : null;
+    setWeeklyTargets({
+      ...weeklyTargets,
+      perDayCalories: { ...weeklyTargets.perDayCalories, [day]: override },
+    });
+  };
+
+  const perDayTotal = perDayMode
+    ? DAYS_OF_WEEK.reduce((sum, day) => {
+        const val = parseInt(perDayInputs[day]);
+        return sum + (isNaN(val) ? weeklyTargets.dailyCalories : val);
+      }, 0)
+    : weeklyTargets.dailyCalories * 7;
+  const perDayAvg = Math.round(perDayTotal / 7);
 
   const handlePrevDay = () => {
     const idx = DAYS_OF_WEEK.indexOf(selectedDay);
@@ -421,10 +485,45 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                 <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground" onClick={() => setViewSettingsOpen(true)}>
                   <SlidersHorizontal className="h-4 w-4" />
                 </Button>
+
+                <div className="flex items-center gap-1.5 ml-1">
+                  <span className="text-[10px] text-muted-foreground">Per-day</span>
+                  <Switch
+                    checked={perDayMode}
+                    onCheckedChange={handlePerDayToggle}
+                    className="scale-75"
+                  />
+                </div>
               </div>
             </>
           )}
         </div>
+
+        {/* Per-day calorie row (desktop only) */}
+        {!isMobile && perDayMode && (
+          <div className="border-b border-white/30 px-4 py-2 flex items-center gap-3">
+            <div className="grid grid-cols-7 gap-1.5 flex-1">
+              {DAYS_OF_WEEK.map(day => (
+                <div key={day} className="flex flex-col items-center gap-0.5">
+                  <Label className="text-[9px] uppercase text-muted-foreground font-semibold tracking-wide">
+                    {DAY_LABELS[day]}
+                  </Label>
+                  <Input
+                    type="number"
+                    value={perDayInputs[day]}
+                    onChange={(e) => handlePerDayInput(day, e.target.value)}
+                    className="h-7 w-full text-center text-xs border-0 bg-accent rounded-lg px-1"
+                    placeholder={weeklyTargets.dailyCalories.toString()}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-col items-end text-[10px] text-muted-foreground whitespace-nowrap">
+              <span>Σ {perDayTotal} kcal</span>
+              <span>ø {perDayAvg} kcal/d</span>
+            </div>
+          </div>
+        )}
 
         {/* Day Columns */}
         <div className="flex-1 overflow-x-auto">
