@@ -170,6 +170,13 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
     }
   };
 
+  const getDayTargets = (day: DayOfWeek) => ({
+    dailyCalories: getEffectiveCalories(weeklyTargets, day),
+    protein: weeklyTargets.protein,
+    carbs: weeklyTargets.carbs,
+    fat: weeklyTargets.fat,
+  });
+
   const renderDayHeader = (day: DayOfWeek) => {
     const dayMacros = getDailyMacros(day);
     return (
@@ -186,7 +193,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
             {DAY_LABELS[day]}
           </span>
         </div>
-        <DayMacroBars macros={dayMacros} targets={weeklyTargets} visibility={macroVisibility} />
+        <DayMacroBars macros={dayMacros} targets={getDayTargets(day)} visibility={macroVisibility} />
       </div>
     );
   };
