@@ -16,33 +16,45 @@ export type Database = {
     Tables: {
       diet_presets: {
         Row: {
+          carbs_pct: number | null
           carbs_per_kg: number | null
           created_at: string
+          fat_pct: number | null
           fat_per_kg: number | null
           id: string
+          macro_mode: string
           name: string
+          protein_pct: number | null
           protein_per_kg: number | null
           tdee_multiplier: number
           updated_at: string
           user_id: string
         }
         Insert: {
+          carbs_pct?: number | null
           carbs_per_kg?: number | null
           created_at?: string
+          fat_pct?: number | null
           fat_per_kg?: number | null
           id?: string
+          macro_mode?: string
           name: string
+          protein_pct?: number | null
           protein_per_kg?: number | null
           tdee_multiplier?: number
           updated_at?: string
           user_id: string
         }
         Update: {
+          carbs_pct?: number | null
           carbs_per_kg?: number | null
           created_at?: string
+          fat_pct?: number | null
           fat_per_kg?: number | null
           id?: string
+          macro_mode?: string
           name?: string
+          protein_pct?: number | null
           protein_per_kg?: number | null
           tdee_multiplier?: number
           updated_at?: string
@@ -394,6 +406,13 @@ export type Database = {
       }
       weekly_targets: {
         Row: {
+          calories_friday: number | null
+          calories_monday: number | null
+          calories_saturday: number | null
+          calories_sunday: number | null
+          calories_thursday: number | null
+          calories_tuesday: number | null
+          calories_wednesday: number | null
           carbs: number
           created_at: string
           daily_calories: number
@@ -409,6 +428,13 @@ export type Database = {
           weight_kg: number
         }
         Insert: {
+          calories_friday?: number | null
+          calories_monday?: number | null
+          calories_saturday?: number | null
+          calories_sunday?: number | null
+          calories_thursday?: number | null
+          calories_tuesday?: number | null
+          calories_wednesday?: number | null
           carbs?: number
           created_at?: string
           daily_calories?: number
@@ -424,6 +450,13 @@ export type Database = {
           weight_kg?: number
         }
         Update: {
+          calories_friday?: number | null
+          calories_monday?: number | null
+          calories_saturday?: number | null
+          calories_sunday?: number | null
+          calories_thursday?: number | null
+          calories_tuesday?: number | null
+          calories_wednesday?: number | null
           carbs?: number
           created_at?: string
           daily_calories?: number
