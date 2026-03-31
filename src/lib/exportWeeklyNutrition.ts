@@ -153,9 +153,9 @@ export function buildExportJson(opts: ExportOptions): object {
     };
   });
 
-  const avgDivisor = daysWithData || 1;
+  const weeklyCalTarget = DAYS_OF_WEEK.reduce((sum, day) => sum + getEffectiveCalories(weeklyTargets, day), 0);
   const adherence = (actual: number, target: number) =>
-    target > 0 ? Math.round((actual / (target * daysWithData)) * 1000) / 10 : 0;
+    target > 0 ? Math.round((actual / target) * 1000) / 10 : 0;
 
   return {
     week: weekStart,
