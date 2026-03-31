@@ -138,11 +138,14 @@ export function buildExportJson(opts: ExportOptions): object {
     weeklyMacroSums.fat += dayTotals.fat;
     weeklyMacroSums.carbs += dayTotals.carbs;
 
+    const dayCalTarget = getEffectiveCalories(weeklyTargets, day);
+
     days[day] = {
       meals,
       totals: dayTotals,
+      calorie_target: dayCalTarget,
       vs_targets: {
-        calories: dayTotals.calories - weeklyTargets.dailyCalories,
+        calories: dayTotals.calories - dayCalTarget,
         protein: dayTotals.protein - weeklyTargets.protein,
         fat: dayTotals.fat - weeklyTargets.fat,
         carbs: dayTotals.carbs - weeklyTargets.carbs,
