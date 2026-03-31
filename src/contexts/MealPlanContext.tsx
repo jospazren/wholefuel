@@ -236,6 +236,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
             carbs: Number(latestTargets.carbs),
             presetId: latestTargets.preset_id || null,
             weightKg: Number(latestTargets.weight_kg) || 80,
+            perDayCalories: { ...defaultPerDay },
           };
           setWeeklyTargetsState(clonedTargets);
 
