@@ -231,7 +231,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
             border: '1px solid rgba(255,255,255,0.5)',
           }}
         >
-          <DayMacroBars macros={dayMacros} targets={weeklyTargets} visibility={macroVisibility} />
+          <DayMacroBars macros={dayMacros} targets={getDayTargets(day)} visibility={macroVisibility} />
         </div>
 
         <div className="flex-1 overflow-y-auto pb-1.5 pt-1.5 space-y-1">
