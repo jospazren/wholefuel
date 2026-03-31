@@ -85,9 +85,15 @@ const defaultWeeklyPlan: WeeklyPlan = {
   friday: {}, saturday: {}, sunday: {},
 };
 
+const defaultPerDay: PerDayCalories = {
+  monday: null, tuesday: null, wednesday: null, thursday: null,
+  friday: null, saturday: null, sunday: null,
+};
+
 const defaultTargets: WeeklyTargets = {
   tdee: 2500, strategy: 'maintain', dailyCalories: 2500,
   protein: 150, fat: 67, carbs: 200, presetId: null, weightKg: 80,
+  perDayCalories: { ...defaultPerDay },
 };
 
 const MealPlanContext = createContext<MealPlanContextType | undefined>(undefined);
