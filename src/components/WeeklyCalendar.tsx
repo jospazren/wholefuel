@@ -247,7 +247,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
     return (
       <div
         key={`header-${day}`}
-        className="rounded-2xl p-[13px] space-y-3 mx-1.5 mt-1.5"
+        className="rounded-2xl p-[13px] space-y-2 mx-1.5 mt-1.5"
         style={{
           backgroundImage: 'linear-gradient(137deg, rgba(255,255,255,0.6), rgba(249,250,251,0.3))',
           border: '1px solid rgba(255,255,255,0.5)',
@@ -258,6 +258,15 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
             {DAY_LABELS[day]}
           </span>
         </div>
+        {perDayMode && (
+          <Input
+            type="number"
+            value={perDayInputs[day]}
+            onChange={(e) => handlePerDayInput(day, e.target.value)}
+            className="h-6 w-full text-center text-xs border-0 bg-accent rounded-lg px-1"
+            placeholder={weeklyTargets.dailyCalories.toString()}
+          />
+        )}
         <DayMacroBars macros={dayMacros} targets={getDayTargets(day)} visibility={macroVisibility} />
       </div>
     );
