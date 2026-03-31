@@ -44,7 +44,7 @@ export function DailyMacroSummary() {
           <MacroRing
             type="calories"
             value={averageDaily.calories}
-            max={weeklyTargets.dailyCalories}
+            max={avgDailyCalTarget}
             size="lg"
             label="Calories"
           />
