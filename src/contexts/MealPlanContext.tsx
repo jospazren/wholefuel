@@ -187,6 +187,10 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           proteinPerKg: p.protein_per_kg != null ? Number(p.protein_per_kg) : null,
           carbsPerKg: p.carbs_per_kg != null ? Number(p.carbs_per_kg) : null,
           fatPerKg: p.fat_per_kg != null ? Number(p.fat_per_kg) : null,
+          macroMode: (p.macro_mode as DietPreset['macroMode']) || 'g_per_kg',
+          proteinPct: p.protein_pct != null ? Number(p.protein_pct) : null,
+          carbsPct: p.carbs_pct != null ? Number(p.carbs_pct) : null,
+          fatPct: p.fat_pct != null ? Number(p.fat_pct) : null,
         })));
       }
 
@@ -202,6 +206,15 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           carbs: Number(dt.carbs),
           presetId: dt.preset_id || null,
           weightKg: Number(dt.weight_kg) || 80,
+          perDayCalories: {
+            monday: dt.calories_monday != null ? Number(dt.calories_monday) : null,
+            tuesday: dt.calories_tuesday != null ? Number(dt.calories_tuesday) : null,
+            wednesday: dt.calories_wednesday != null ? Number(dt.calories_wednesday) : null,
+            thursday: dt.calories_thursday != null ? Number(dt.calories_thursday) : null,
+            friday: dt.calories_friday != null ? Number(dt.calories_friday) : null,
+            saturday: dt.calories_saturday != null ? Number(dt.calories_saturday) : null,
+            sunday: dt.calories_sunday != null ? Number(dt.calories_sunday) : null,
+          },
         });
       } else {
         // Fallback to most recent targets and clone as snapshot for this week
