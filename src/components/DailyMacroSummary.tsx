@@ -1,5 +1,5 @@
 import { useMealPlan } from '@/contexts/MealPlanContext';
-import { DAYS_OF_WEEK } from '@/types/meal';
+import { DAYS_OF_WEEK, getEffectiveCalories } from '@/types/meal';
 import { MacroRing } from '@/components/MacroRing';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, Target } from 'lucide-react';
@@ -16,9 +16,10 @@ export function DailyMacroSummary() {
     carbs: Math.round(weeklyTotals.carbs / 7),
   };
 
-  // Calculate weekly adherence percentage
-  const weeklyTarget = weeklyTargets.dailyCalories * 7;
+  // Calculate weekly adherence using per-day effective targets
+  const weeklyTarget = DAYS_OF_WEEK.reduce((sum, day) => sum + getEffectiveCalories(weeklyTargets, day), 0);
   const adherencePercent = weeklyTarget > 0 ? Math.round((weeklyTotals.calories / weeklyTarget) * 100) : 0;
+  const avgDailyCalTarget = Math.round(weeklyTarget / 7);
 
   return (
     <Card className="border-0 shadow-lg">
@@ -43,7 +44,7 @@ export function DailyMacroSummary() {
           <MacroRing
             type="calories"
             value={averageDaily.calories}
-            max={weeklyTargets.dailyCalories}
+            max={avgDailyCalTarget}
             size="lg"
             label="Calories"
           />

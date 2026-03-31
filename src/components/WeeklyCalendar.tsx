@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { WeeklyExportDialog } from '@/components/WeeklyExportDialog';
 import { useMealPlan } from '@/contexts/MealPlanContext';
-import { Recipe, DayOfWeek, MealSlot, MealSlotAssignment, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, DAY_FULL_LABELS, WeeklyTargets, DietPreset, computeTargetsFromPreset } from '@/types/meal';
+import { Recipe, DayOfWeek, MealSlot, MealSlotAssignment, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, DAY_FULL_LABELS, WeeklyTargets, DietPreset, computeTargetsFromPreset, getEffectiveCalories } from '@/types/meal';
 import { ViewSettingsDialog, getMacroVisibility, MacroVisibility } from '@/components/ViewSettingsDialog';
 import { MealSlotCell } from '@/components/MealSlotCell';
 import { MealEditSheet } from '@/components/MealEditSheet';
@@ -145,6 +145,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
       protein: computed.protein,
       carbs: computed.carbs,
       fat: computed.fat,
+      perDayCalories: { monday: null, tuesday: null, wednesday: null, thursday: null, friday: null, saturday: null, sunday: null },
     });
   };
 
@@ -170,6 +171,13 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
     }
   };
 
+  const getDayTargets = (day: DayOfWeek) => ({
+    dailyCalories: getEffectiveCalories(weeklyTargets, day),
+    protein: weeklyTargets.protein,
+    carbs: weeklyTargets.carbs,
+    fat: weeklyTargets.fat,
+  });
+
   const renderDayHeader = (day: DayOfWeek) => {
     const dayMacros = getDailyMacros(day);
     return (
@@ -186,7 +194,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
             {DAY_LABELS[day]}
           </span>
         </div>
-        <DayMacroBars macros={dayMacros} targets={weeklyTargets} visibility={macroVisibility} />
+        <DayMacroBars macros={dayMacros} targets={getDayTargets(day)} visibility={macroVisibility} />
       </div>
     );
   };
@@ -224,7 +232,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
             border: '1px solid rgba(255,255,255,0.5)',
           }}
         >
-          <DayMacroBars macros={dayMacros} targets={weeklyTargets} visibility={macroVisibility} />
+          <DayMacroBars macros={dayMacros} targets={getDayTargets(day)} visibility={macroVisibility} />
         </div>
 
         <div className="flex-1 overflow-y-auto pb-1.5 pt-1.5 space-y-1">

@@ -105,6 +105,8 @@ export interface WeeklyPlan {
 export type DayOfWeek = keyof WeeklyPlan;
 export type MealSlot = keyof DayPlan;
 
+export type MacroMode = 'g_per_kg' | 'pct_of_calories';
+
 export interface DietPreset {
   id: string;
   name: string;
@@ -112,7 +114,21 @@ export interface DietPreset {
   proteinPerKg: number | null;
   carbsPerKg: number | null;
   fatPerKg: number | null;
+  macroMode: MacroMode;
+  proteinPct: number | null;
+  carbsPct: number | null;
+  fatPct: number | null;
 }
+
+export type PerDayCalories = {
+  monday: number | null;
+  tuesday: number | null;
+  wednesday: number | null;
+  thursday: number | null;
+  friday: number | null;
+  saturday: number | null;
+  sunday: number | null;
+};
 
 export interface WeeklyTargets {
   tdee: number;
@@ -123,6 +139,12 @@ export interface WeeklyTargets {
   carbs: number;
   presetId: string | null;
   weightKg: number;
+  perDayCalories: PerDayCalories;
+}
+
+/** Get the effective calorie target for a specific day */
+export function getEffectiveCalories(targets: WeeklyTargets, day: DayOfWeek): number {
+  return targets.perDayCalories[day] ?? targets.dailyCalories;
 }
 
 export const STRATEGY_MULTIPLIERS = {

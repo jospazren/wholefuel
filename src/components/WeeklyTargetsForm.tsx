@@ -11,8 +11,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { useMealPlan } from '@/contexts/MealPlanContext';
-import { WeeklyTargets } from '@/types/meal';
+import { WeeklyTargets, PerDayCalories, DAYS_OF_WEEK, DAY_LABELS, DayOfWeek } from '@/types/meal';
 import { Target, Flame, Beef, Wheat, Droplet, Check, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -33,14 +34,24 @@ export function WeeklyTargetsForm({ onComplete }: WeeklyTargetsFormProps) {
   const [tdee, setTdee] = useState(weeklyTargets.tdee.toString());
   const [strategy, setStrategy] = useState<WeeklyTargets['strategy']>(weeklyTargets.strategy);
   const [inputMode, setInputMode] = useState<'calculated' | 'manual'>('calculated');
-  
+  const [perDayMode, setPerDayMode] = useState(
+    Object.values(weeklyTargets.perDayCalories).some(v => v !== null)
+  );
+  const [perDayCalories, setPerDayCalories] = useState<Record<DayOfWeek, string>>(() => {
+    const result: Record<string, string> = {};
+    DAYS_OF_WEEK.forEach(day => {
+      result[day] = weeklyTargets.perDayCalories[day]?.toString() ?? '';
+    });
+    return result as Record<DayOfWeek, string>;
+  });
+
   // Manual input states
   const [manualProtein, setManualProtein] = useState(weeklyTargets.protein.toString());
   const [manualFat, setManualFat] = useState(weeklyTargets.fat.toString());
   const [manualCarbs, setManualCarbs] = useState(weeklyTargets.carbs.toString());
 
   const calculatedTargets = calculateTargets(parseInt(tdee) || 0, strategy);
-  
+
   useEffect(() => {
     if (inputMode === 'calculated') {
       setManualProtein(calculatedTargets.protein.toString());
@@ -50,17 +61,31 @@ export function WeeklyTargetsForm({ onComplete }: WeeklyTargetsFormProps) {
   }, [tdee, strategy, inputMode]);
 
   const handleApply = () => {
+    const baseCalories = inputMode === 'calculated'
+      ? calculatedTargets.calories
+      : Math.round((parseInt(manualProtein) * 4) + (parseInt(manualFat) * 9) + (parseInt(manualCarbs) * 4));
+
+    const resolvedPerDay: PerDayCalories = {
+      monday: null, tuesday: null, wednesday: null, thursday: null,
+      friday: null, saturday: null, sunday: null,
+    };
+    if (perDayMode) {
+      DAYS_OF_WEEK.forEach(day => {
+        const val = parseInt(perDayCalories[day]);
+        resolvedPerDay[day] = (!isNaN(val) && val !== baseCalories) ? val : null;
+      });
+    }
+
     const finalTargets: WeeklyTargets = {
       tdee: parseInt(tdee) || 2000,
       strategy,
-      dailyCalories: inputMode === 'calculated' 
-        ? calculatedTargets.calories 
-        : Math.round((parseInt(manualProtein) * 4) + (parseInt(manualFat) * 9) + (parseInt(manualCarbs) * 4)),
+      dailyCalories: baseCalories,
       protein: inputMode === 'calculated' ? calculatedTargets.protein : parseInt(manualProtein) || 0,
       fat: inputMode === 'calculated' ? calculatedTargets.fat : parseInt(manualFat) || 0,
       carbs: inputMode === 'calculated' ? calculatedTargets.carbs : parseInt(manualCarbs) || 0,
       presetId: weeklyTargets.presetId,
       weightKg: weeklyTargets.weightKg,
+      perDayCalories: resolvedPerDay,
     };
     setWeeklyTargets(finalTargets);
     onComplete?.();
@@ -69,6 +94,15 @@ export function WeeklyTargetsForm({ onComplete }: WeeklyTargetsFormProps) {
   const displayCalories = inputMode === 'calculated'
     ? calculatedTargets.calories
     : Math.round((parseInt(manualProtein) || 0) * 4 + (parseInt(manualFat) || 0) * 9 + (parseInt(manualCarbs) || 0) * 4);
+
+  // Weekly summary for per-day mode
+  const perDayTotal = perDayMode
+    ? DAYS_OF_WEEK.reduce((sum, day) => {
+        const val = parseInt(perDayCalories[day]);
+        return sum + (isNaN(val) ? displayCalories : val);
+      }, 0)
+    : displayCalories * 7;
+  const perDayAvg = Math.round(perDayTotal / 7);
 
   return (
     <Card className="border-0 shadow-lg animate-fade-in">
@@ -131,13 +165,62 @@ export function WeeklyTargetsForm({ onComplete }: WeeklyTargetsFormProps) {
           </Select>
         </div>
 
+        {/* Per-day calorie toggle */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">Calorie Targets</Label>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Per-day</span>
+              <Switch
+                checked={perDayMode}
+                onCheckedChange={(checked) => {
+                  setPerDayMode(checked);
+                  if (checked) {
+                    // Pre-fill all days with current base
+                    const filled: Record<string, string> = {};
+                    DAYS_OF_WEEK.forEach(day => {
+                      filled[day] = perDayCalories[day] || displayCalories.toString();
+                    });
+                    setPerDayCalories(filled as Record<DayOfWeek, string>);
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {perDayMode && (
+            <div className="space-y-2">
+              <div className="grid grid-cols-7 gap-1.5">
+                {DAYS_OF_WEEK.map(day => (
+                  <div key={day} className="space-y-1">
+                    <Label className="text-[10px] uppercase text-muted-foreground text-center block">
+                      {DAY_LABELS[day]}
+                    </Label>
+                    <Input
+                      type="number"
+                      value={perDayCalories[day]}
+                      onChange={(e) => setPerDayCalories(prev => ({ ...prev, [day]: e.target.value }))}
+                      className="h-9 text-center text-sm px-1"
+                      placeholder={displayCalories.toString()}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Weekly total: {perDayTotal} kcal</span>
+                <span>Daily avg: {perDayAvg} kcal</span>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Macro Configuration */}
         <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as 'calculated' | 'manual')}>
           <TabsList className="w-full">
             <TabsTrigger value="calculated" className="flex-1">Auto Calculate</TabsTrigger>
             <TabsTrigger value="manual" className="flex-1">Manual Input</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="calculated" className="mt-4">
             <p className="text-sm text-muted-foreground mb-4">
               Using balanced split: 30% protein, 25% fat, 45% carbs

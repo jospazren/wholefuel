@@ -7,6 +7,7 @@ import { startOfWeek, addWeeks, format, parseISO } from 'date-fns';
 import {
   WeeklyPlan,
   WeeklyTargets,
+  PerDayCalories,
   DayOfWeek,
   MealSlot,
   MealSlotAssignment,
@@ -17,6 +18,7 @@ import {
   STRATEGY_MULTIPLIERS,
   DAYS_OF_WEEK,
   MEAL_SLOTS,
+  getEffectiveCalories,
 } from '@/types/meal';
 import { useIngredients } from '@/contexts/IngredientsContext';
 import { useMeals } from '@/contexts/MealsContext';
@@ -58,6 +60,7 @@ interface MealPlanContextType {
   weeklyPlan: WeeklyPlan;
   weeklyTargets: WeeklyTargets;
   setWeeklyTargets: (targets: WeeklyTargets) => void;
+  getEffectiveDayCalories: (day: DayOfWeek) => number;
   addMealToSlot: (day: DayOfWeek, slot: MealSlot, recipe: Recipe) => void;
   addEstimatedMealToSlot: (day: DayOfWeek, slot: MealSlot, data: EstimatedMealInput) => void;
   duplicateMealToSlot: (sourceMealId: string, toDay: DayOfWeek, toSlot: MealSlot) => void;
@@ -82,9 +85,15 @@ const defaultWeeklyPlan: WeeklyPlan = {
   friday: {}, saturday: {}, sunday: {},
 };
 
+const defaultPerDay: PerDayCalories = {
+  monday: null, tuesday: null, wednesday: null, thursday: null,
+  friday: null, saturday: null, sunday: null,
+};
+
 const defaultTargets: WeeklyTargets = {
   tdee: 2500, strategy: 'maintain', dailyCalories: 2500,
   protein: 150, fat: 67, carbs: 200, presetId: null, weightKg: 80,
+  perDayCalories: { ...defaultPerDay },
 };
 
 const MealPlanContext = createContext<MealPlanContextType | undefined>(undefined);
@@ -178,6 +187,10 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           proteinPerKg: p.protein_per_kg != null ? Number(p.protein_per_kg) : null,
           carbsPerKg: p.carbs_per_kg != null ? Number(p.carbs_per_kg) : null,
           fatPerKg: p.fat_per_kg != null ? Number(p.fat_per_kg) : null,
+          macroMode: (p.macro_mode as DietPreset['macroMode']) || 'g_per_kg',
+          proteinPct: p.protein_pct != null ? Number(p.protein_pct) : null,
+          carbsPct: p.carbs_pct != null ? Number(p.carbs_pct) : null,
+          fatPct: p.fat_pct != null ? Number(p.fat_pct) : null,
         })));
       }
 
@@ -193,6 +206,15 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
           carbs: Number(dt.carbs),
           presetId: dt.preset_id || null,
           weightKg: Number(dt.weight_kg) || 80,
+          perDayCalories: {
+            monday: dt.calories_monday != null ? Number(dt.calories_monday) : null,
+            tuesday: dt.calories_tuesday != null ? Number(dt.calories_tuesday) : null,
+            wednesday: dt.calories_wednesday != null ? Number(dt.calories_wednesday) : null,
+            thursday: dt.calories_thursday != null ? Number(dt.calories_thursday) : null,
+            friday: dt.calories_friday != null ? Number(dt.calories_friday) : null,
+            saturday: dt.calories_saturday != null ? Number(dt.calories_saturday) : null,
+            sunday: dt.calories_sunday != null ? Number(dt.calories_sunday) : null,
+          },
         });
       } else {
         // Fallback to most recent targets and clone as snapshot for this week
@@ -214,6 +236,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
             carbs: Number(latestTargets.carbs),
             presetId: latestTargets.preset_id || null,
             weightKg: Number(latestTargets.weight_kg) || 80,
+            perDayCalories: { ...defaultPerDay },
           };
           setWeeklyTargetsState(clonedTargets);
 
@@ -291,6 +314,13 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         carbs: targets.carbs,
         preset_id: targets.presetId,
         weight_kg: targets.weightKg,
+        calories_monday: targets.perDayCalories.monday,
+        calories_tuesday: targets.perDayCalories.tuesday,
+        calories_wednesday: targets.perDayCalories.wednesday,
+        calories_thursday: targets.perDayCalories.thursday,
+        calories_friday: targets.perDayCalories.friday,
+        calories_saturday: targets.perDayCalories.saturday,
+        calories_sunday: targets.perDayCalories.sunday,
       }, { onConflict: 'user_id,week_start_date' });
 
     if (error) {
@@ -311,6 +341,10 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       protein_per_kg: preset.proteinPerKg,
       carbs_per_kg: preset.carbsPerKg,
       fat_per_kg: preset.fatPerKg,
+      macro_mode: preset.macroMode,
+      protein_pct: preset.proteinPct,
+      carbs_pct: preset.carbsPct,
+      fat_pct: preset.fatPct,
     }).select().single();
     if (error) {
       setDietPresets(previousPresets);
@@ -325,6 +359,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.from('diet_presets').update({
       name: preset.name, tdee_multiplier: preset.tdeeMultiplier,
       protein_per_kg: preset.proteinPerKg, carbs_per_kg: preset.carbsPerKg, fat_per_kg: preset.fatPerKg,
+      macro_mode: preset.macroMode, protein_pct: preset.proteinPct, carbs_pct: preset.carbsPct, fat_pct: preset.fatPct,
     }).eq('id', id).eq('user_id', user.id);
     if (error) {
       setDietPresets(previousPresets);
@@ -637,6 +672,10 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     return Array.from(itemMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   };
 
+  const getEffectiveDayCalories = useCallback((day: DayOfWeek) => {
+    return getEffectiveCalories(weeklyTargets, day);
+  }, [weeklyTargets]);
+
   return (
     <MealPlanContext.Provider
       value={{
@@ -648,6 +687,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         weeklyPlan,
         weeklyTargets,
         setWeeklyTargets,
+        getEffectiveDayCalories,
         addMealToSlot,
         addEstimatedMealToSlot,
         duplicateMealToSlot,

@@ -9,6 +9,7 @@ import {
   MEAL_SLOTS,
   DAY_FULL_LABELS,
   BaseIngredient,
+  getEffectiveCalories,
 } from '@/types/meal';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
@@ -137,11 +138,14 @@ export function buildExportJson(opts: ExportOptions): object {
     weeklyMacroSums.fat += dayTotals.fat;
     weeklyMacroSums.carbs += dayTotals.carbs;
 
+    const dayCalTarget = getEffectiveCalories(weeklyTargets, day);
+
     days[day] = {
       meals,
       totals: dayTotals,
+      calorie_target: dayCalTarget,
       vs_targets: {
-        calories: dayTotals.calories - weeklyTargets.dailyCalories,
+        calories: dayTotals.calories - dayCalTarget,
         protein: dayTotals.protein - weeklyTargets.protein,
         fat: dayTotals.fat - weeklyTargets.fat,
         carbs: dayTotals.carbs - weeklyTargets.carbs,
@@ -149,9 +153,9 @@ export function buildExportJson(opts: ExportOptions): object {
     };
   });
 
-  const avgDivisor = daysWithData || 1;
+  const weeklyCalTarget = DAYS_OF_WEEK.reduce((sum, day) => sum + getEffectiveCalories(weeklyTargets, day), 0);
   const adherence = (actual: number, target: number) =>
-    target > 0 ? Math.round((actual / (target * daysWithData)) * 1000) / 10 : 0;
+    target > 0 ? Math.round((actual / target) * 1000) / 10 : 0;
 
   return {
     week: weekStart,
@@ -166,15 +170,15 @@ export function buildExportJson(opts: ExportOptions): object {
     },
     days,
     weekly_summary: {
-      avg_daily_calories: Math.round(weeklyMacroSums.calories / avgDivisor),
-      avg_daily_protein: Math.round(weeklyMacroSums.protein / avgDivisor),
+      avg_daily_calories: Math.round(weeklyMacroSums.calories / (daysWithData || 1)),
+      avg_daily_protein: Math.round(weeklyMacroSums.protein / (daysWithData || 1)),
       total_meals_planned: totalMealsPlanned,
       total_meals_estimated: totalMealsEstimated,
       target_adherence_pct: {
-        calories: adherence(weeklyMacroSums.calories, weeklyTargets.dailyCalories),
-        protein: adherence(weeklyMacroSums.protein, weeklyTargets.protein),
-        fat: adherence(weeklyMacroSums.fat, weeklyTargets.fat),
-        carbs: adherence(weeklyMacroSums.carbs, weeklyTargets.carbs),
+        calories: adherence(weeklyMacroSums.calories, weeklyCalTarget),
+        protein: adherence(weeklyMacroSums.protein, weeklyTargets.protein * 7),
+        fat: adherence(weeklyMacroSums.fat, weeklyTargets.fat * 7),
+        carbs: adherence(weeklyMacroSums.carbs, weeklyTargets.carbs * 7),
       },
     },
     ingredient_totals: Array.from(ingredientTotals.values())
