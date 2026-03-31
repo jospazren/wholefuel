@@ -145,6 +145,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
       protein: computed.protein,
       carbs: computed.carbs,
       fat: computed.fat,
+      perDayCalories: { monday: null, tuesday: null, wednesday: null, thursday: null, friday: null, saturday: null, sunday: null },
     });
   };
 
