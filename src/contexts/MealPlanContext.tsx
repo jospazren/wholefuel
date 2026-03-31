@@ -341,6 +341,10 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       protein_per_kg: preset.proteinPerKg,
       carbs_per_kg: preset.carbsPerKg,
       fat_per_kg: preset.fatPerKg,
+      macro_mode: preset.macroMode,
+      protein_pct: preset.proteinPct,
+      carbs_pct: preset.carbsPct,
+      fat_pct: preset.fatPct,
     }).select().single();
     if (error) {
       setDietPresets(previousPresets);
