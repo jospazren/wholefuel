@@ -314,6 +314,13 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         carbs: targets.carbs,
         preset_id: targets.presetId,
         weight_kg: targets.weightKg,
+        calories_monday: targets.perDayCalories.monday,
+        calories_tuesday: targets.perDayCalories.tuesday,
+        calories_wednesday: targets.perDayCalories.wednesday,
+        calories_thursday: targets.perDayCalories.thursday,
+        calories_friday: targets.perDayCalories.friday,
+        calories_saturday: targets.perDayCalories.saturday,
+        calories_sunday: targets.perDayCalories.sunday,
       }, { onConflict: 'user_id,week_start_date' });
 
     if (error) {
