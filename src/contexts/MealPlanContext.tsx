@@ -60,6 +60,7 @@ interface MealPlanContextType {
   weeklyPlan: WeeklyPlan;
   weeklyTargets: WeeklyTargets;
   setWeeklyTargets: (targets: WeeklyTargets) => void;
+  getEffectiveDayCalories: (day: DayOfWeek) => number;
   addMealToSlot: (day: DayOfWeek, slot: MealSlot, recipe: Recipe) => void;
   addEstimatedMealToSlot: (day: DayOfWeek, slot: MealSlot, data: EstimatedMealInput) => void;
   duplicateMealToSlot: (sourceMealId: string, toDay: DayOfWeek, toSlot: MealSlot) => void;
