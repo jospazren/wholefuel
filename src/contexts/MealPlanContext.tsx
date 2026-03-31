@@ -359,6 +359,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     const { error } = await supabase.from('diet_presets').update({
       name: preset.name, tdee_multiplier: preset.tdeeMultiplier,
       protein_per_kg: preset.proteinPerKg, carbs_per_kg: preset.carbsPerKg, fat_per_kg: preset.fatPerKg,
+      macro_mode: preset.macroMode, protein_pct: preset.proteinPct, carbs_pct: preset.carbsPct, fat_pct: preset.fatPct,
     }).eq('id', id).eq('user_id', user.id);
     if (error) {
       setDietPresets(previousPresets);
