@@ -672,6 +672,10 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
     return Array.from(itemMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   };
 
+  const getEffectiveDayCalories = useCallback((day: DayOfWeek) => {
+    return getEffectiveCalories(weeklyTargets, day);
+  }, [weeklyTargets]);
+
   return (
     <MealPlanContext.Provider
       value={{
@@ -683,6 +687,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
         weeklyPlan,
         weeklyTargets,
         setWeeklyTargets,
+        getEffectiveDayCalories,
         addMealToSlot,
         addEstimatedMealToSlot,
         duplicateMealToSlot,
