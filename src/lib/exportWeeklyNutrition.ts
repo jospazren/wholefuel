@@ -9,6 +9,7 @@ import {
   MEAL_SLOTS,
   DAY_FULL_LABELS,
   BaseIngredient,
+  getEffectiveCalories,
 } from '@/types/meal';
 
 const SLOT_LABELS: Record<MealSlot, string> = {
