@@ -7,6 +7,7 @@ import { startOfWeek, addWeeks, format, parseISO } from 'date-fns';
 import {
   WeeklyPlan,
   WeeklyTargets,
+  PerDayCalories,
   DayOfWeek,
   MealSlot,
   MealSlotAssignment,
@@ -17,6 +18,7 @@ import {
   STRATEGY_MULTIPLIERS,
   DAYS_OF_WEEK,
   MEAL_SLOTS,
+  getEffectiveCalories,
 } from '@/types/meal';
 import { useIngredients } from '@/contexts/IngredientsContext';
 import { useMeals } from '@/contexts/MealsContext';
