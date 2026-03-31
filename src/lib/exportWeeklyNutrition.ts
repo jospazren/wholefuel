@@ -170,15 +170,15 @@ export function buildExportJson(opts: ExportOptions): object {
     },
     days,
     weekly_summary: {
-      avg_daily_calories: Math.round(weeklyMacroSums.calories / avgDivisor),
-      avg_daily_protein: Math.round(weeklyMacroSums.protein / avgDivisor),
+      avg_daily_calories: Math.round(weeklyMacroSums.calories / (daysWithData || 1)),
+      avg_daily_protein: Math.round(weeklyMacroSums.protein / (daysWithData || 1)),
       total_meals_planned: totalMealsPlanned,
       total_meals_estimated: totalMealsEstimated,
       target_adherence_pct: {
-        calories: adherence(weeklyMacroSums.calories, weeklyTargets.dailyCalories),
-        protein: adherence(weeklyMacroSums.protein, weeklyTargets.protein),
-        fat: adherence(weeklyMacroSums.fat, weeklyTargets.fat),
-        carbs: adherence(weeklyMacroSums.carbs, weeklyTargets.carbs),
+        calories: adherence(weeklyMacroSums.calories, weeklyCalTarget),
+        protein: adherence(weeklyMacroSums.protein, weeklyTargets.protein * 7),
+        fat: adherence(weeklyMacroSums.fat, weeklyTargets.fat * 7),
+        carbs: adherence(weeklyMacroSums.carbs, weeklyTargets.carbs * 7),
       },
     },
     ingredient_totals: Array.from(ingredientTotals.values())
