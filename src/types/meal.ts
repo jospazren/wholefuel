@@ -161,6 +161,25 @@ export function computeTargetsFromPreset(
   tdee: number
 ): { dailyCalories: number; protein: number; carbs: number; fat: number } {
   const dailyCalories = Math.round(tdee * preset.tdeeMultiplier);
+
+  if (preset.macroMode === 'pct_of_calories') {
+    const proteinG = preset.proteinPct != null ? Math.round((dailyCalories * preset.proteinPct / 100) / 4) : null;
+    const carbsG = preset.carbsPct != null ? Math.round((dailyCalories * preset.carbsPct / 100) / 4) : null;
+    const fatG = preset.fatPct != null ? Math.round((dailyCalories * preset.fatPct / 100) / 9) : null;
+    const usedCalories =
+      (proteinG != null ? proteinG * 4 : 0) +
+      (carbsG != null ? carbsG * 4 : 0) +
+      (fatG != null ? fatG * 9 : 0);
+    const remainingCalories = Math.max(0, dailyCalories - usedCalories);
+    return {
+      dailyCalories,
+      protein: proteinG ?? Math.round(remainingCalories / 4),
+      carbs: carbsG ?? Math.round(remainingCalories / 4),
+      fat: fatG ?? Math.round(remainingCalories / 9),
+    };
+  }
+
+  // g_per_kg mode
   const proteinG = preset.proteinPerKg != null ? Math.round(preset.proteinPerKg * weightKg) : null;
   const carbsG = preset.carbsPerKg != null ? Math.round(preset.carbsPerKg * weightKg) : null;
   const fatG = preset.fatPerKg != null ? Math.round(preset.fatPerKg * weightKg) : null;
