@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { WeeklyExportDialog } from '@/components/WeeklyExportDialog';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { Recipe, DayOfWeek, MealSlot, MealSlotAssignment, DAYS_OF_WEEK, MEAL_SLOTS, DAY_LABELS, DAY_FULL_LABELS, WeeklyTargets, DietPreset, computeTargetsFromPreset, getEffectiveCalories } from '@/types/meal';
