@@ -142,7 +142,62 @@ export function RecipeViewMobile({
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Meal Actions */}
+        {mealActions && (
+          <div className="px-5 py-3 flex items-center gap-2 border-t shrink-0">
+            <MobilePortionButton onAdjust={mealActions.onPortionAdjust} />
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={mealActions.onDuplicate}>
+              <Copy className="h-3.5 w-3.5" />
+              Duplicate
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function MobilePortionButton({ onAdjust }: { onAdjust: (multiplier: number) => void }) {
+  const [showInput, setShowInput] = useState(false);
+  const [value, setValue] = useState('');
+
+  if (!showInput) {
+    return (
+      <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => setShowInput(true)}>
+        <Scale className="h-3.5 w-3.5" />
+        Portion
+      </Button>
+    );
+  }
+
+  const handleApply = () => {
+    const mult = parseFloat(value);
+    if (mult > 0) {
+      onAdjust(mult);
+      setShowInput(false);
+      setValue('');
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Input
+        autoFocus
+        type="number"
+        step="0.25"
+        min="0.25"
+        placeholder="e.g. 0.5"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') handleApply(); if (e.key === 'Escape') setShowInput(false); }}
+        className="h-7 w-20 text-xs"
+      />
+      <span className="text-xs text-muted-foreground">×</span>
+      <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={handleApply}>Apply</Button>
+      <Button size="sm" variant="ghost" className="h-7 px-1.5" onClick={() => setShowInput(false)}>
+        <X className="h-3 w-3" />
+      </Button>
+    </div>
   );
 }
