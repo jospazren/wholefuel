@@ -165,6 +165,7 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave, mealActions }:
         formNotes={formNotes}
         macroBadges={macroBadges}
         ingredientDb={ingredientDb}
+        mealActions={mealActions}
       />
     );
   }
