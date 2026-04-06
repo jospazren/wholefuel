@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Recipe, RecipeIngredient } from '@/types/meal';
 import { useIngredients } from '@/contexts/IngredientsContext';
 import { useRecipes } from '@/contexts/RecipesContext';
