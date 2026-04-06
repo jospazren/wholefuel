@@ -2,39 +2,50 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-const CACHE_RESET_KEY = "wholefuel-cache-reset-v2";
+declare const __BUILD_ID__: string;
 
-async function clearStaleClientCaches() {
-  const supportsServiceWorker = "serviceWorker" in navigator;
-  const supportsCaches = "caches" in window;
-
-  if (!supportsServiceWorker && !supportsCaches) {
-    return;
-  }
-
-  let hadRegistrations = false;
-
-  if (supportsServiceWorker) {
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    hadRegistrations = registrations.length > 0;
-
-    await Promise.all(
-      registrations.map((registration) => registration.unregister())
+async function checkForUpdate() {
+  try {
+    const res = await fetch("/?_cb=" + Date.now(), {
+      cache: "no-store",
+      headers: { Accept: "text/html" },
+    });
+    if (!res.ok) return;
+    const html = await res.text();
+    const match = html.match(
+      /<meta\s+name="wholefuel-build-id"\s+content="([^"]+)"/
     );
+    if (match && match[1] !== __BUILD_ID__) {
+      // New build detected – force a clean reload once
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has("_updated")) {
+        url.searchParams.set("_updated", match[1]);
+        window.location.replace(url.toString());
+        return; // stop rendering, page will reload
+      }
+    }
+  } catch {
+    // Network error – continue with current build
   }
 
-  if (supportsCaches) {
-    const cacheKeys = await caches.keys();
-    await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
+  // Clean up the query param if present
+  const url = new URL(window.location.href);
+  if (url.searchParams.has("_updated")) {
+    url.searchParams.delete("_updated");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
   }
 
-  if (hadRegistrations && !sessionStorage.getItem(CACHE_RESET_KEY)) {
-    sessionStorage.setItem(CACHE_RESET_KEY, "true");
-    window.location.reload();
+  // Legacy cleanup: unregister any old service workers
+  if ("serviceWorker" in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    regs.forEach((r) => r.unregister());
   }
+  if ("caches" in window) {
+    const keys = await caches.keys();
+    keys.forEach((k) => caches.delete(k));
+  }
+
+  createRoot(document.getElementById("root")!).render(<App />);
 }
 
-// Always run cache cleanup on every page load
-void clearStaleClientCaches();
-
-createRoot(document.getElementById("root")!).render(<App />);
+checkForUpdate();
