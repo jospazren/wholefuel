@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     {
       name: "inject-build-id",
-      transformIndexHtml(html) {
+      transformIndexHtml(html: string) {
         return html.replace(
           "</head>",
           `<meta name="wholefuel-build-id" content="${buildId}">\n  </head>`
