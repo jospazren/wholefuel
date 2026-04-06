@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Recipe, RecipeIngredient } from '@/types/meal';
 import { useIngredients } from '@/contexts/IngredientsContext';
 import { useRecipes } from '@/contexts/RecipesContext';
@@ -44,24 +44,29 @@ export function RecipeEditorDialog({ mode, open, onClose, onSave, mealActions }:
   const [openIngredientPopover, setOpenIngredientPopover] = useState<number | null>(null);
   const [addIngredientOpen, setAddIngredientOpen] = useState(false);
   const [mobileEditing, setMobileEditing] = useState(false);
+  const [prevOpen, setPrevOpen] = useState(false);
 
-  useEffect(() => {
-    if (open && mode) {
-      if (mode.type === 'add') {
-        setFormName(''); setFormTags([]); setFormIngredients([]);
-        setFormInstructionSteps([]); setFormNotes(''); setFormLink('');
-        setMobileEditing(true);
-      } else {
-        const recipe = mode.recipe;
-        setFormName(recipe.name); setFormTags(recipe.tags || []);
-        setFormIngredients([...recipe.ingredients]);
-        const instructions = recipe.instructions || '';
-        setFormInstructionSteps(instructions ? instructions.split('\n').filter(s => s.trim()) : []);
-        setFormNotes(recipe.notes || ''); setFormLink(recipe.link || '');
-        setMobileEditing(false);
-      }
+  // Only reset form state when the dialog opens (open transitions false→true),
+  // not on every re-render of mode which would wipe unsaved edits.
+  if (open && !prevOpen && mode) {
+    setPrevOpen(true);
+    if (mode.type === 'add') {
+      setFormName(''); setFormTags([]); setFormIngredients([]);
+      setFormInstructionSteps([]); setFormNotes(''); setFormLink('');
+      setMobileEditing(true);
+    } else {
+      const recipe = mode.recipe;
+      setFormName(recipe.name); setFormTags(recipe.tags || []);
+      setFormIngredients([...recipe.ingredients]);
+      const instructions = recipe.instructions || '';
+      setFormInstructionSteps(instructions ? instructions.split('\n').filter(s => s.trim()) : []);
+      setFormNotes(recipe.notes || ''); setFormLink(recipe.link || '');
+      setMobileEditing(false);
     }
-  }, [open, mode]);
+  }
+  if (!open && prevOpen) {
+    setPrevOpen(false);
+  }
 
   const sortedIngredientDb = useMemo(() =>
     [...ingredientDb].sort((a, b) => a.name.localeCompare(b.name)),
