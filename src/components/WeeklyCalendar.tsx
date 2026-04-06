@@ -57,24 +57,15 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>(getCurrentDayOfWeek);
   const [duplicatingMealId, setDuplicatingMealId] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
-  const [perDayMode, setPerDayMode] = useState(
-    Object.values(weeklyTargets.perDayCalories).some(v => v !== null)
-  );
+  const [perDayMode, setPerDayMode] = useState(false);
   const [perDayInputs, setPerDayInputs] = useState<Record<DayOfWeek, string>>(() => {
     const result: Record<string, string> = {};
-    DAYS_OF_WEEK.forEach(day => {
-      result[day] = weeklyTargets.perDayCalories[day]?.toString() ?? '';
-    });
+    DAYS_OF_WEEK.forEach(day => { result[day] = ''; });
     return result as Record<DayOfWeek, string>;
   });
 
-  // Sync perDayMode and inputs when weeklyTargets change (e.g. week navigation)
-  const targetsRef = JSON.stringify(weeklyTargets.perDayCalories);
-  useState(() => {}); // placeholder
-  // Use effect-like pattern via key comparison
-  const [lastTargetsRef, setLastTargetsRef] = useState(targetsRef);
-  if (targetsRef !== lastTargetsRef) {
-    setLastTargetsRef(targetsRef);
+  // Sync perDayMode and inputs whenever weeklyTargets.perDayCalories changes (initial load, week nav, etc.)
+  useEffect(() => {
     const hasOverrides = Object.values(weeklyTargets.perDayCalories).some(v => v !== null);
     setPerDayMode(hasOverrides);
     const newInputs: Record<string, string> = {};
@@ -82,7 +73,7 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
       newInputs[day] = weeklyTargets.perDayCalories[day]?.toString() ?? '';
     });
     setPerDayInputs(newInputs as Record<DayOfWeek, string>);
-  }
+  }, [JSON.stringify(weeklyTargets.perDayCalories)]);
 
   const handlePerDayToggle = (checked: boolean) => {
     setPerDayMode(checked);
