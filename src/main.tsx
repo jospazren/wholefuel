@@ -2,19 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-const CACHE_RESET_KEY = "wholefuel-cache-reset-v1";
-
-const isInIframe = (() => {
-  try {
-    return window.self !== window.top;
-  } catch {
-    return true;
-  }
-})();
-
-const isPreviewHost =
-  window.location.hostname.includes("id-preview--") ||
-  window.location.hostname.includes("lovableproject.com");
+const CACHE_RESET_KEY = "wholefuel-cache-reset-v2";
 
 async function clearStaleClientCaches() {
   const supportsServiceWorker = "serviceWorker" in navigator;
@@ -40,19 +28,13 @@ async function clearStaleClientCaches() {
     await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
   }
 
-  const shouldForceRefresh =
-    hadRegistrations &&
-    !window.sessionStorage.getItem(CACHE_RESET_KEY) &&
-    !isInIframe;
-
-  if (shouldForceRefresh) {
-    window.sessionStorage.setItem(CACHE_RESET_KEY, "true");
+  if (hadRegistrations && !sessionStorage.getItem(CACHE_RESET_KEY)) {
+    sessionStorage.setItem(CACHE_RESET_KEY, "true");
     window.location.reload();
   }
 }
 
-if (isInIframe || isPreviewHost || window.location.hostname === "wholefuel.lovable.app") {
-  void clearStaleClientCaches();
-}
+// Always run cache cleanup on every page load
+void clearStaleClientCaches();
 
 createRoot(document.getElementById("root")!).render(<App />);
