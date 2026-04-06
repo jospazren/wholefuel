@@ -198,7 +198,7 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
       // Process weekly targets
       if (targetsResult.data) {
         const dt = targetsResult.data;
-        setWeeklyTargetsState({
+        const baseTargets: WeeklyTargets = {
           tdee: Number(dt.tdee),
           strategy: dt.strategy as WeeklyTargets['strategy'],
           dailyCalories: Number(dt.daily_calories),
@@ -216,7 +216,32 @@ export function MealPlanProvider({ children }: { children: ReactNode }) {
             saturday: dt.calories_saturday != null ? Number(dt.calories_saturday) : null,
             sunday: dt.calories_sunday != null ? Number(dt.calories_sunday) : null,
           },
-        });
+        };
+
+        // Recompute macros from linked preset to pick up any preset changes
+        if (baseTargets.presetId && presetsResult.data) {
+          const linkedPreset = presetsResult.data.find(p => p.id === baseTargets.presetId);
+          if (linkedPreset) {
+            const presetObj: DietPreset = {
+              id: linkedPreset.id, name: linkedPreset.name,
+              tdeeMultiplier: Number(linkedPreset.tdee_multiplier),
+              proteinPerKg: linkedPreset.protein_per_kg != null ? Number(linkedPreset.protein_per_kg) : null,
+              carbsPerKg: linkedPreset.carbs_per_kg != null ? Number(linkedPreset.carbs_per_kg) : null,
+              fatPerKg: linkedPreset.fat_per_kg != null ? Number(linkedPreset.fat_per_kg) : null,
+              macroMode: (linkedPreset.macro_mode as DietPreset['macroMode']) || 'g_per_kg',
+              proteinPct: linkedPreset.protein_pct != null ? Number(linkedPreset.protein_pct) : null,
+              carbsPct: linkedPreset.carbs_pct != null ? Number(linkedPreset.carbs_pct) : null,
+              fatPct: linkedPreset.fat_pct != null ? Number(linkedPreset.fat_pct) : null,
+            };
+            const computed = computeTargetsFromPreset(presetObj, baseTargets.weightKg, baseTargets.tdee);
+            baseTargets.dailyCalories = computed.dailyCalories;
+            baseTargets.protein = computed.protein;
+            baseTargets.carbs = computed.carbs;
+            baseTargets.fat = computed.fat;
+          }
+        }
+
+        setWeeklyTargetsState(baseTargets);
       } else {
         // Fallback to most recent targets and clone as snapshot for this week
         const { data: latestTargets } = await supabase
