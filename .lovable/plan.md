@@ -1,39 +1,54 @@
 
+Goal: fix the real issue on the published site so new frontend builds appear on normal refresh, without requiring a hard refresh.
 
-## Fix: Android Home Screen App Showing Stale Version
+What I think is happening:
+- This no longer looks like a mobile-only problem.
+- Hard refresh fixes browser HTTP caching; the current `main.tsx` logic only clears service workers / Cache Storage.
+- So the app is likely loading an older cached HTML/app shell on normal refresh, and the current cache cleanup does not detect that.
 
-### Root Cause
+Plan:
+1. Replace the current “clear SW caches on load” strategy with a build-version check.
+   - Keep the app focused on detecting stale published builds, not just service workers.
 
-The app was previously set up as a PWA with `vite-plugin-pwa`, which registered a service worker and cached assets. Although the PWA plugin was later removed from the Vite config, three things remain that keep the installed home-screen app stuck on an old build:
+2. Add a unique build ID at build time in `vite.config.ts`.
+   - Inject the same build ID into:
+     - a global JS constant for the running app
+     - a `<meta>` tag in the built HTML
+   - This gives the app a reliable “current build” marker.
 
-1. **`vite-plugin-pwa` is still in `package.json`** -- it should be fully removed
-2. **PWA meta tags in `index.html`** (`mobile-web-app-capable`, `apple-mobile-web-app-capable`) tell Android to treat the app as standalone, which can aggressively cache the initial shell
-3. **A stale service worker** may still be registered on the phone from the original PWA install. The current cache-clearing logic in `main.tsx` only does a forced reload if it finds active registrations AND a session flag hasn't been set -- meaning after the first successful clear, subsequent visits skip the reload even if stale content persists
+3. On startup in `src/main.tsx`, fetch the latest HTML with `cache: "no-store"`.
+   - Parse the returned HTML.
+   - Read the latest build ID from the meta tag.
+   - Compare it with the currently running build ID.
 
-The combined effect: the home-screen shortcut launches the app in standalone mode with a cached old build, and the cleanup code doesn't re-trigger.
+4. If the fetched build ID is newer than the running one, force a one-time navigation to the fresh build.
+   - Use a guarded reload/redirect so it does not loop.
+   - Add a temporary cache-busting query param for that one refresh if needed.
+   - After the new app loads, clean up that query param from the URL.
 
-### Plan
+5. Remove or simplify the current cache-reset logic.
+   - The existing service-worker/cache cleanup is not solving the “hard refresh on Mac” problem.
+   - Keep only minimal fallback cleanup if needed, but make version detection the primary fix.
 
-**1. Remove `vite-plugin-pwa` dependency from `package.json`**
-- Delete the `"vite-plugin-pwa": "^1.2.0"` line
+Technical details:
+- `vite.config.ts`
+  - Generate `buildId` once per build.
+  - Expose it to app code.
+  - Inject `<meta name="wholefuel-build-id" ...>` into HTML.
+- `src/main.tsx`
+  - Before rendering, fetch fresh HTML from the current route/root with `no-store`.
+  - Compare remote build ID vs local build ID.
+  - If mismatched, do a guarded one-time refresh to the new build.
+  - If the check fails, continue rendering normally so the app never blocks.
+- Likely no change needed in `index.html` besides the injected meta.
 
-**2. Clean up `index.html`**
-- Remove `<link rel="apple-touch-icon" href="/pwa-192x192.png">`
-- Remove `<meta name="mobile-web-app-capable" content="yes">`
-- Remove `<meta name="apple-mobile-web-app-capable" content="yes">`
-- Remove `<meta name="apple-mobile-web-app-status-bar-style" content="default">`
-- Keep the `theme-color` meta (harmless, good for browser chrome)
+Expected result:
+- After each publish, a normal refresh should pick up the latest build automatically.
+- No hard refresh should be needed on Mac.
+- The same fix should also improve “stale app” behavior on phones because it targets published-build freshness directly.
 
-**3. Harden the cache-busting in `main.tsx`**
-- Always attempt to unregister service workers and clear caches on every page load (not gated behind `isPreviewHost` or iframe checks)
-- Remove the `sessionStorage` guard so the cleanup runs every time until there are truly no stale workers or caches
-- After clearing, use a versioned cache-bust key (e.g. `wholefuel-cache-reset-v2`) so existing installs with the old key re-trigger the cleanup
-
-**4. Publish the updated version**
-- After publishing, the user will need to open the home-screen app once. The cleanup code will unregister the old service worker and clear caches, then reload with the latest build.
-- If the home-screen app still shows the old version after one open, the user should uninstall the app from their home screen and re-add it from Chrome.
-
-### What the User Needs to Do After Publishing
-
-Open the home-screen app once -- it should auto-refresh with the latest version. If it still looks old, remove the shortcut from the home screen and add it fresh from Chrome (Menu > Add to Home Screen).
-
+Validation:
+- Publish a frontend change.
+- Open the published site on Mac in a normal tab.
+- Refresh normally and confirm the new UI appears without Cmd+Shift+R.
+- Then verify the same on mobile/home-screen entry if needed.
