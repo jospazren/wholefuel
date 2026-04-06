@@ -19,6 +19,7 @@ import {
   DAYS_OF_WEEK,
   MEAL_SLOTS,
   getEffectiveCalories,
+  computeTargetsFromPreset,
 } from '@/types/meal';
 import { useIngredients } from '@/contexts/IngredientsContext';
 import { useMeals } from '@/contexts/MealsContext';
