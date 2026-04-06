@@ -296,6 +296,15 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
             border: '1px solid rgba(255,255,255,0.5)',
           }}
         >
+          {perDayMode && (
+            <Input
+              type="number"
+              value={perDayInputs[day]}
+              onChange={(e) => handlePerDayInput(day, e.target.value)}
+              className="h-7 w-full text-center text-xs border-0 bg-accent rounded-lg px-1"
+              placeholder={weeklyTargets.dailyCalories.toString()}
+            />
+          )}
           <DayMacroBars macros={dayMacros} targets={getDayTargets(day)} visibility={macroVisibility} />
         </div>
 
@@ -385,17 +394,28 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
                 </div>
               </div>
 
-              {/* Mobile Row 2: Day selector */}
-              <div className="flex items-center justify-center gap-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={handlePrevDay}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm font-bold min-w-[90px] text-center">
-                  {DAY_FULL_LABELS[selectedDay]}
-                </span>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={handleNextDay}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+              {/* Mobile Row 2: Day selector + per-day toggle */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-muted-foreground">Per-day</span>
+                  <Switch
+                    checked={perDayMode}
+                    onCheckedChange={handlePerDayToggle}
+                    className="scale-75"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={handlePrevDay}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm font-bold min-w-[90px] text-center">
+                    {DAY_FULL_LABELS[selectedDay]}
+                  </span>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={handleNextDay}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="w-[70px]" /> {/* spacer for centering */}
               </div>
             </>
           ) : (

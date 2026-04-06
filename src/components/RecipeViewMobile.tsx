@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { RecipeIngredient } from '@/types/meal';
 import { BaseIngredient } from '@/types/meal';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { ExternalLink, Pencil, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ExternalLink, Pencil, X, Copy, Scale } from 'lucide-react';
+import { MealActions } from '@/components/RecipeEditDesktop';
 
 interface MacroBadge {
   label: string;
@@ -25,12 +29,13 @@ interface RecipeViewMobileProps {
   formNotes: string;
   macroBadges: MacroBadge[];
   ingredientDb: BaseIngredient[];
+  mealActions?: MealActions;
 }
 
 export function RecipeViewMobile({
   open, onClose, onEdit, formName, formLink,
   formIngredients, formInstructionSteps, formNotes,
-  macroBadges, ingredientDb,
+  macroBadges, ingredientDb, mealActions,
 }: RecipeViewMobileProps) {
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
