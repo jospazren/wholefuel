@@ -226,12 +226,18 @@ export function WeeklyCalendar({ className, sidebarOpen, onToggleSidebar }: Week
     }
   };
 
-  const getDayTargets = (day: DayOfWeek) => ({
-    dailyCalories: getEffectiveCalories(weeklyTargets, day),
-    protein: weeklyTargets.protein,
-    carbs: weeklyTargets.carbs,
-    fat: weeklyTargets.fat,
-  });
+  const getDayTargets = (day: DayOfWeek) => {
+    const effectiveCal = getEffectiveCalories(weeklyTargets, day);
+    const baseCal = weeklyTargets.dailyCalories;
+    // Scale macros proportionally when per-day calories differ from base
+    const ratio = baseCal > 0 ? effectiveCal / baseCal : 1;
+    return {
+      dailyCalories: effectiveCal,
+      protein: Math.round(weeklyTargets.protein * ratio),
+      carbs: Math.round(weeklyTargets.carbs * ratio),
+      fat: Math.round(weeklyTargets.fat * ratio),
+    };
+  };
 
   const renderDayHeader = (day: DayOfWeek) => {
     const dayMacros = getDailyMacros(day);
